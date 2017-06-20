@@ -1,0 +1,8 @@
+#!/usr/bin/env php
+<?php
+
+include __DIR__ . "/../vendor/autoload.php";
+use MQK\Runner;
+
+$runner = new Runner();
+$runner->run();
