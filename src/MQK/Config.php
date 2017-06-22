@@ -61,7 +61,7 @@ class Config
     public function workers()
     {
         if (!$this->workers) {
-            $this->workers = 2;
+            $this->workers = 50;
         }
         return $this->workers;
     }

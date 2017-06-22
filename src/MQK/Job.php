@@ -14,6 +14,11 @@ class Job implements \JsonSerializable
     private $arguments;
     private $connection;
 
+    /**
+     * @var int
+     */
+    private $delay;
+
     public function __construct($id, $func, $arguments)
     {
         $this->id = $id == null ? uniqid() : $id;
@@ -47,12 +52,23 @@ class Job implements \JsonSerializable
         return $this->connection->hget('result', $this->id());
     }
 
+    public function delay()
+    {
+        return $this->delay;
+    }
+
+    public function setDelay($delay)
+    {
+        $this->delay = $delay;
+    }
+
     public function jsonSerialize()
     {
         return array(
             'id' => $this->id,
             'func' => $this->func,
-            'arguments' => $this->arguments
+            'arguments' => $this->arguments,
+            'delay' => $this->delay
         );
     }
 

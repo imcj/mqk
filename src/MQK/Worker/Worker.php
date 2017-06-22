@@ -4,7 +4,8 @@ namespace MQK\Worker;
 interface Worker
 {
     function start();
-    // function execute();
+    function run();
     function stop();
     function pause();
+    function join();
 }

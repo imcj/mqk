@@ -2,7 +2,10 @@
 <?php
 
 include __DIR__ . "/../vendor/autoload.php";
-use MQK\Runner;
 
-$runner = new Runner();
-$runner->run();
+use Symfony\Component\Console\Application;
+use MQK\Command\RunCommand;
+
+$application = new Application();
+$application->add(new RunCommand());
+$application->run();

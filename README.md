@@ -1,9 +1,10 @@
 MQK
 ====
 
-MQK是一个轻量级的消息队列应用。
+MQK是一个创建后台任务的轻量级的消息队列应用。使用`K::invoke`方法直接调用php方法。
 
-一个需要耗时长的函数。
+定义一个需要在后台运行的函数。
+
 ```
 function sum($a, $b)
 {
@@ -12,7 +13,7 @@ function sum($a, $b)
 }
 ```
 
-使用`MQK::invoke`调用sum函数。
+使用`K::invoke`调用sum函数。
 ```
 $job = \MQK\K::invoke('sum', 1, 2);
 sleep(1);
@@ -20,16 +21,22 @@ sleep(1);
 assert(3 === (int)$job);
 ```
 
-想要在后台运行队列功能，在项目目录下运行mqk.
+项目目录下运行mqk run.
 
 ```
 $ mqk run
-*** Listening
-Job id a2c34 running.
+Master work on 14360
+Process 14364 started.
 ```
 
 ## Install
 
 ```shell
-$ composer require mqk/mqk
+$ composer require fatrellis/mqk
 ```
+
+## 依赖
+
+- php 5.6
+- php-redis
+- redis-server

@@ -3,13 +3,20 @@ namespace MQK;
 use MQK\Queue\RedisQueue;
 declare(ticks=1);
 
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+
+
 class Runner
 {
     private $config;
-    private $workerId = [];
+    private $logger;
+    private $workers = [];
 
     public function __construct()
     {
+        $this->logger = new Logger(__CLASS__);
+//        $this->logger->pushHandler(new StreamHandler("php://stdout"));
         $this->config = Config::defaultConfig();
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
@@ -17,10 +24,38 @@ class Runner
 
     function signal($status)
     {
+        switch ($status) {
+            case SIGCHLD:
+                $this->signalChld($status);
+                break;
+            case STDIN:
+                $this->signalIncrement($status);
+                break;
+        }
+
+    }
+
+    function signalChld($status)
+    {
         $pid = posix_getpid();
-        echo "Signal pid is {$pid}\n";
+        $this->logger->debug("Signal pid is {$pid}\n");
         $workerId = pcntl_waitpid(-1, $status, WNOHANG);
         $status = $status >> 8;
+
+        $worker = $this->workers[$workerId];
+        unset($this->workers[$workerId]);
+        $this->logger->debug("Child {$workerId} quit.");
+
+        if (time() - $worker->createdAt() < 2) {
+            $this->logger->debug("Child quit too fast sleep.");
+            sleep(2);
+        }
+        $this->spawn();
+    }
+
+    function signalIncrement($status)
+    {
+        $this->spawn();
     }
 
     public function run()
@@ -28,7 +63,8 @@ class Runner
         echo "Master work on " . posix_getpid() . "\n";
 
         for ($i = 0; $i < $this->config->workers(); $i++) {
-            $this->fork();
+            $worker = $this->spawn();
+            $this->workers[] = $worker;
         }
 
         while (true) {
@@ -36,17 +72,16 @@ class Runner
         }
     }
 
+    function spawn()
+    {
+        $queue = new RedisQueue();
+        $worker = new \MQK\Worker\WorkerConsumer($this->config, $queue);
+        $worker->start();
+        return $worker;
+    }
+
     function fork()
     {
-        $pid = pcntl_fork();
-        $queue = new RedisQueue();
-        $worker = new \MQK\Worker\WorkerImpl($pid, $this->config, $queue);
 
-        if (-1 == $pid) {
-            exit(1);
-        } else if ($pid) {
-            $this->workerId[] = $pid;
-            return $pid;
-        }
     }
 }

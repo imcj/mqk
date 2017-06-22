@@ -6,7 +6,11 @@
             "email": "fa.trellis@gmail.com"
         }
     ],
-    "require": {},
+    "minimum-stability": "dev",
+    "require": {
+        "monolog/monolog": "^2.0@dev",
+        "symfony/console": "3.4.x-dev"
+    },
     "autoload":{
         "psr-4": {
             "MQK\\": "src/MQK/"
