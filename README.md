@@ -24,7 +24,7 @@ assert(3 === (int)$job);
 项目目录下运行mqk run.
 
 ```
-$ mqk run
+$ vendor/bin/mqk run
 Master work on 14360
 Process 14364 started.
 ```
