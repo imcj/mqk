@@ -1,15 +1,33 @@
 <?php
 namespace MQK\Queue;
 
+use Connection\Connection;
+use Monolog\Logger;
 use MQK\Job;
+use MQK\LoggerFactory;
 
 class RedisQueue implements Queue
 {
-    
-    public function __construct()
+    /**
+     * @var \Redis
+     */
+    private $connection;
+
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
+     * @var string
+     */
+    private $name;
+
+    public function __construct($name, \Redis $connection)
     {
-        $this->connection = new \Redis();
-        $this->connection->connect('127.0.0.1');
+        $this->connection = $connection;
+        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->name = $name;
     }
 
     public function connection()
@@ -17,19 +35,31 @@ class RedisQueue implements Queue
         return $this->connection;
     }
 
-    public function enqueue(Job $queue)
+    public function setConnection(\Redis $connection)
     {
-        $this->connection->hset('job', $queue->id(), json_encode($queue->jsonSerialize()));
-        $this->connection->lpush('queue', $queue->id());
+        $this->connection = $connection;
     }
 
-    public function dequeue()
+    public function key()
     {
-        $raw = $this->connection->blPop('queue', 60);
-        if (empty($raw))
-            return null;
-        $raw = $this->connection->hget('job', $raw[1]);
+        return "queue_{$this->name}";
+    }
 
-        return Job::job(json_decode($raw));
+    public function enqueue(Job $queue)
+    {
+        $queue->setQueue($this->name);
+        $this->connection->hset(
+            'job',
+            $queue->id(),
+            json_encode($queue->jsonSerialize())
+        );
+        $this->connection->lpush("{$this->key()}", $queue->id());
+
+        $this->logger->debug("enqueue job {$queue->id()}");
+    }
+
+    public function name()
+    {
+        return $this->name;
     }
 }

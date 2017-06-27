@@ -2,19 +2,61 @@
 namespace MQK\Worker;
 
 
+use Monolog\Logger;
 use MQK\Config;
+use MQK\Exception\JobMaxRetriesException;
+use MQK\Exception\TestTimeoutException;
+use MQK\Job\JobDAO;
+use MQK\LoggerFactory;
 use MQK\Queue\Queue;
+use MQK\Queue\QueueCollection;
+use MQK\Queue\RedisQueue;
+use MQK\Queue\RedisQueueCollection;
+use MQK\RedisFactory;
+use MQK\Registry;
 
 class WorkerConsumer extends AbstractWorker implements Worker
 {
     protected $config;
     protected $queue;
 
-    public function __construct(Config $config, Queue $queue)
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
+     * @var Registry
+     */
+    private $registry;
+
+    /**
+     * @var JobDAO
+     */
+    private $jobDAO;
+
+    /**
+     * @var \Redis
+     */
+    private $connection;
+
+    /**
+     * @var QueueCollection
+     */
+    private $queues;
+
+    public function __construct(Config $config, $queues)
     {
         parent::__construct();
         $this->config = $config;
-        $this->queue = $queue;
+        $this->connection = (new RedisFactory())->createRedis();
+        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->registry = new Registry($this->connection);
+
+        $this->jobDAO = new JobDAO($this->connection);
+
+        $this->queues = new RedisQueueCollection($this->connection);
+        $this->queues->register($queues);
     }
 
     public function run()
@@ -36,12 +78,46 @@ class WorkerConsumer extends AbstractWorker implements Worker
 
     function execute()
     {
-        $job = $this->queue->dequeue();
+        try {
+            $this->reassignExpredJob();
+        } catch (JobMaxRetriesException $e) {
+            $this->registry->clear("mqk:started", $e->job()->id());
+            $this->jobDAO->clear($e->job());
+        }
+        $job = $this->queues->dequeue();
         if (null == $job) {
             return;
         }
-        $result = call_user_func_array($job->func(), $job->arguments());
+
+        $this->registry->start($job);
+        try {
+            $result = call_user_func_array($job->func(), $job->arguments());
+            $this->registry->finish($job);
+        } catch (\Exception $exception) {
+
+            if ($exception instanceof TestTimeoutException)
+                $result = null;
+            else
+                $this->registry->fail($job);
+        }
+
         $this->config->redis()->hset('result', $job->id(), $result);
         $this->config->redis()->expire($this->id, 500);
+    }
+
+    function reassignExpredJob()
+    {
+        $id = $this->registry->getExpiredJob("mqk:started");
+        if (null == $id)
+            return;
+        $job = $this->jobDAO->find($id);
+        $queue = $this->queues->get($job->queue());
+
+        if (3 <= $job->retries()) {
+            throw new JobMaxRetriesException($job);
+        }
+        $job->increaseRetries();
+        $this->jobDAO->store($job);
+        $queue->enqueue($job);
     }
 }

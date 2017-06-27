@@ -1,5 +1,7 @@
 <?php
 namespace MQK;
+use MQK\Queue\Queue;
+use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
 declare(ticks=1);
 
@@ -13,9 +15,17 @@ class Runner
     private $logger;
     private $workers = [];
 
+    /**
+     * @var Queue
+     */
+    private $queue;
+
     public function __construct()
     {
         $this->logger = new Logger(__CLASS__);
+        $queueFactory = new QueueFactory();
+        $this->queue = $queueFactory->createQueue();
+
 //        $this->logger->pushHandler(new StreamHandler("php://stdout"));
         $this->config = Config::defaultConfig();
 
@@ -74,8 +84,7 @@ class Runner
 
     function spawn()
     {
-        $queue = new RedisQueue();
-        $worker = new \MQK\Worker\WorkerConsumer($this->config, $queue);
+        $worker = new \MQK\Worker\WorkerConsumer($this->config, $this->queue);
         $worker->start();
         return $worker;
     }
