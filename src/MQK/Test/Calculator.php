@@ -15,4 +15,9 @@ class Calculator
     {
         throw new TestTimeoutException("Test");
     }
+
+    public static function sumTimeout($a, $b)
+    {
+        sleep(2);
+    }
 }
