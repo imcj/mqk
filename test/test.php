@@ -8,10 +8,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
-use MQK\K;
-
-
-
 class ProduceWorker extends \MQK\Worker\AbstractWorker
 {
     /**
@@ -62,6 +58,7 @@ class TestCommand extends Command
         $a = $numbers / $workers;
         for ($i = 0; $i < $workers; $i++) {
             $worker = new ProduceWorker($numbers / $workers);
+            echo $i . "\n";
             $worker->start();
             $processes[] = $worker;
         }

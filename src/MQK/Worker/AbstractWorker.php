@@ -24,6 +24,7 @@ abstract class AbstractWorker
         }
         $this->id = posix_getpid();
         $this->run();
+        exit();
     }
 
 
