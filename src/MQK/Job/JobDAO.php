@@ -21,7 +21,7 @@ class JobDAO
     public function __construct(\Redis $connection)
     {
         $this->connection = $connection;
-        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     /**

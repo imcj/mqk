@@ -50,7 +50,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         parent::__construct();
         $this->config = $config;
         $this->connection = (new RedisFactory())->createRedis();
-        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->registry = new Registry($this->connection);
 
         $this->jobDAO = new JobDAO($this->connection);

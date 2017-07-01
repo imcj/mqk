@@ -20,7 +20,7 @@ class Registry
     {
         $this->connection = $connection;
         $this->jobDAO = new JobDAO($this->connection);
-        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     public function setConnection(\Redis $connection)

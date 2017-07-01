@@ -1,6 +1,8 @@
 <?php
 namespace MQK\Command;
 
+use Monolog\Logger;
+use MQK\LoggerFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -18,6 +20,10 @@ class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $workers = (int)$input->getOption("workers");
+        $verbose = $input->getOption("verbose");
+        if ($verbose) {
+            LoggerFactory::shared()->setLevel(Logger::DEBUG);
+        }
         $config = \MQK\Config::defaultConfig();
         if (0 == $workers)
             $workers = 1;

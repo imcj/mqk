@@ -26,7 +26,7 @@ class RedisQueue implements Queue
     public function __construct($name, \Redis $connection)
     {
         $this->connection = $connection;
-        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->name = $name;
     }
 
