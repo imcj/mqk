@@ -40,3 +40,15 @@ $ composer require fatrellis/mqk
 - php 5.6
 - php-redis
 - redis-server
+
+## 性能测试
+
+进行写入压力测试。
+
+```shell
+$ mqk invoke sum 1 1 --repeat 1000 --workers 10
+
+Options
+    --invokes -i 总的调用次数，例如1000次调用
+    --workers -w 并发的进程数量
+```

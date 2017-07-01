@@ -20,10 +20,7 @@ class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $workers = (int)$input->getOption("workers");
-        $verbose = $input->getOption("verbose");
-        if ($verbose) {
-            LoggerFactory::shared()->setLevel(Logger::DEBUG);
-        }
+
         $config = \MQK\Config::defaultConfig();
         if (0 == $workers)
             $workers = 1;

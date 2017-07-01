@@ -47,8 +47,8 @@ class RedisQueue implements Queue
 
     public function enqueue(Job $queue)
     {
-        printf("Enqueue job function is %s\n", $queue->func());
-        printf("ttl %d second\n", $queue->ttl());
+        $this->logger->info("Enqueue job function is {$queue->func()}");
+        $this->logger->debug("ttl {$queue->ttl()} second\n");
         $queue->setQueue($this->name);
         $this->connection->hset(
             'job',
