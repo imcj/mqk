@@ -81,6 +81,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         try {
             $this->reassignExpredJob();
         } catch (JobMaxRetriesException $e) {
+            $this->logger->warning("超过最大重试次数 {$e->job()->id()}");
             $this->registry->clear("mqk:started", $e->job()->id());
             $this->jobDAO->clear($e->job());
         }
@@ -91,7 +92,28 @@ class WorkerConsumer extends AbstractWorker implements Worker
 
         $this->registry->start($job);
         try {
-            $result = call_user_func_array($job->func(), $job->arguments());
+            $this->logger->info("Job {$job->id()} is started");
+            $this->logger->info("Job call function {$job->func()}");
+            $this->logger->info("retries {$job->retries()}");
+            $arguments = $job->arguments();
+            $beforeExecute = time();
+            $result = @call_user_func_array($job->func(), $arguments);
+            $afterExecute = time();
+            $duration = $afterExecute - $beforeExecute;
+            $this->logger->info("Execute duration {$duration}");
+            $this->logger->info(sprintf("Job finished %s", $result));
+            if ($afterExecute - $beforeExecute >= $job->ttl()) {
+                $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
+            }
+
+            $error = error_get_last();
+            if (!empty($error)) {
+                printf("%s\n", $error['message']);
+                printf("%s\n", $job->func());
+                printf("%s\n", json_encode($job->arguments()));
+
+                throw new \Exception($error['message']);
+            }
             $this->registry->finish($job);
         } catch (\Exception $exception) {
 
@@ -110,6 +132,10 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $id = $this->registry->getExpiredJob("mqk:started");
         if (null == $id)
             return;
+        else {
+            $this->logger->info("Remove timeout job {$id}");
+        }
+        $this->logger->debug("重建Job对象");
         $job = $this->jobDAO->find($id);
         $queue = $this->queues->get($job->queue());
 
@@ -119,5 +145,6 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $job->increaseRetries();
         $this->jobDAO->store($job);
         $queue->enqueue($job);
+        $this->registry->clear("mqk:started", $id);
     }
 }

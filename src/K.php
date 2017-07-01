@@ -42,7 +42,7 @@ class K
     static function defaultQueue()
     {
         if (null == self::$queue)
-            self::$queue = (new \MQK\Queue\QueueFactory())->createQueue();
+            self::$queue = (new \MQK\Queue\QueueFactory())->createQueue("default");
 
         return self::$queue;
     }

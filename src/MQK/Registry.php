@@ -1,6 +1,7 @@
 <?php
 namespace MQK;
 
+use Monolog\Logger;
 use MQK\Job\JobDAO;
 
 class Registry
@@ -10,10 +11,16 @@ class Registry
      */
     private $connection;
 
+    /**
+     * @var Logger
+     */
+    private $logger;
+
     public function __construct(\Redis $connection)
     {
         $this->connection = $connection;
         $this->jobDAO = new JobDAO($this->connection);
+        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
     }
 
     public function setConnection(\Redis $connection)
@@ -25,6 +32,7 @@ class Registry
     {
         $ttl = time() + $job->ttl();
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
+        $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 
     public function fail(Job $job)

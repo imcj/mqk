@@ -18,13 +18,13 @@ class Runner
     /**
      * @var Queue
      */
-    private $queue;
+    private $queues;
 
     public function __construct()
     {
         $this->logger = new Logger(__CLASS__);
         $queueFactory = new QueueFactory();
-        $this->queue = $queueFactory->createQueue();
+        $this->queues = [$queueFactory->createQueue("default")];
 
 //        $this->logger->pushHandler(new StreamHandler("php://stdout"));
         $this->config = Config::defaultConfig();
@@ -48,10 +48,14 @@ class Runner
     function signalChld($status)
     {
         $pid = posix_getpid();
-        $this->logger->debug("Signal pid is {$pid}\n");
+        $this->logger->debug("Signal child trigger master pid is {$pid}\n");
         $workerId = pcntl_waitpid(-1, $status, WNOHANG);
         $status = $status >> 8;
 
+        if (!isset($this->workers[$workerId])) {
+            $this->logger->info("Worker {$workerId} not found");
+            return;
+        }
         $worker = $this->workers[$workerId];
         unset($this->workers[$workerId]);
         $this->logger->debug("Child {$workerId} quit.");
@@ -74,7 +78,6 @@ class Runner
 
         for ($i = 0; $i < $this->config->workers(); $i++) {
             $worker = $this->spawn();
-            $this->workers[] = $worker;
         }
 
         while (true) {
@@ -84,8 +87,10 @@ class Runner
 
     function spawn()
     {
-        $worker = new \MQK\Worker\WorkerConsumer($this->config, $this->queue);
-        $worker->start();
+        $worker = new \MQK\Worker\WorkerConsumer($this->config, $this->queues);
+        $pid = $worker->start();
+        $worker->setId($pid);
+        $this->workers[$worker->id()] = $worker;
         return $worker;
     }
 

@@ -5,7 +5,9 @@ include __DIR__ . "/../vendor/autoload.php";
 
 use Symfony\Component\Console\Application;
 use MQK\Command\RunCommand;
+use MQK\Command\InvokeCommand;
 
 $application = new Application();
 $application->add(new RunCommand());
+$application->add(new InvokeCommand());
 $application->run();

@@ -2,10 +2,17 @@
 namespace MQK\Job;
 
 use Connection\RedisConnectionProxy;
+use Monolog\Logger;
 use MQK\Job;
+use MQK\LoggerFactory;
 
 class JobDAO
 {
+    /**
+     * @var Logger
+     */
+    private $logger;
+
     /**
      * @var \Redis
      */
@@ -14,6 +21,7 @@ class JobDAO
     public function __construct(\Redis $connection)
     {
         $this->connection = $connection;
+        $this->logger = (new LoggerFactory())->getLogger(__CLASS__);
     }
 
     /**
@@ -22,13 +30,19 @@ class JobDAO
      */
     public function find($id)
     {
-        $jsonObject = json_decode($this->connection->hGet("job", $id));
+        $this->logger->info("JobDAO find {$id}");
+        $raw = $this->connection->hGet("job", $id);
+        $jsonObject = json_decode($raw);
+        $this->logger->debug($raw);
         return Job::job($jsonObject);
     }
 
     public function store(Job $job)
     {
-        $this->connection->hSet("job", $job->id(), $job->jsonSerialize());
+        $raw = json_encode($job->jsonSerialize());
+        $this->logger->debug("Store job");
+        $this->logger->debug($raw);
+        $this->connection->hSet("job", $job->id(), $raw);
     }
 
     public function clear($job)
