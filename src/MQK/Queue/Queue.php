@@ -18,10 +18,7 @@ interface Queue
      */
     function enqueue(Job $job);
 
-    /**
-     * 出队列
-     *
-     * @return Job
-     */
-    function dequeue();
+    function name();
+
+    function key();
 }

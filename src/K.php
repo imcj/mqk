@@ -1,4 +1,5 @@
 <?php
+use MQK\Job;
 use MQK\Queue\Queue;
 use MQK\Queue\RedisQueue;
 
@@ -7,13 +8,13 @@ class K
     /**
      * @var Queue
      */
-    private $queue;
+    private static $queue;
 
     public static function setup($config)
     {
     }
 
-    static function job($func, ...$args)
+    static function job($func, $args)
     {
         $job = new Job(null, $func, $args);
         $job->setConnection(self::defaultQueue()->connection());
@@ -40,8 +41,8 @@ class K
 
     static function defaultQueue()
     {
-        if (self::$queue)
-            self::$queue = new RedisQueue();
+        if (null == self::$queue)
+            self::$queue = (new \MQK\Queue\QueueFactory())->createQueue("default");
 
         return self::$queue;
     }

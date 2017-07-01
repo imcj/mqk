@@ -13,6 +13,12 @@ class Config
     private $queueName;
     private $workers;
 
+    /**
+     * 队列最大重试
+     * @var int
+     */
+    private $jobMaxRetries = 3;
+
     private $redis;
 
     public function __construct(
@@ -69,6 +75,16 @@ class Config
     public function setWorkers($workers)
     {
         $this->workers = $workers;
+    }
+
+    public function jobMaxRetries()
+    {
+        return $this->jobMaxRetries;
+    }
+
+    public function setJobMaxRetries($jobMaxRetries)
+    {
+        $this->jobMaxRetries = $jobMaxRetries;
     }
 
     public static function defaultConfig()
