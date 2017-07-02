@@ -30,7 +30,12 @@ class Registry
 
     public function start(Job $job)
     {
+        if (strpos($job->id(), "_") > -1) {
+            return;
+        }
         $ttl = time() + $job->ttl();
+        var_dump("start function");
+        var_dump($job->id());
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
         $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
@@ -64,6 +69,8 @@ class Registry
 
         if (empty($id))
             return null;
+        var_dump(time());
+        var_dump($id);
         return $id[0];
     }
 

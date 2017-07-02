@@ -41,13 +41,20 @@ class RedisQueueCollection implements QueueCollection
 
     public function dequeue()
     {
-        $raw = $this->connection->blPop($this->queueKeys, 10);
+        for ($i = 0; $i < 3; $i++) {
+            try {
+                $raw = $this->connection->blPop($this->queueKeys, 10);
+                break;
+            } catch (\RedisException $e) {
+//                var_dump($e);
+            }
+        }
         if (empty($raw))
             return null;
         if (!isset($raw[1])) {
             var_dump($raw);
         }
-        $raw = $this->connection->hget('job', $raw[1]);
+        $raw = $this->connection->hget('job', $raw[0]);
 
         return Job::job(json_decode($raw));
     }

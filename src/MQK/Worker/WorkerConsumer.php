@@ -51,6 +51,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->config = $config;
         $this->connection = (new RedisFactory())->createRedis();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->logger->debug("here");
         $this->registry = new Registry($this->connection);
 
         $this->jobDAO = new JobDAO($this->connection);
@@ -123,8 +124,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->registry->fail($job);
         }
 
-        $this->config->redis()->hset('result', $job->id(), $result);
-        $this->config->redis()->expire($this->id, 500);
+        $this->connection->hset('result', $job->id(), $result);
+        $this->connection->expire($this->id, 500);
     }
 
     function reassignExpredJob()
@@ -135,12 +136,16 @@ class WorkerConsumer extends AbstractWorker implements Worker
         else {
             $this->logger->info("Remove timeout job {$id}");
         }
-        $this->logger->debug("重建Job对象");
+        $this->logger->debug("Renew enqueue Job in {$job->queue()}");
         $job = $this->jobDAO->find($id);
         $queue = $this->queues->get($job->queue());
 
         if (3 <= $job->retries()) {
             throw new JobMaxRetriesException($job);
+        }
+        if (null == $job) {
+            var_dump($id);
+            exit(1);
         }
         $job->increaseRetries();
         $this->jobDAO->store($job);

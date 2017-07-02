@@ -64,7 +64,8 @@ class Runner
             $this->logger->debug("Child quit too fast sleep.");
             sleep(2);
         }
-        $this->spawn();
+        if ($status == 0)
+            $this->spawn();
     }
 
     function signalIncrement($status)

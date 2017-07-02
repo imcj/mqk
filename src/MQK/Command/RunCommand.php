@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class RunCommand extends Command
+class RunCommand extends AbstractCommand
 {
     protected function configure()
     {
@@ -19,6 +19,7 @@ class RunCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        parent::execute($input, $output);
         $workers = (int)$input->getOption("workers");
 
         $config = \MQK\Config::defaultConfig();

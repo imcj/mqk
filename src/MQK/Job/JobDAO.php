@@ -32,6 +32,13 @@ class JobDAO
     {
         $this->logger->info("JobDAO find {$id}");
         $raw = $this->connection->hGet("job", $id);
+        if (null == $raw) {
+
+            var_dump("find");
+            var_dump($id);
+            throw new \Exception("");
+            exit(1);
+        }
         $jsonObject = json_decode($raw);
         $this->logger->debug($raw);
         return Job::job($jsonObject);
