@@ -12,9 +12,27 @@ class Job implements \JsonSerializable
      */
     private $id;
 
+    /**
+     * 函数调用
+     * @var string
+     */
     private $func;
+
+    /**
+     * @var object[] 方法调用的参数
+     */
     private $arguments;
+
+    /**
+     * Redis connection
+     *
+     * @var \Redis
+     */
     private $connection;
+
+    /**
+     * @var int 任务超时时间
+     */
     private $ttl = 500;
 
     /**
@@ -35,7 +53,7 @@ class Job implements \JsonSerializable
 
     public function __construct($id, $func, $arguments)
     {
-        $this->id = $id == null ? uniqid() : $id;
+        $this->id = $id == null ? md5(rand()) : $id;
         $this->func = $func;
         $this->arguments = $arguments;
         $this->result = null;
@@ -84,7 +102,7 @@ class Job implements \JsonSerializable
             'arguments' => $this->arguments,
             'delay' => $this->delay,
             'ttl' => $this->ttl,
-            'queue' => $this->queue(),
+            'queue' => $this->queue,
             'retries' => $this->retries
         );
     }

@@ -31,11 +31,10 @@ class Registry
     public function start(Job $job)
     {
         if (strpos($job->id(), "_") > -1) {
+            $this->logger->debug("Name of job is invalid.");
             return;
         }
         $ttl = time() + $job->ttl();
-        var_dump("start function");
-        var_dump($job->id());
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
         $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
@@ -58,7 +57,6 @@ class Registry
         $this->connection->zDelete($queueName, $id);
     }
 
-
     public function getExpiredJob($queueName)
     {
         $id = $this->connection->zRangeByScore(
@@ -66,12 +64,17 @@ class Registry
             0,
             time(),
             array("limit" => array(0, 1)));
+        if (is_array($id)) {
+            if (empty($id))
+                return null;
+            $id = $id[0];
+        }
 
         if (empty($id))
             return null;
-        var_dump(time());
-        var_dump($id);
-        return $id[0];
+
+        $this->logger->debug("Found expire job {$id}.");
+        return $id;
     }
 
 }

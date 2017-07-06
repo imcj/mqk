@@ -1,7 +1,11 @@
 <?php
 namespace MQK\Queue;
 
+use Monolog\Logger;
+use MQK\Exception\BlockPopException;
 use MQK\Job;
+use MQK\LoggerFactory;
+use MQK\RedisFactory;
 
 class RedisQueueCollection implements QueueCollection
 {
@@ -17,9 +21,21 @@ class RedisQueueCollection implements QueueCollection
 
     private $queueKeys = [];
 
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
+     * @var RedisFactory
+     */
+    private $redisFactory;
+
     public function __construct(\Redis $connection)
     {
         $this->connection = $connection;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->redisFactory = RedisFactory::shared();
     }
 
     /**
@@ -34,29 +50,82 @@ class RedisQueueCollection implements QueueCollection
         }
     }
 
+    /**
+     * @param $name
+     * @return Queue
+     * @throws \Exception
+     */
     public function get($name)
     {
+        if (!isset($this->queues[$name])) {
+            throw new \Exception("Queue {$name} not found.");
+        }
         return $this->queues[$name];
     }
 
-    public function dequeue()
+    public function dequeue($block=true)
     {
         for ($i = 0; $i < 3; $i++) {
             try {
-                $raw = $this->connection->blPop($this->queueKeys, 10);
+                $this->logger->debug("[dequeue] from queues of", $this->queueKeys);
+                if ($block)
+                    $raw = $this->connection->blPop($this->queueKeys, 60);
+                else {
+                    foreach ($this->queueKeys as $queueKey) {
+                        $raw = $this->connection->lPop($queueKey);
+                        if ($raw) {
+                            $raw = array($queueKey, $raw);
+                            break;
+                        }
+                    }
+                }
+
+                if (!$raw && !$block ) {
+                    throw new BlockPopException("");
+                }
                 break;
             } catch (\RedisException $e) {
-//                var_dump($e);
+                // e 0
+                // read error on connection
+                $this->logger->error($e->getCode());
+                $this->logger->error($e->getMessage());
+                if ("read error on connection" == $e->getMessage()) {
+                    $this->redisFactory->reconnect(3);
+                    continue;
+                }
+
+                throw $e;
             }
         }
-        if (empty($raw))
+        if (count($raw) < 2) {
+            if (empty($raw))
+                $this->logger->debug("[dequeue] Queue is empty.");
+            else
+                $this->logger->error("[dequeue] receive data length less 2 from redis", $raw);
             return null;
-        if (!isset($raw[1])) {
-            var_dump($raw);
         }
-        $raw = $this->connection->hget('job', $raw[0]);
+        list($queueKey, $jobId) = $raw;
+        $this->logger->debug("[dequeue] Job id is $jobId");
+        if (empty($jobId))
+            return null;
 
-        return Job::job(json_decode($raw));
+        $raw = $this->connection->hget('job', $jobId);
+
+        if (null == $raw) {
+            exit(1);
+        }
+
+        try {
+            $job = Job::job(json_decode($raw));
+        } catch (\Exception $e) {
+            $this->logger("Make job object error.", $raw);
+            throw \Exception("Make job object error");
+        }
+        if (null == $job) {
+            $this->logger("Make job object error.", $raw);
+            throw \Exception("Make job object error");
+        }
+        return $job;
     }
 
     public function queueNames()

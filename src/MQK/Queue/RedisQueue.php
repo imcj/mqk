@@ -47,6 +47,9 @@ class RedisQueue implements Queue
 
     public function enqueue(Job $queue)
     {
+        if (strpos($queue->id(), "_")) {
+            $this->logger->error("[enqueue] {$queue->id()} contains _", debug_backtrace());
+        }
         $this->logger->info("Enqueue job function is {$queue->func()}");
         $this->logger->debug("ttl {$queue->ttl()} second\n");
         $queue->setQueue($this->name);

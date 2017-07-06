@@ -19,14 +19,12 @@ class Calculator
 
     public static function sumTimeout($a, $b)
     {
-        $redis = (new RedisFactory())->createRedis();
+        $redis = RedisFactory::shared()->createRedis();
         $idx = (int)$redis->get("test_sum_timeout");
         if ($idx == 2) {
             $idx = 0;
             $redis->del("test_sum_timeout");
         }
-
-        printf("Index %s\n", $idx);
 
         if ($idx == 0) {
             sleep(2);

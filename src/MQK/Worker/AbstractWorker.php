@@ -1,10 +1,20 @@
 <?php
 namespace MQK\Worker;
 
+use MQK\LoggerFactory;
+
 abstract class AbstractWorker
 {
+    /**
+     * @var integer
+     */
     protected $id;
+
+    /**
+     * @var int
+     */
     protected $createdAt;
+    protected $alive = true;
 
     const M = 1024 * 1024;
 
@@ -23,7 +33,10 @@ abstract class AbstractWorker
             return $pid;
         }
         $this->id = posix_getpid();
+        $logger = LoggerFactory::shared()->getLogger("AbstractWorker");
+        $logger->debug("Before run");
         $this->run();
+        $logger->debug("After run");
         exit();
     }
 

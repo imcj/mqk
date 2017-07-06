@@ -12,13 +12,13 @@ class RedisTest extends TestCase
 
     public function setUp()
     {
-        $this->redis = ((new RedisFactory()))->createRedis();
+        $this->redis = (RedisFactory::shared())->createRedis();
         $this->redis->flushAll();
     }
 
     public function testSet()
     {
-        $redis = (new RedisFactory())->createRedis();
+        $redis = RedisFactory::shared()->createRedis();
         $redis->set("test", 1);
         $test = $redis->get("test");
         $this->assertEquals("1", $test);

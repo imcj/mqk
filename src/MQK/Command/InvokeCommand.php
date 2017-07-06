@@ -18,7 +18,8 @@ class InvokeCommand extends AbstractCommand
             ->addArgument("funcAndArguments", InputArgument::IS_ARRAY)
             ->addOption("ttl", "t", InputOption::VALUE_OPTIONAL)
             ->addOption("workers", "w", InputOption::VALUE_OPTIONAL)
-            ->addOption("invokes", "i", InputOption::VALUE_OPTIONAL);
+            ->addOption("invokes", "i", InputOption::VALUE_OPTIONAL)
+            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -91,7 +92,7 @@ class ProduceWorker extends AbstractWorker
         echo "Start process {$this->id}.\n";
 
         $queueFactory = new QueueFactory();
-        $redis = (new RedisFactory())->createRedis();
+        $redis = RedisFactory::shared()->createRedis();
         $queue = $queueFactory->createQueue("default");
 
         for ($i = 0; $i < $this->numbers; $i++) {

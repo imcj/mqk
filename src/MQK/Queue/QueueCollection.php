@@ -11,7 +11,7 @@ interface QueueCollection
      *
      * @return Job
      */
-    function dequeue();
+    function dequeue($block=true);
 
     /**
      * @return stringp[

@@ -1,28 +1,29 @@
 <?php
 namespace MQK\Command;
 
-use Monolog\Logger;
-use MQK\LoggerFactory;
-use Symfony\Component\Console\Command\Command;
+use MQK\Config;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class RunCommand extends AbstractCommand
 {
     protected function configure()
     {
         $this->setName("run")
-            ->addOption("workers", "w", InputOption::VALUE_OPTIONAL, "", 1);
+            ->addOption("workers", "w", InputOption::VALUE_OPTIONAL, "", 1)
+            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
+            ->addOption("burst", 'b', InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         parent::execute($input, $output);
         $workers = (int)$input->getOption("workers");
+        $burst = $input->getOption("burst");
 
-        $config = \MQK\Config::defaultConfig();
+        $config = Config::defaultConfig();
+        $config->setBurst($burst);
         if (0 == $workers)
             $workers = 1;
         $config->setWorkers($workers);

@@ -2,6 +2,7 @@
 namespace MQK;
 
 
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -24,10 +25,23 @@ class LoggerFactory
         $this->level = $level;
     }
 
+    /**
+     * Logger的工厂方法
+     *
+     * @param $name
+     * @param integer $level Logger level
+     * @return Logger
+     */
     public function getLogger($name, $level=null)
     {
         $logger = new Logger($name);
         $handler = new StreamHandler("php://stdout");
+        $pid = posix_getpid();
+        $output = "[%datetime%] {$pid} %channel%.%level_name%: %message% %context% %extra%\n";
+
+        $formatter = new LineFormatter($output);
+        $handler->setFormatter($formatter);
+
         if ($level)
             $handler->setLevel($level);
         else

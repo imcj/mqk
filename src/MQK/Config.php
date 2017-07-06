@@ -6,11 +6,27 @@ class Config
 {
     public static $default;
 
+    /**
+     * @var Redis主机
+     */
     private $host;
+
+    /**
+     * Redis 端口
+     * @var int
+     */
     private $port;
-    private $username;
+
+    /**
+     * @var string Redis密码
+     */
     private $password;
-    private $queueName;
+
+    /**
+     * Worker的数量
+     *
+     * @var int
+     */
     private $workers;
 
     /**
@@ -19,20 +35,24 @@ class Config
      */
     private $jobMaxRetries = 3;
 
-    private $redis;
+    /**
+     * Burst模式
+     *
+     * Burst模式下队列处理完后程序退出
+     *
+     * @var bool
+     */
+    private $burst;
 
     public function __construct(
         $host,
         $port,
-        $username,
-        $password,
-        $queueName = "queue"
+        $password
     ) {
         $this->host = $host;
         $this->port = $port;
-        $this->username = $username;
         $this->password = $password;
-        $this->queueName = $queueName;
+        $this->burst = false;
     }
 
     public function host()
@@ -53,15 +73,6 @@ class Config
     public function setPort($port)
     {
         $this->port = $port;
-    }
-
-    public function redis()
-    {
-        if (null == $this->redis) {
-            $this->redis = new \Redis();
-            $this->redis->connect($this->host);
-        }
-        return $this->redis;
     }
 
     public function workers()
@@ -99,5 +110,15 @@ class Config
         }
 
         return self::$default;
+    }
+
+    public function burst()
+    {
+        return $this->burst;
+    }
+
+    public function setBurst($burst)
+    {
+        $this->burst = $burst;
     }
 }

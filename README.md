@@ -29,6 +29,21 @@ Master work on 14360
 Process 14364 started.
 ```
 
+## 开发状态
+
+开发中，不可用于生产环境
+
+Issues
+
+- [ ] 任务超时再次重试存在BUG
+
+TODO
+
+- [ ] `bin/mqk monitor` 增加redis dsn参数配置redis
+- [ ] 主进程退出退出的时候先退出其他子进程
+- [ ] 增加burst模式，队列为空时进程退出不在服务
+- [ ] 通过信号增加和减少Worker的数量
+
 ## Install
 
 ```shell
@@ -46,7 +61,7 @@ $ composer require fatrellis/mqk
 进行写入压力测试。
 
 ```shell
-$ mqk invoke sum 1 1 --repeat 1000 --workers 10
+$ mqk invoke \\MQK\\Test\\Caculator::sum 1 1 --invokes 1000 --workers 10
 
 Options
     --invokes -i 总的调用次数，例如1000次调用
