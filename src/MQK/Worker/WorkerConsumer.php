@@ -148,7 +148,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
             $this->logger->debug("Function execute duration {$duration}");
-            $this->cliLogger->info(sprintf("Job finished and result is %s", $result));
+            $this->cliLogger->info(sprintf("Job finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
             }
