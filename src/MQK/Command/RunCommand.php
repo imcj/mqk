@@ -13,7 +13,8 @@ class RunCommand extends AbstractCommand
         $this->setName("run")
             ->addOption("workers", "w", InputOption::VALUE_OPTIONAL, "", 1)
             ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
-            ->addOption("burst", 'b', InputOption::VALUE_NONE);
+            ->addOption("burst", 'b', InputOption::VALUE_NONE)
+            ->addOption("quite", '', InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -26,7 +27,13 @@ class RunCommand extends AbstractCommand
         $config->setBurst($burst);
         if (0 == $workers)
             $workers = 1;
+
         $config->setWorkers($workers);
+
+        $quite = $input->getOption("quite");
+        if ($quite)
+            $config->beQuite();
+
         $runner = new \MQK\Runner();
         $runner->run();
     }

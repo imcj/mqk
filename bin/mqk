@@ -1,15 +1,16 @@
 #!/usr/bin/env php
 <?php
 
-include __DIR__ . "/../../../autoload.php";
+$autoloadPath = [__DIR__ . "/../../../autoload.php", __DIR__ . "/../vendor/autoload.php"];
 
-use Symfony\Component\Console\Application;
-use MQK\Command\RunCommand;
-use MQK\Command\InvokeCommand;
-use MQK\Command\MonitorCommand;
+foreach ($autoloadPath as $path) {
+    if (file_exists($path)) {
+        include $path;
+        break;
+    }
+}
 
-$application = new Application();
-$application->add(new RunCommand());
-$application->add(new InvokeCommand());
-$application->add(new MonitorCommand());
-$application->run();
+use \MQK\MQKApplication;
+$app = new MQKApplication();
+$app->run();
+

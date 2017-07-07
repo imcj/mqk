@@ -34,6 +34,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
     private $logger;
 
     /**
+     * @var Logger
+     */
+    private $cliLogger;
+
+    /**
      * @var Registry
      */
     private $registry;
@@ -76,6 +81,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->redisFactory = RedisFactory::shared();
         $this->connection = $this->redisFactory->reconnect();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->cliLogger = LoggerFactory::shared()->cliLogger();
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
 
@@ -142,7 +148,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
             $this->logger->debug("Function execute duration {$duration}");
-            $this->logger->warn(sprintf("Job finished and result is %s", $result));
+            $this->cliLogger->info(sprintf("Job finished and result is %s", $result));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
             }

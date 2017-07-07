@@ -39,6 +39,11 @@ class Runner
     private $logger;
 
     /**
+     * @var Logger
+     */
+    private $cliLogger;
+
+    /**
      * @var QueueCollection
      */
     private $queues;
@@ -49,7 +54,8 @@ class Runner
 
     public function __construct()
     {
-        $this->logger = new Logger(__CLASS__);
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->cliLogger = LoggerFactory::shared()->cliLogger();
         $queueFactory = new QueueFactory();
         $this->queues = [$queueFactory->createQueue("default")];
         $this->config = Config::defaultConfig();
@@ -98,7 +104,7 @@ class Runner
 
     public function run()
     {
-        echo "Master work on " . posix_getpid() . "\n";
+        $this->cliLogger->notice("Master work on " . posix_getpid());
         $this->logger->debug("Starting {$this->config->workers()}.");
 
         for ($i = 0; $i < $this->config->workers(); $i++) {

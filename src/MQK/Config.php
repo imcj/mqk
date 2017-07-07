@@ -44,6 +44,13 @@ class Config
      */
     private $burst;
 
+    /**
+     * 安静模式，安静模式下不输出任何内容。
+     *
+     * @var boolean
+     */
+    private $quite = false;
+
     public function __construct(
         $host,
         $port,
@@ -120,5 +127,15 @@ class Config
     public function setBurst($burst)
     {
         $this->burst = $burst;
+    }
+
+    public function quite()
+    {
+        return $this->quite;
+    }
+
+    public function beQuite()
+    {
+        $this->quite = true;
     }
 }

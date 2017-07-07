@@ -8,21 +8,21 @@ use Monolog\Logger;
 
 class LoggerFactory
 {
-    private $level = Logger::WARNING;
+    private $defaultLevel = Logger::WARNING;
 
     /**
      * @var LoggerFactory
      */
     private static $shared;
 
-    public function level()
+    public function defaultLevel()
     {
-        return $this->level;
+        return $this->defaultLevel;
     }
 
-    public function setLevel($level)
+    public function setDefaultLevel($level)
     {
-        $this->level = $level;
+        $this->defaultLevel = $level;
     }
 
     /**
@@ -45,9 +45,21 @@ class LoggerFactory
         if ($level)
             $handler->setLevel($level);
         else
-            $handler->setLevel($this->level);
+            $handler->setLevel($this->defaultLevel);
         $logger->pushHandler($handler);
         return $logger;
+    }
+
+    public function cliLogger()
+    {
+        $config = Config::defaultConfig();
+        if ($config->quite()) {
+            $level = Logger::NOTICE;
+        } else {
+            $level = Logger::INFO;
+        }
+
+        return $this->getLogger("", $level);
     }
 
     public static function shared()
