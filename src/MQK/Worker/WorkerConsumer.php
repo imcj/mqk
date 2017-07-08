@@ -80,6 +80,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
     {
         $this->redisFactory = RedisFactory::shared();
         $this->connection = $this->redisFactory->reconnect();
+
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
         $this->registry = new Registry($this->connection);
@@ -91,8 +92,6 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->logger->debug("Process {$this->id} started.");
         while ($this->alive) {
             $this->execute();
-            if (!$this->alive) {
-            }
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 10) {
                 exit(0);

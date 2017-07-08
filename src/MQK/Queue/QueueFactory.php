@@ -22,4 +22,20 @@ class QueueFactory
     {
         return new RedisQueue($name, $this->redisFactory->createRedis());
     }
+
+    /**
+     * 创建一个队列的列表
+     *
+     * @param $nameList ['default', 'fast']
+     * @param $redis Redis connection
+     * @return Queue
+     */
+    public function createQueues($nameList, $redis)
+    {
+        $queues = [];
+        foreach ($nameList as $name) {
+            $queues[] = new RedisQueue($name, $redis);
+        }
+        return $queues;
+    }
 }

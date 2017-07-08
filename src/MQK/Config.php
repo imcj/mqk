@@ -51,6 +51,12 @@ class Config
      */
     private $quite = false;
 
+    /**
+     * Redis 集群的服务器配置
+     * @var string[]
+     */
+    private $cluster = array();
+
     public function __construct(
         $host,
         $port,
@@ -137,5 +143,15 @@ class Config
     public function beQuite()
     {
         $this->quite = true;
+    }
+
+    public function cluster()
+    {
+        return $this->cluster;
+    }
+
+    public function setCluster($cluster)
+    {
+        $this->cluster = $cluster;
     }
 }

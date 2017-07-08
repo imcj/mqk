@@ -23,7 +23,7 @@ class RedisQueue implements Queue
      */
     private $name;
 
-    public function __construct($name, \Redis $connection)
+    public function __construct($name, $connection)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
@@ -35,7 +35,7 @@ class RedisQueue implements Queue
         return $this->connection;
     }
 
-    public function setConnection(\Redis $connection)
+    public function setConnection($connection)
     {
         $this->connection = $connection;
     }
@@ -59,7 +59,6 @@ class RedisQueue implements Queue
             json_encode($queue->jsonSerialize())
         );
         $this->connection->lpush("{$this->key()}", $queue->id());
-
         $this->logger->debug("enqueue job {$queue->id()}");
     }
 

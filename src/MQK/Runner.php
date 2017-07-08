@@ -52,18 +52,25 @@ class Runner
 
     private $exists = 0;
 
+    private $nameList = ['default'];
+
     public function __construct()
     {
+        $queueFactory = new QueueFactory();
+        $redisFactory = RedisFactory::shared();
+        $config = Config::defaultConfig();
+
+        $connection = $redisFactory->createRedis();
+
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
-        $queueFactory = new QueueFactory();
-        $this->queues = [$queueFactory->createQueue("default")];
-        $this->config = Config::defaultConfig();
 
-        $this->connection = RedisFactory::shared()->createRedis();
-        $this->registry = new Registry($this->connection);
-        $this->jobDAO = new JobDAO($this->connection);
+        $this->config = $config;
+        $this->connection = $connection;
+        $this->registry = new Registry($connection);
+        $this->jobDAO = new JobDAO($connection);
         $this->queues = new RedisQueueCollection($this->connection);
+        $this->queues->register($queueFactory->createQueues($this->nameList, $connection));
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
     }
@@ -154,6 +161,7 @@ class Runner
         try {
             $queue = $this->queues->get($job->queue());
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
             $this->logger->error(json_encode($job->jsonSerialize()));
             return;
         }

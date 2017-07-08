@@ -31,7 +31,7 @@ class RedisQueueCollection implements QueueCollection
      */
     private $redisFactory;
 
-    public function __construct(\Redis $connection)
+    public function __construct($connection)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
@@ -67,21 +67,21 @@ class RedisQueueCollection implements QueueCollection
     {
         for ($i = 0; $i < 3; $i++) {
             try {
-                $this->logger->debug("[dequeue] from queues of", $this->queueKeys);
-                if ($block)
-                    $raw = $this->connection->blPop($this->queueKeys, 60);
-                else {
+                $this->logger->debug("[dequeue] queues", $this->queueKeys);
+                if ($block) {
+                    $raw = $this->connection->blPop($this->queueKeys, 10);
+                    if (!$raw)
+                        return null;
+                } else {
                     foreach ($this->queueKeys as $queueKey) {
                         $raw = $this->connection->lPop($queueKey);
                         if ($raw) {
                             $raw = array($queueKey, $raw);
                             break;
+                        } else {
+                            throw new BlockPopException("");
                         }
                     }
-                }
-
-                if (!$raw && !$block ) {
-                    throw new BlockPopException("");
                 }
                 break;
             } catch (\RedisException $e) {
@@ -98,11 +98,7 @@ class RedisQueueCollection implements QueueCollection
             }
         }
         if (count($raw) < 2) {
-            if (empty($raw))
-                $this->logger->debug("[dequeue] Queue is empty.");
-            else
-                $this->logger->error("[dequeue] receive data length less 2 from redis", $raw);
-            return null;
+            throw new \Exception("queue data count less 2.");
         }
         list($queueKey, $jobId) = $raw;
         $this->logger->debug("[dequeue] Job id is $jobId");

@@ -68,11 +68,9 @@ class RedisFactory
             return $this->connection;
         }
 
-        $redis = new \Redis();
-        $this->connection = $redis;
         $this->connect();
 
-        return $redis;
+        return $this->connection;
     }
 
     /**
@@ -91,15 +89,25 @@ class RedisFactory
             exit(0);
         }
 
-        $this->connection = new \Redis();
         $this->connect();
         return $this->connection;
     }
 
     function connect()
     {
-        $this->logger->debug("Connection to redis {$this->host}.");
-        $this->connection->connect($this->host);
+        if (!empty($this->config->cluster())) {
+            $servers = [];
+            foreach ($this->config->cluster() as $cluster) {
+                $dsn = Dsn::parse($cluster);
+                $servers = [$dsn->host, $dsn->port];
+            }
+            $this->connection = new \RedisCluster(NULL, $servers);
+        } else {
+            $this->logger->debug("Connection to redis {$this->host}.");
+            $this->connection = new \Redis();
+            $this->connection->connect($this->host, $this->port);
+        }
+
     }
 
     /**

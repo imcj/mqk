@@ -16,14 +16,14 @@ class Registry
      */
     private $logger;
 
-    public function __construct(\Redis $connection)
+    public function __construct($connection)
     {
         $this->connection = $connection;
         $this->jobDAO = new JobDAO($this->connection);
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
-    public function setConnection(\Redis $connection)
+    public function setConnection($connection)
     {
         $this->connection = $connection;
     }
@@ -48,7 +48,8 @@ class Registry
     public function finish(Job $job)
     {
         $ttl = time() + $job->ttl();
-        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
+        // TODO: 后续在Slow模式加入成功的任务保存
+//        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
         $this->connection->zRem("mqk:started", $job->id());
     }
 
