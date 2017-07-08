@@ -45,21 +45,16 @@ class RedisQueue implements Queue
         return "queue_{$this->name}";
     }
 
-    public function enqueue(Job $queue)
+    public function enqueue(Job $job)
     {
-        if (strpos($queue->id(), "_")) {
-            $this->logger->error("[enqueue] {$queue->id()} contains _", debug_backtrace());
+        if (strpos($job->id(), "_")) {
+            $this->logger->error("[enqueue] {$job->id()} contains _", debug_backtrace());
         }
-        $this->logger->info("Enqueue job function is {$queue->func()}");
-        $this->logger->debug("ttl {$queue->ttl()} second\n");
-        $queue->setQueue($this->name);
-        $this->connection->hset(
-            'job',
-            $queue->id(),
-            json_encode($queue->jsonSerialize())
-        );
-        $this->connection->lpush("{$this->key()}", $queue->id());
-        $this->logger->debug("enqueue job {$queue->id()}");
+        $this->logger->info("Enqueue job function is {$job->func()}");
+        $this->logger->debug("ttl {$job->ttl()} second\n");
+        $job->setQueue($this->name);
+        $this->connection->lpush("{$this->key()}", json_encode($job->jsonSerialize()));
+        $this->logger->debug("enqueue job {$job->id()}");
     }
 
     public function name()

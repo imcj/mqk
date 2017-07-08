@@ -152,7 +152,6 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
             }
 
-
             $this->registry->finish($job);
         } catch (\Exception $exception) {
 
@@ -164,8 +163,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
             }
         }
 
-        $this->connection->hset('result', $job->id(), $result);
-        $this->connection->expire($job->id(), 500);
-        $this->logger->debug("Set {$job->id()} at 500 micro second expire");
+//        $this->connection->hset('result', $job->id(), $result);
+//        $this->connection->expire($job->id(), 500);
+//        $this->logger->debug("Set {$job->id()} at 500 micro second expire");
     }
 }

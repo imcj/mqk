@@ -100,10 +100,10 @@ class Job implements \JsonSerializable
             'id' => $this->id,
             'func' => $this->func,
             'arguments' => $this->arguments,
-            'delay' => $this->delay,
+//            'delay' => $this->delay,
             'ttl' => $this->ttl,
             'queue' => $this->queue,
-            'retries' => $this->retries
+//            'retries' => $this->retries
         );
     }
 
@@ -112,7 +112,8 @@ class Job implements \JsonSerializable
         $job = new Job($json->id, $json->func, $json->arguments);
         $job->setTtl($json->ttl);
         $job->setQueue($json->queue);
-        $job->setRetries((int)$json->retries);
+        if (property_exists($json,"retries"))
+            $job->setRetries((int)$json->retries);
         return $job;
     }
 

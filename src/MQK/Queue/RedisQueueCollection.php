@@ -100,22 +100,16 @@ class RedisQueueCollection implements QueueCollection
         if (count($raw) < 2) {
             throw new \Exception("queue data count less 2.");
         }
-        list($queueKey, $jobId) = $raw;
-        $this->logger->debug("[dequeue] Job id is $jobId");
-        if (empty($jobId))
+        list($queueKey, $jobJson) = $raw;
+
+        if (empty($jobJson))
             return null;
 
-        $raw = $this->connection->hget('job', $jobId);
-
-        if (null == $raw) {
-            exit(1);
-        }
-
         try {
-            $job = Job::job(json_decode($raw));
+            $job = Job::job(json_decode($jobJson));
+            $this->logger->debug("[dequeue] Job id is {$job->id()}");
         } catch (\Exception $e) {
-            $this->logger("Make job object error.", $raw);
-            throw \Exception("Make job object error");
+            $job = null;
         }
         if (null == $job) {
             $this->logger("Make job object error.", $raw);

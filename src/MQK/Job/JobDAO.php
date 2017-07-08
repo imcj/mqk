@@ -43,10 +43,10 @@ class JobDAO
 
     public function store(Job $job)
     {
-        $raw = json_encode($job->jsonSerialize());
-        $this->logger->debug("Store job");
-        $this->logger->debug($raw);
-        $this->connection->hSet("job", $job->id(), $raw);
+//        $raw = json_encode($job->jsonSerialize());
+//        $this->logger->debug("Store job");
+//        $this->logger->debug($raw);
+//        $this->connection->hSet("job", $job->id(), $raw);
     }
 
     public function clear($job)
