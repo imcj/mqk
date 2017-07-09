@@ -57,6 +57,13 @@ class Config
      */
     private $cluster = array();
 
+    /**
+     * 极速模式，该模式下任务失败后丢失
+     *
+     * @var bool
+     */
+    private $fast = false;
+
     public function __construct(
         $host,
         $port,
@@ -153,5 +160,15 @@ class Config
     public function setCluster($cluster)
     {
         $this->cluster = $cluster;
+    }
+
+    public function fast()
+    {
+        return $this->fast;
+    }
+
+    public function enableFast()
+    {
+        $this->fast = true;
     }
 }

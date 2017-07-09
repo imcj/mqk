@@ -73,6 +73,7 @@ class Runner
         $this->queues->register($queueFactory->createQueues($this->nameList, $connection));
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
+//        pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
     }
 
     function signal($status)
@@ -85,7 +86,11 @@ class Runner
                 $this->signalIncrement($status);
                 break;
         }
+    }
 
+    function sigintHandler($signo)
+    {
+        // kill all process
     }
 
     function signalChld($status)
@@ -119,15 +124,21 @@ class Runner
         }
 
         while ($this->alive) {
-            try {
-                $this->reassignExpiredJob();
-                sleep(1);
-            } catch (JobMaxRetriesException $e) {
-                $job = $e->job();
-                $this->logger->warning("超过最大重试次数 {$job->id()}");
-                $this->registry->clear("mqk:started", $job->id());
-                $this->jobDAO->clear($e->job());
+            if ($this->config->fast()) {
+                sleep(100);
+            } else {
+
+                try {
+                    $this->reassignExpiredJob();
+                    sleep(1);
+                } catch (JobMaxRetriesException $e) {
+                    $job = $e->job();
+                    $this->logger->warning("超过最大重试次数 {$job->id()}");
+                    $this->registry->clear("mqk:started", $job->id());
+                    $this->jobDAO->clear($e->job());
+                };
             }
+
         }
         $this->logger->info("Master process quit.");
     }

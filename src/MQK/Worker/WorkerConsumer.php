@@ -126,9 +126,12 @@ class WorkerConsumer extends AbstractWorker implements Worker
             return;
         }
 
-        $this->registry->start($job);
+        if (!$this->config->fast())
+            $this->registry->start($job);
         try {
-            $this->logger->info("Job {$job->id()} is started");
+            if (!$this->config->fast()) {
+                $this->logger->info("Job {$job->id()} is started");
+            }
             $this->logger->info("Job call function {$job->func()}");
             $this->logger->info("retries {$job->retries()}");
             $arguments = $job->arguments();
@@ -152,7 +155,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
             }
 
-            $this->registry->finish($job);
+            if (!$this->config->fast())
+                $this->registry->finish($job);
         } catch (\Exception $exception) {
 
             if ($exception instanceof TestTimeoutException)

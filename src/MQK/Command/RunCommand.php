@@ -15,7 +15,8 @@ class RunCommand extends AbstractCommand
             ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
             ->addOption("burst", 'b', InputOption::VALUE_NONE)
             ->addOption("quite", '', InputOption::VALUE_NONE)
-            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
+            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
+            ->addOption("fast", 'f', InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -38,6 +39,10 @@ class RunCommand extends AbstractCommand
         $cluster = $input->getOption("cluster");
         if (!empty($cluster))
             $config->setCluster($cluster);
+
+        $fast = $input->getOption("fast");
+        if ($fast)
+            $config->enableFast();
 
         $runner = new \MQK\Runner();
         $runner->run();
