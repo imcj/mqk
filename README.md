@@ -88,7 +88,7 @@ Options
 ## TODO
 
 - [x] `bin/mqk monitor` 增加redis dsn参数配置redis
-- [ ] 主进程退出退出的时候先退出其他子进程
+- [x] 主进程退出退出的时候先退出其他子进程
 - [x] 增加burst模式，队列为空时进程退出不在服务
 - [ ] 通过信号增加和减少Worker的数量
 - [ ] Redis DSN 支持密码

@@ -11,6 +11,7 @@ declare(ticks=1);
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use MQK\Queue\RedisQueueCollection;
+use MQK\Worker\Worker;
 
 
 class Runner
@@ -73,7 +74,7 @@ class Runner
         $this->queues->register($queueFactory->createQueues($this->nameList, $connection));
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
-//        pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
+        pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
     }
 
     function signal($status)
@@ -91,6 +92,17 @@ class Runner
     function sigintHandler($signo)
     {
         // kill all process
+        /**
+         * @var $worker Worker
+         */
+        foreach ($this->workers as $worker) {
+            $this->cliLogger->info("Kiling process {$worker->id()}");
+            if (!posix_kill($worker->id(), SIGKILL)) {
+                throw new \Exception("Kill process failure {$worker->id()}");
+            }
+        }
+
+        exit(0);
     }
 
     function signalChld($status)
