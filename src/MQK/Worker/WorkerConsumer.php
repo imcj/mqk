@@ -126,12 +126,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
             return;
         }
 
-        if (!$this->config->fast())
+        if (!$this->config->fast()) {
             $this->registry->start($job);
+            $this->logger->info("Job {$job->id()} is started");
+        }
         try {
-            if (!$this->config->fast()) {
-                $this->logger->info("Job {$job->id()} is started");
-            }
             $this->logger->info("Job call function {$job->func()}");
             $this->logger->info("retries {$job->retries()}");
             $arguments = $job->arguments();
@@ -152,7 +151,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $this->logger->debug("Function execute duration {$duration}");
             $this->cliLogger->info(sprintf("Job finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
-                $this->logger->warn(sprintf("Job %d is timeout", $job->id()));
+                $this->logger->warn(sprintf("Job %s is timeout", $job->id()));
             }
 
             if (!$this->config->fast())
@@ -166,9 +165,5 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->registry->fail($job);
             }
         }
-
-//        $this->connection->hset('result', $job->id(), $result);
-//        $this->connection->expire($job->id(), 500);
-//        $this->logger->debug("Set {$job->id()} at 500 micro second expire");
     }
 }

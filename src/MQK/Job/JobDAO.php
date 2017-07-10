@@ -31,7 +31,7 @@ class JobDAO
     public function find($id)
     {
         $this->logger->info("JobDAO find {$id}");
-        $raw = $this->connection->hGet("job", $id);
+        $raw = $this->connection->get("job:{$id}");
         if (null == $raw || false === $raw) {
             $this->logger->error("Job {$id} not found.");
             throw new \Exception("Job {$id} not found.");

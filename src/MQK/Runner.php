@@ -91,18 +91,7 @@ class Runner
 
     function sigintHandler($signo)
     {
-        // kill all process
-        /**
-         * @var $worker Worker
-         */
-        foreach ($this->workers as $worker) {
-            $this->cliLogger->info("Kiling process {$worker->id()}");
-            if (!posix_kill($worker->id(), SIGKILL)) {
-                throw new \Exception("Kill process failure {$worker->id()}");
-            }
-        }
-
-        exit(0);
+        $this->halt();
     }
 
     function signalChld($status)
@@ -164,6 +153,22 @@ class Runner
         return $worker;
     }
 
+    function halt()
+    {
+        // kill all process
+        /**
+         * @var $worker Worker
+         */
+        foreach ($this->workers as $worker) {
+            $this->cliLogger->info("Kiling process {$worker->id()}");
+            if (!posix_kill($worker->id(), SIGKILL)) {
+                $this->cliLogger->error("Kill process failure {$worker->id()}");
+            }
+        }
+
+        exit(0);
+    }
+
     function reassignExpiredJob()
     {
         $id = $this->registry->getExpiredJob("mqk:started");
@@ -172,10 +177,10 @@ class Runner
         else {
             $this->logger->info("Remove expired job {$id} from started queue");
         }
-        // TODO: need to pipeline
+
         $this->registry->clear("mqk:started", $id);
         try {
-            $job = $this->jobDAO->find($id);
+             $job = $this->jobDAO->find($id);
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return;

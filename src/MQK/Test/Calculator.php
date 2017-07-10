@@ -19,6 +19,7 @@ class Calculator
 
     public static function sumTimeout($a, $b)
     {
+        echo "Sum test";
         $redis = RedisFactory::shared()->createRedis();
         $idx = (int)$redis->get("test_sum_timeout");
         if ($idx == 2) {
@@ -27,10 +28,9 @@ class Calculator
         }
 
         if ($idx == 0) {
+            echo "sleep 2 will timeout\n";
             sleep(2);
             $redis->set("test_sum_timeout", 1);
-            echo "sleep 2 will timeout\n";
-            exit();
         } else {
             echo "Result " . $a + $b;
             $redis->set("test_sum_timeout", 2);

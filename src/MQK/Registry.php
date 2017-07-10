@@ -16,11 +16,17 @@ class Registry
      */
     private $logger;
 
+    /**
+     * @var Config
+     */
+    private $config;
+
     public function __construct($connection)
     {
         $this->connection = $connection;
         $this->jobDAO = new JobDAO($this->connection);
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->config = Config::defaultConfig();
     }
 
     public function setConnection($connection)
@@ -35,7 +41,11 @@ class Registry
             return;
         }
         $ttl = time() + $job->ttl();
+        $this->connection->multi();
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
+        $this->connection->set("job:{$job->id()}", json_encode($job->jsonSerialize()));
+        $this->connection->expire("job:{$job->id()}", 500);
+        $this->connection->exec();
         $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 
