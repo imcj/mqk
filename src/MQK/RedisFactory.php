@@ -57,12 +57,13 @@ class RedisFactory
     public function createRedis($dsn=null)
     {
         if (null == $dsn) {
-            $dsn = "redis://{$this->config->host()}:{$this->config->port()}";
+            $dsn = "redis://:{$this->config->password()}@{$this->config->host()}:{$this->config->port()}";
         }
         $dsn = Dsn::parse($dsn);
 
         $this->host = $dsn->host;
         $this->port = (int)$dsn->port;
+        $this->password = $dsn->pass;
 
         if (null != $this->connection) {
             return $this->connection;
@@ -99,15 +100,20 @@ class RedisFactory
             $servers = [];
             foreach ($this->config->cluster() as $cluster) {
                 $dsn = Dsn::parse($cluster);
-                $servers = [$dsn->host, $dsn->port];
+                $servers[] = $dsn->host . ":" . $dsn->port;
+
             }
             $this->connection = new \RedisCluster(NULL, $servers);
         } else {
             $this->logger->debug("Connection to redis {$this->host}.");
             $this->connection = new \Redis();
             $this->connection->connect($this->host, $this->port);
-        }
+            if (strlen($this->password) > 0) {
+                $this->connection->auth($this->password);
+            }
 
+            $this->connection->ping();
+        }
     }
 
     /**

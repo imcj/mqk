@@ -117,7 +117,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->redisFactory->reconnect();
             } catch (BlockPopException $e) {
                 $this->alive = false;
-                $this->logger->debug("[execute] Worker {$this->id} will quit.");
+                $this->cliLogger->info("Worker {$this->id} is quitting.");
                 return;
             }
         }
@@ -138,6 +138,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $result = @call_user_func_array($job->func(), $arguments);
 
             $error = error_get_last();
+            error_clear_last();
+
             if (!empty($error)) {
                 $this->logger->error($error['message']);
                 $this->logger->error($job->func());

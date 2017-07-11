@@ -41,11 +41,15 @@ class Registry
             return;
         }
         $ttl = time() + $job->ttl();
-        $this->connection->multi();
+
+        if (empty($this->config->cluster()))
+            $this->connection->multi();
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
         $this->connection->set("job:{$job->id()}", json_encode($job->jsonSerialize()));
         $this->connection->expire("job:{$job->id()}", 500);
-        $this->connection->exec();
+
+        if (empty($this->config->cluster()))
+            $this->connection->exec();
         $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 

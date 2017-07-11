@@ -60,11 +60,17 @@ class Runner
         $queueFactory = new QueueFactory();
         $redisFactory = RedisFactory::shared();
         $config = Config::defaultConfig();
-
-        $connection = $redisFactory->createRedis();
-
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
+
+        try {
+            $connection = $redisFactory->createRedis();
+        } catch (\RedisException $e) {
+            if ("Failed to AUTH connection" == $e->getMessage()) {
+                $this->cliLogger->error($e->getMessage());
+                exit(1);
+            }
+        }
 
         $this->config = $config;
         $this->connection = $connection;

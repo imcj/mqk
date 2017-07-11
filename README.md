@@ -1,7 +1,7 @@
 MQK
 ====
 
-MQK是一个创建后台任务的轻量级的消息队列应用。
+MQK是一个简单、高性能的PHP后台任务框架。在单核心的VPS上每秒可以处理`20,000+`数据量，在容错模式下每秒可处理`6,000+`。
 
 ## 第一步
 使用`K::invoke`方法调用方法并传入参数`\K::invoke('\\MQK\\Test\\Calculator::sum', 1, 2)`。
@@ -36,9 +36,35 @@ function sum($a, $b)
 
 ```
 $ vendor/bin/mqk run
-Master work on 14360
-Process 14364 started.
+[2017-07-11 08:14:52] 14327 .NOTICE: Master work on 14327 [] []
+[2017-07-11 08:14:56] 14331 .INFO: Job finished and result is 2 [] []
 ```
+
+Result is 2 说明函数执行完成，函数的返回值是2。
+
+## K::invoke($functionName, ...$arguments)
+
+`K::invoke`传入两个参数，第一个是函数的路径。例如`\\MQK\\Test\\Caculator::sum`，
+其中`\\MQK\\Test`是`namespace`，`Caculator`是类名，`sum`是静态方法名，所以有`::`静态方法分隔符。
+
+也可以是 `K::invoke('add', 1, 1)`。
+
+不能调用实例对象。
+
+```php
+class Caculator
+{
+    public function sum($a, $b)
+    {
+        return $a + $b;
+    }
+}
+
+$caculator = new Caculator();
+$caculator->sum(1, 1);
+```
+
+上面的方法是无法成功调用的。应该定义成静态方法。
 
 ## Install
 
@@ -58,10 +84,12 @@ $ composer require fatrellis/mqk
 
 ## 性能测试
 
-进行写入压力测试。先用`invoke`命令批量写入10,000条数据。然后用`monitor`命令观察任务的观察情况。
+在mbp的i7移动版cpu上的测试结果是
+
+进行写入压力测试。先用`invoke`命令批量写入100,000条数据。然后用`monitor`命令观察任务的观察情况。
 
 ```shell
-$ mqk invoke \\MQK\\Test\\Caculator::sum 1 1 --invokes 10000 --workers 10
+$ vendor/bin/mqk invoke \\MQK\\Test\\Caculator::sum 1 1 --invokes 10000 --workers 10
 
 Options
     --invokes -i 总的调用次数，例如1000次调用
@@ -83,7 +111,7 @@ Options
 
 ## Issues
 
-- [ ] 任务超时再次重试存在BUG
+- [x] 任务超时再次重试存在BUG
 
 ## TODO
 
@@ -91,4 +119,79 @@ Options
 - [x] 主进程退出退出的时候先退出其他子进程
 - [x] 增加burst模式，队列为空时进程退出不在服务
 - [ ] 通过信号增加和减少Worker的数量
-- [ ] Redis DSN 支持密码
+- [x] Redis DSN 支持密码
+- [ ] `mqk monitor` 支持 `--interval 1` 选项
+
+## Burst 模式
+
+```shell
+$ vendor/bin/mqk run --burst -w 2
+[2017-07-11 08:11:37] 14309 .NOTICE: Master work on 14309 [] []
+[2017-07-11 08:11:37] 14313 .INFO: Worker 14313 is quitting. [] []
+[2017-07-11 08:11:37] 14314 .INFO: Worker 14314 is quitting. [] []
+```
+burst模式下当所有任务执行完成后mqk进程会退出。非burst模式会一直运行到进程被终止。
+
+## 安静模式
+
+非安静模式下会输出函数执行的结果。
+
+```shell
+$ vendor/bin/mqk run
+[2017-07-11 08:14:52] 14327 .NOTICE: Master work on 14327 [] []
+[2017-07-11 08:14:56] 14331 .INFO: Job finished and result is 2 [] []
+```
+
+安静模式下，不输出结果。在并发很高的情况下，输出内容的打印会影响性能。
+
+## 命令说明
+
+## Run
+
+```shell
+$ vendor/bin/mqk run
+选项
+    --workers -w 并发的进程数量
+    --burst -b Burst模式
+    --quite -q 安静模式，不输出函数的执行结果
+    --fast -f 开启技术模式，任务执行异常不会在试。
+    --verbose -vvv 打印程序的调试信息
+```
+
+## Invoke
+
+invoke命令用命令行迅速调用php函数。php命名空间的分隔符用使用 `\\` 代替 `\`，因为在CLI下需要转义。
+
+```shell
+$ vendor/bin/mqk invoke \\MQK\\Test\\Calculator::sum 1 1
+[2017-07-11 08:14:56] 14331 .INFO: Invoke \\MQK\\Test\\Calculator::sum [] []
+[2017-07-11 08:14:56] 14331 .INFO: ['json argument'] [] []
+```
+
+```shell
+$ vendor/bin/mqk invoke function argument ...
+选项
+    --workers   -w 启动函数执行的工作进程数
+    --invokes   -i 总的调用次数，例如1000次调用
+    --redis-dsn -s Redis服务器的连接DSN。如果连接Redis cluster请使用`--cluster`参数。
+    --cluster   -c 连接Redis Cluster。
+    --ttl       -t 任务执行的超时时间，如果设置了 --ttl 10，当程序执行超过10秒将会认为是超时的。
+```
+
+## Monitor
+
+按每秒输出队列中剩余的任务数量
+
+```shell
+$ vendor/bin/mqk monitor
+2017-07-11 08:30:23,100000
+2017-07-11 08:30:24,10000
+2017-07-11 08:30:25,0
+```
+
+```shell
+$ vendor/bin/mqk monitor
+选项
+    --redis-dsn -s Redis服务器的连接DSN。如果连接Redis cluster请使用`--cluster`参数。
+    --cluster   -c 连接Redis Cluster。
+```

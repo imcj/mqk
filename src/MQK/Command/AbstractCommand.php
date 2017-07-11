@@ -32,6 +32,7 @@ abstract class AbstractCommand extends Command
             $config = Config::defaultConfig();
             $config->setHost($host);
             $config->setPort($port);
+            $config->setPassword($dsn->pass);
         }
     }
 }

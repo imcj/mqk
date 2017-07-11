@@ -95,6 +95,16 @@ class Config
         $this->port = $port;
     }
 
+    public function password()
+    {
+        return $this->password;
+    }
+
+    public function setPassword($password)
+    {
+        $this->password = $password;
+    }
+
     public function workers()
     {
         if (!$this->workers) {
