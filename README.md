@@ -18,7 +18,7 @@ function main()
 
 `$job->result()` 可以查询到计算的结果，异步任务一般用不到。
 
-也可以使用命令行测试。`mqk invoke \\MQK\\Test\\Caculator::sum 1 1`
+也可以使用命令行测试。`mqk invoke \\MQK\\Test\\Calculator::sum 1 1`
 
 ## 第二步
 调用前先定义一个在后台运行的函数，计算两个参数相加。
@@ -44,15 +44,15 @@ Result is 2 说明函数执行完成，函数的返回值是2。
 
 ## K::invoke($functionName, ...$arguments)
 
-`K::invoke`传入两个参数，第一个是函数的路径。例如`\\MQK\\Test\\Caculator::sum`，
-其中`\\MQK\\Test`是`namespace`，`Caculator`是类名，`sum`是静态方法名，所以有`::`静态方法分隔符。
+`K::invoke`传入两个参数，第一个是函数的路径。例如`\\MQK\\Test\\Calculator::sum`，
+其中`\\MQK\\Test`是`namespace`，`Calculator`是类名，`sum`是静态方法名，所以有`::`静态方法分隔符。
 
 也可以是 `K::invoke('add', 1, 1)`。
 
 不能调用实例对象。
 
 ```php
-class Caculator
+class Calculator
 {
     public function sum($a, $b)
     {
@@ -60,8 +60,8 @@ class Caculator
     }
 }
 
-$caculator = new Caculator();
-$caculator->sum(1, 1);
+$calculator = new Calculator();
+$calculator->sum(1, 1);
 ```
 
 上面的方法是无法成功调用的。应该定义成静态方法。
@@ -82,14 +82,19 @@ $ composer require fatrellis/mqk
 
 开发中，不推荐用在生产环境
 
-## 性能测试
+### 坑
+- 超时重试可能有些问题，未严格验证。
+
+## 测试
+
+### 性能测试
 
 在mbp的i7移动版cpu上的测试结果是
 
 进行写入压力测试。先用`invoke`命令批量写入100,000条数据。然后用`monitor`命令观察任务的观察情况。
 
 ```shell
-$ vendor/bin/mqk invoke \\MQK\\Test\\Caculator::sum 1 1 --invokes 10000 --workers 10
+$ vendor/bin/mqk invoke \\MQK\\Test\\Calculator::sum 1 1 --invokes 10000 --workers 10
 
 Options
     --invokes -i 总的调用次数，例如1000次调用
@@ -107,6 +112,20 @@ $ mqk monitor --redis redis-dsn://192.168.0.100
 
 Options
     --redis-dsn -s Redis服务器的DSN redis://127.0.0.1:1234
+```
+
+### 测试任务超时
+
+call `sumTimeout` 函数。会延迟2秒导致任务失败。失败后重试然后执行成功。
+
+```
+$ vendor/bin/mqk invoke \\MQK\\Test\\Calculator::sumTimeout 1 1
+```
+
+```
+$ vendor/bin/mqk run
+Sum testsleep 2 will timeout
+[2017-07-13 15:01:10] 24533 MQK\Worker\WorkerConsumer.WARNING: The job 72d81ec7d44b2ee460a3c4ab8e6283e4 timed out for 1 seconds. [] []
 ```
 
 ## Issues
