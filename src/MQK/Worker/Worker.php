@@ -1,13 +1,9 @@
 <?php
 namespace MQK\Worker;
 
-interface Worker
+use MQK\Process\Process;
+
+interface Worker extends Process
 {
     function id();
-
-    function start();
-    function run();
-    function stop();
-    function pause();
-    function join();
 }

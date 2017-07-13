@@ -2,12 +2,27 @@
 namespace MQK\Command;
 
 use MQK\Config;
+use MQK\MasterProcess\MasterProcessFactory;
+use MQK\MasterProcess\MQKMasterProcessFactory;
+use MQK\Runner;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class RunCommand extends AbstractCommand
 {
+    /**
+     * @var MasterProcessFactory
+     */
+    protected $masterProcessFactory;
+
+    public function __construct($name = null)
+    {
+        parent::__construct($name);
+
+        $this->masterProcessFactory = new MQKMasterProcessFactory();
+    }
+
     protected function configure()
     {
         $this->setName("run")
@@ -44,7 +59,17 @@ class RunCommand extends AbstractCommand
         if ($fast)
             $config->enableFast();
 
-        $runner = new \MQK\Runner();
+        $runner = $this->masterProcessFactory->create();
         $runner->run();
+    }
+
+    public function masterProcessFactory()
+    {
+        return $this->masterProcessFactory;
+    }
+
+    public function setMasterProcessFactory($masterProcessFactory)
+    {
+        $this->masterProcessFactory = $masterProcessFactory;
     }
 }

@@ -31,11 +31,12 @@ class RedisQueueCollection implements QueueCollection
      */
     private $redisFactory;
 
-    public function __construct($connection)
+    public function __construct($connection, $queues)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->redisFactory = RedisFactory::shared();
+        $this->register($queues);
     }
 
     /**
@@ -67,7 +68,6 @@ class RedisQueueCollection implements QueueCollection
     {
         for ($i = 0; $i < 3; $i++) {
             try {
-                $this->logger->debug("[dequeue] queues", $this->queueKeys);
                 if ($block) {
                     $raw = $this->connection->blPop($this->queueKeys, 10);
                     if (!$raw)
@@ -104,10 +104,10 @@ class RedisQueueCollection implements QueueCollection
 
         if (empty($jobJson))
             return null;
-
         try {
-            $job = Job::job(json_decode($jobJson));
-            $this->logger->debug("[dequeue] Job id is {$job->id()}");
+            $jsonObject = json_decode($jobJson);
+            // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
+            $job = Job::job($jsonObject);
         } catch (\Exception $e) {
             $job = null;
         }

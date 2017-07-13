@@ -12,6 +12,9 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Worker\Worker;
+use MQK\Worker\WorkerConsumer;
+use MQK\Worker\WorkerConsumerFactory;
+use MQK\Worker\WorkerFactory;
 
 
 class Runner
@@ -55,6 +58,13 @@ class Runner
 
     private $nameList = ['default'];
 
+    /**
+     * @var WorkerFactory
+     */
+    protected $workerFactory;
+
+    protected $findExpiredJob = true;
+
     public function __construct()
     {
         $queueFactory = new QueueFactory();
@@ -76,8 +86,13 @@ class Runner
         $this->connection = $connection;
         $this->registry = new Registry($connection);
         $this->jobDAO = new JobDAO($connection);
-        $this->queues = new RedisQueueCollection($this->connection);
-        $this->queues->register($queueFactory->createQueues($this->nameList, $connection));
+        $this->queues = new RedisQueueCollection(
+            $this->connection,
+            $queueFactory->createQueues($this->nameList, $connection)
+        );
+        $queueFactory = new QueueFactory();
+        $queues = [$queueFactory->createQueue("default")];
+        $this->workerFactory = new WorkerConsumerFactory($config, $queues);
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
         pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
@@ -123,7 +138,7 @@ class Runner
 
     public function run()
     {
-        $this->cliLogger->notice("Master work on " . posix_getpid());
+        $this->cliLogger->notice("MasterProcess work on " . posix_getpid());
         $this->logger->debug("Starting {$this->config->workers()}.");
 
         for ($i = 0; $i < $this->config->workers(); $i++) {
@@ -134,9 +149,10 @@ class Runner
             if ($this->config->fast()) {
                 sleep(100);
             } else {
-
                 try {
-                    $this->reassignExpiredJob();
+                    if ($this->findExpiredJob) {
+                        $this->reassignExpiredJob();
+                    }
                     sleep(1);
                 } catch (JobMaxRetriesException $e) {
                     $job = $e->job();
@@ -147,12 +163,12 @@ class Runner
             }
 
         }
-        $this->logger->info("Master process quit.");
+        $this->logger->info("MasterProcess process quit.");
     }
 
     function spawn()
     {
-        $worker = new \MQK\Worker\WorkerConsumer($this->config, [(new QueueFactory())->createQueue("default")]);
+        $worker = $this->workerFactory->create();
         $pid = $worker->start();
         $worker->setId($pid);
         $this->workers[$worker->id()] = $worker;
@@ -210,5 +226,15 @@ class Runner
         $job->increaseRetries();
         $this->jobDAO->store($job);
         $queue->enqueue($job);
+    }
+
+    public function workerFactory()
+    {
+        return $this->workerFactory;
+    }
+
+    public function setWorkerFactory($workerFactory)
+    {
+        $this->workerFactory = $workerFactory;
     }
 }

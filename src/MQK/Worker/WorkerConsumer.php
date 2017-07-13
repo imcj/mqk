@@ -16,6 +16,7 @@ use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
+use MQK\Time;
 
 /**
  * Woker的具体实现，在进程内调度Queue和Job完成具体任务
@@ -68,6 +69,16 @@ class WorkerConsumer extends AbstractWorker implements Worker
      */
     private $redisFactory;
 
+    /**
+     * @var float
+     */
+    protected $workerStartTime;
+
+    /**
+     * @var float
+     */
+    protected $workerEndTime;
+
     public function __construct(Config $config, $queues)
     {
         parent::__construct();
@@ -86,18 +97,25 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
 
-        $this->queues = new RedisQueueCollection($this->connection);
-        $this->queues->register($this->queueNameList);
+        $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
+//        $this->queues->register($this->queueNameList);
 
         $this->logger->debug("Process {$this->id} started.");
+
+        $this->workerStartTime = Time::micro();
+
         while ($this->alive) {
             $this->execute();
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 10) {
-                exit(0);
+                break;
             }
         }
-        $this->logger->debug("[run] quiting");
+
+        $this->workerEndTime = Time::micro();
+
+        $duration = $this->workerEndTime - $this->workerStartTime;
+        $this->cliLogger->info("[run] duration {$duration} second");
         exit(0);
     }
 
