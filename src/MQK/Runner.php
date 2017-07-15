@@ -66,6 +66,11 @@ class Runner implements MasterProcess
 
     protected $findExpiredJob = true;
 
+    /**
+     * @var ExpiredFinder
+     */
+    protected $expiredFinder;
+
     public function __construct()
     {
         $queueFactory = new QueueFactory();
@@ -95,6 +100,8 @@ class Runner implements MasterProcess
         $queueFactory = new QueueFactory();
         $queues = [$queueFactory->createQueue("default")];
         $this->workerFactory = new WorkerConsumerFactory($config, $queues);
+
+        $this->expiredFinder = new ExpiredFinder($connection, $this->jobDAO, $this->registry, $this->queues);
 
         pcntl_signal(SIGCHLD, array(&$this, "signal"));
         pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
@@ -146,22 +153,18 @@ class Runner implements MasterProcess
         for ($i = 0; $i < $this->config->workers(); $i++) {
             $worker = $this->spawn();
         }
+        $fast = $this->config->fast();
+        $findExpiredJob = $this->findExpiredJob;
 
         while ($this->alive) {
-            if ($this->config->fast()) {
+            if ($fast) {
                 sleep(100);
             } else {
-                try {
-                    if ($this->findExpiredJob) {
-                        $this->reassignExpiredJob();
-                    }
-                    sleep(1);
-                } catch (JobMaxRetriesException $e) {
-                    $job = $e->job();
-                    $this->logger->warning("超过最大重试次数 {$job->id()}");
-                    $this->registry->clear("mqk:started", $job->id());
-                    $this->jobDAO->clear($e->job());
-                };
+                if ($findExpiredJob) {
+//                    $this->logger->debug("Search expired job");
+                    $this->expiredFinder->process();
+                }
+                sleep(1);
             }
 
         }
@@ -191,43 +194,6 @@ class Runner implements MasterProcess
         }
 
         exit(0);
-    }
-
-    function reassignExpiredJob()
-    {
-        $id = $this->registry->getExpiredJob("mqk:started");
-        if (null == $id)
-            return;
-        else {
-            $this->logger->info("Remove expired job {$id} from started queue");
-        }
-
-        $this->registry->clear("mqk:started", $id);
-        try {
-             $job = $this->jobDAO->find($id);
-        } catch(\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return;
-        }
-        $this->logger->debug("Renew enqueue Job in {$job->queue()}");
-        try {
-            $queue = $this->queues->get($job->queue());
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(json_encode($job->jsonSerialize()));
-            return;
-        }
-
-        if (3 <= $job->retries()) {
-            throw new JobMaxRetriesException($job);
-        }
-        if (null == $job) {
-            $this->logger->error("[reassignExpredJob] Job is null");
-            exit(1);
-        }
-        $job->increaseRetries();
-        $this->jobDAO->store($job);
-        $queue->enqueue($job);
     }
 
     public function workerFactory()

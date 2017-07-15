@@ -3,6 +3,7 @@ namespace MQK\Test;
 
 use MQK\Exception\TestTimeoutException;
 use MQK\RedisFactory;
+use MQK\Time;
 
 class Calculator
 {
@@ -17,32 +18,32 @@ class Calculator
         throw new TestTimeoutException("Test");
     }
 
-    public static function sumTimeout($a, $b)
+    public static function sumTimeout($session, $a, $b)
     {
-        echo "Sum test";
+        echo "Sum test\n";
         $redis = RedisFactory::shared()->createRedis();
-        $idx = (int)$redis->get("test_sum_timeout");
-        if ($idx == 2) {
-            $idx = 0;
-            $redis->del("test_sum_timeout");
-        }
+        $idx = (int)$redis->exists($session);
 
-        if ($idx == 0) {
+        if (!$idx) {
             echo "sleep 2 will timeout\n";
+            $s = Time::micro();
             sleep(2);
-            $redis->set("test_sum_timeout", 1);
+            $e = Time::micro() - $s;
+            echo "Duration {$e}.\n";
+            $redis->set($session, 1);
         } else {
-            echo "Result " . $a + $b;
-            $redis->set("test_sum_timeout", 2);
+            echo "Result " . $a + $b . "\n";
+            $redis->del($session);
             return $a + $b;
         }
     }
 
     public static function sumTimeoutForever($a, $b)
     {
-        echo "Exit\n";
-        exit();
-//        sleep(2);
-        return $a + $b;
+        $s = Time::micro();
+        sleep(2);
+        $e = Time::micro() - $s;
+        exit(0);
+//        return $a + $b;
     }
 }

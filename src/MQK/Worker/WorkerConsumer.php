@@ -5,7 +5,7 @@ namespace MQK\Worker;
 
 use Monolog\Logger;
 use MQK\Config;
-use MQK\Exception\BlockPopException;
+use MQK\Exception\QueueIsEmptyException;
 use MQK\Exception\JobMaxRetriesException;
 use MQK\Exception\TestTimeoutException;
 use MQK\Job\JobDAO;
@@ -137,20 +137,21 @@ class WorkerConsumer extends AbstractWorker implements Worker
             } catch (\RedisException $e) {
                 $this->logger->error($e);
                 $this->redisFactory->reconnect();
-            } catch (BlockPopException $e) {
+            } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
-                $this->cliLogger->info("Worker {$this->id} is quitting.");
+                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
                 return;
             }
         }
+        // 可能出列的数据是空
         if (null == $job) {
-            $this->logger->debug("[execute] Job is null.");
+//            $this->logger->debug("[execute] Job is null.");
             return;
         }
 
         if (!$this->config->fast()) {
             $this->registry->start($job);
-            $this->logger->info("Job {$job->id()} is started");
+//            $this->logger->info("Job {$job->id()} is started");
         }
         try {
             $this->logger->info("Job call function {$job->func()}");
@@ -173,9 +174,10 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
 //            $this->cliLogger->notice("Function execute duration {$duration}");
-            $this->cliLogger->info(sprintf("Job finished and result is %s", json_encode($result)));
+            $this->cliLogger->info(sprintf("The job {$job->id()} is finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $job->id(), $job->ttl()));
+                return;
             }
 
             if (!$this->config->fast())

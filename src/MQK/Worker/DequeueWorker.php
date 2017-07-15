@@ -48,7 +48,5 @@ class DequeueWorker extends AbstractWorker implements Worker
         }
 
         $now = microtime_float();
-
-        echo $now - $pre . "\n";
     }
 }

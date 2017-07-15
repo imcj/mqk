@@ -49,7 +49,6 @@ class RunCommand extends AbstractCommand
             $workers = 1;
 
         $config->setWorkers($workers);
-
         $quite = $input->getOption("quite");
         if ($quite)
             $config->beQuite();
