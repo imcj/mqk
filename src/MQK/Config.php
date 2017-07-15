@@ -58,6 +58,12 @@ class Config
     private $cluster = array();
 
     /**
+     * 测试任务的最大次数，每一个进程。
+     * @var int
+     */
+    private $testJobMax = 0;
+
+    /**
      * 极速模式，该模式下任务失败后丢失
      *
      * @var bool
@@ -180,5 +186,21 @@ class Config
     public function enableFast()
     {
         $this->fast = true;
+    }
+
+    /**
+     * @return int
+     */
+    public function testJobMax()
+    {
+        return $this->testJobMax;
+    }
+
+    /**
+     * @param int $testJobMax
+     */
+    public function setTestJobMax(int $testJobMax)
+    {
+        $this->testJobMax = $testJobMax;
     }
 }

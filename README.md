@@ -84,6 +84,8 @@ $ composer require fatrellis/mqk
 
 ### 坑
 - 超时重试可能有些问题，未严格验证。
+- 未进行严格的测试，可能存在各种问题。
+- 函数参数以json格式进行序列化，不能使用对象
 
 ## 测试
 
@@ -214,3 +216,7 @@ $ vendor/bin/mqk monitor
     --redis-dsn -s Redis服务器的连接DSN。如果连接Redis cluster请使用`--cluster`参数。
     --cluster   -c 连接Redis Cluster。
 ```
+
+## FAQ
+
+运行在fast模式下，任务失败是不会再次重试。

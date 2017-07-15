@@ -117,9 +117,4 @@ class RedisQueueCollection implements QueueCollection
         }
         return $job;
     }
-
-    public function queueNames()
-    {
-        return $this->nameList;
-    }
 }

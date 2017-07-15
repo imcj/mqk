@@ -2,6 +2,7 @@
 namespace MQK;
 use MQK\Exception\JobMaxRetriesException;
 use MQK\Job\JobDAO;
+use MQK\MasterProcess\MasterProcess;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\QueueFactory;
@@ -17,7 +18,7 @@ use MQK\Worker\WorkerConsumerFactory;
 use MQK\Worker\WorkerFactory;
 
 
-class Runner
+class Runner implements MasterProcess
 {
     private $config;
     private $workers = [];
@@ -86,6 +87,7 @@ class Runner
         $this->connection = $connection;
         $this->registry = new Registry($connection);
         $this->jobDAO = new JobDAO($connection);
+
         $this->queues = new RedisQueueCollection(
             $this->connection,
             $queueFactory->createQueues($this->nameList, $connection)

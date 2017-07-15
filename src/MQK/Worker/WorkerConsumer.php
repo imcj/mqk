@@ -14,6 +14,7 @@ use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
+use MQK\Queue\TestQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
 use MQK\Time;
@@ -97,8 +98,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
 
-        $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
-//        $this->queues->register($this->queueNameList);
+        if ($this->config->testJobMax() > 0 ) {
+            $this->queues = new TestQueueCollection($this->config->testJobMax());
+        } else {
+            $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
+        }
 
         $this->logger->debug("Process {$this->id} started.");
 
@@ -115,7 +119,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->workerEndTime = Time::micro();
 
         $duration = $this->workerEndTime - $this->workerStartTime;
-        $this->cliLogger->info("[run] duration {$duration} second");
+        $this->cliLogger->notice("[run] duration {$duration} second");
         exit(0);
     }
 
@@ -168,7 +172,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
-            $this->logger->debug("Function execute duration {$duration}");
+//            $this->cliLogger->notice("Function execute duration {$duration}");
             $this->cliLogger->info(sprintf("Job finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $job->id(), $job->ttl()));
