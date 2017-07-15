@@ -121,6 +121,7 @@ class Runner implements MasterProcess
 
     function sigintHandler($signo)
     {
+        $this->logger->debug("Press ctrl+C");
         $this->halt();
     }
 
@@ -187,11 +188,12 @@ class Runner implements MasterProcess
          * @var $worker Worker
          */
         foreach ($this->workers as $worker) {
-            $this->cliLogger->info("Kiling process {$worker->id()}");
-            if (!posix_kill($worker->id(), SIGKILL)) {
+            $this->cliLogger->info("Killing process {$worker->id()}");
+            if (!posix_kill($worker->id(), SIGUSR1)) {
                 $this->cliLogger->error("Kill process failure {$worker->id()}");
             }
         }
+        sleep(2);
 
         exit(0);
     }

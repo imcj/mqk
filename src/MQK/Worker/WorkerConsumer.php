@@ -80,6 +80,16 @@ class WorkerConsumer extends AbstractWorker implements Worker
      */
     protected $workerEndTime;
 
+    /**
+     * @var int
+     */
+    protected $success = 0;
+
+    /**
+     * @var int
+     */
+    protected $failure = 0;
+
     public function __construct(Config $config, $queues)
     {
         parent::__construct();
@@ -117,10 +127,18 @@ class WorkerConsumer extends AbstractWorker implements Worker
         }
 
         $this->workerEndTime = Time::micro();
+        $this->beforeExit();
+        exit(0);
+    }
+
+    protected function beforeExit()
+    {
+        if (0 == $this->workerEndTime)
+            $this->workerEndTime = time();
 
         $duration = $this->workerEndTime - $this->workerStartTime;
         $this->cliLogger->notice("[run] duration {$duration} second");
-        exit(0);
+        $this->cliLogger->notice("Success {$this->success} failure {$this->failure}");
     }
 
     protected function memoryGetUsage()
@@ -168,8 +186,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->logger->error($job->func());
                 $this->logger->error(json_encode($job->arguments()));
 
+                $this->failure += 1;
+
                 throw new \Exception($error['message']);
             }
+            $this->success += 1;
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
@@ -177,7 +198,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
             $this->cliLogger->info(sprintf("The job {$job->id()} is finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $job->id(), $job->ttl()));
-                return;
+//                return;
             }
 
             if (!$this->config->fast())

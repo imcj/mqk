@@ -84,7 +84,7 @@ class RedisQueueCollection implements QueueCollection
                             $raw = array($queueKey, $raw);
                             break;
                         } else {
-                            throw new QueueIsEmptyException("");
+                            throw new QueueIsEmptyException(null);
                         }
                     }
                 }

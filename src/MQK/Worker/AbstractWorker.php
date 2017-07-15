@@ -1,5 +1,6 @@
 <?php
 namespace MQK\Worker;
+declare(ticks=1);
 
 use MQK\LoggerFactory;
 
@@ -32,9 +33,34 @@ abstract class AbstractWorker
         } else if ($pid) {
             return $pid;
         }
+        pcntl_signal(SIGQUIT, array(&$this, "signalQuitHandler"));
+        pcntl_signal(SIGTERM, array(&$this, "signalTerminalHandler"));
+        pcntl_signal(SIGUSR1, array(&$this, "signalUsr1Handler"));
         $this->id = posix_getpid();
+
+        // TODO: 进程退出后通知
         $this->run();
         exit();
+    }
+
+    protected function signalUsr1Handler($signo)
+    {
+        $this->beforeExit();
+    }
+
+    protected function signalTerminalHandler($signo)
+    {
+        $this->beforeExit();
+    }
+
+    protected function signalQuitHandler($signo)
+    {
+        $this->beforeExit();
+    }
+
+    protected function beforeExit()
+    {
+
     }
 
 
