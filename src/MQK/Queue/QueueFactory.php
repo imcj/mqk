@@ -10,6 +10,7 @@ class QueueFactory
      */
     private $redisFactory;
 
+    // TODO: 构造函数传入 Redis 实例
     public function __construct()
     {
         $this->redisFactory = new RedisFactory();
@@ -27,8 +28,8 @@ class QueueFactory
      * 创建一个队列的列表
      *
      * @param $nameList ['default', 'fast']
-     * @param $redis Redis connection
-     * @return Queue
+     * @param $redis \Redis connection
+     * @return Queue[]
      */
     public function createQueues($nameList, $redis)
     {

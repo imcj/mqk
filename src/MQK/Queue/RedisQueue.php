@@ -50,11 +50,15 @@ class RedisQueue implements Queue
         if (strpos($job->id(), "_")) {
             $this->logger->error("[enqueue] {$job->id()} contains _", debug_backtrace());
         }
-        $this->logger->info("Enqueue job function is {$job->func()}");
-        $this->logger->debug("ttl {$job->ttl()} second\n");
         $job->setQueue($this->name);
-        $this->connection->lpush("{$this->key()}", json_encode($job->jsonSerialize()));
-        $this->logger->debug("enqueue job {$job->id()}");
+        $jobJson = $job->jsonSerialize();
+        if ($job->retries()) {
+            $jobJson['retries'] = $job->retries();
+        }
+        $encoded = json_encode($jobJson);
+//        $this->logger->debug("[enqueue] {$job->id()}");
+//        $this->logger->debug($encoded);
+        $this->connection->lpush("{$this->key()}", $encoded);
     }
 
     public function name()

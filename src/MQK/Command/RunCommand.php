@@ -5,6 +5,7 @@ use MQK\Config;
 use MQK\MasterProcess\MasterProcessFactory;
 use MQK\MasterProcess\MQKMasterProcessFactory;
 use MQK\Runner;
+use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,7 +32,9 @@ class RunCommand extends AbstractCommand
             ->addOption("burst", 'b', InputOption::VALUE_NONE)
             ->addOption("quite", '', InputOption::VALUE_NONE)
             ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
-            ->addOption("fast", 'f', InputOption::VALUE_NONE);
+            ->addOption("fast", 'f', InputOption::VALUE_NONE)
+            ->addOption("test", 't', InputOption::VALUE_OPTIONAL)
+            ->addOption("empty-worker", '', InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -46,7 +49,6 @@ class RunCommand extends AbstractCommand
             $workers = 1;
 
         $config->setWorkers($workers);
-
         $quite = $input->getOption("quite");
         if ($quite)
             $config->beQuite();
@@ -59,7 +61,16 @@ class RunCommand extends AbstractCommand
         if ($fast)
             $config->enableFast();
 
+        $max = (int)$input->getOption("test");
+        if ($max > 0)
+            $config->setTestJobMax($max);
+
         $runner = $this->masterProcessFactory->create();
+
+        if ((boolean)$input->getOption("empty-worker")) {
+            $workerFactory = new EmptyWorkerFactory();
+            $runner->setWorkerFactory($workerFactory);
+        }
         $runner->run();
     }
 

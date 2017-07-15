@@ -103,7 +103,7 @@ class Job implements \JsonSerializable
 //            'delay' => $this->delay,
             'ttl' => $this->ttl,
             'queue' => $this->queue,
-//            'retries' => $this->retries
+            'retries' => $this->retries
         );
     }
 

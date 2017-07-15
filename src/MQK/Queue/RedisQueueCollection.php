@@ -2,7 +2,7 @@
 namespace MQK\Queue;
 
 use Monolog\Logger;
-use MQK\Exception\BlockPopException;
+use MQK\Exception\QueueIsEmptyException;
 use MQK\Job;
 use MQK\LoggerFactory;
 use MQK\RedisFactory;
@@ -31,6 +31,11 @@ class RedisQueueCollection implements QueueCollection
      */
     private $redisFactory;
 
+    /**
+     * RedisQueueCollection constructor.
+     * @param $connection \Redis
+     * @param $queues Queue[]
+     */
     public function __construct($connection, $queues)
     {
         $this->connection = $connection;
@@ -79,7 +84,7 @@ class RedisQueueCollection implements QueueCollection
                             $raw = array($queueKey, $raw);
                             break;
                         } else {
-                            throw new BlockPopException("");
+                            throw new QueueIsEmptyException(null);
                         }
                     }
                 }
@@ -106,20 +111,17 @@ class RedisQueueCollection implements QueueCollection
             return null;
         try {
             $jsonObject = json_decode($jobJson);
+//            $this->logger->debug("[dequeue] {$jsonObject->id}");
+//            $this->logger->debug($jobJson);
             // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
             $job = Job::job($jsonObject);
         } catch (\Exception $e) {
             $job = null;
         }
-        if (null == $job) {
-            $this->logger("Make job object error.", $raw);
-            throw \Exception("Make job object error");
-        }
+//        if (null == $job) {
+//            $this->logger("Make job object error.", $raw);
+//            throw \Exception("Make job object error");
+//        }
         return $job;
-    }
-
-    public function queueNames()
-    {
-        return $this->nameList;
     }
 }

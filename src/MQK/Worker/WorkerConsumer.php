@@ -5,7 +5,7 @@ namespace MQK\Worker;
 
 use Monolog\Logger;
 use MQK\Config;
-use MQK\Exception\BlockPopException;
+use MQK\Exception\QueueIsEmptyException;
 use MQK\Exception\JobMaxRetriesException;
 use MQK\Exception\TestTimeoutException;
 use MQK\Job\JobDAO;
@@ -14,6 +14,7 @@ use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
+use MQK\Queue\TestQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
 use MQK\Time;
@@ -79,6 +80,16 @@ class WorkerConsumer extends AbstractWorker implements Worker
      */
     protected $workerEndTime;
 
+    /**
+     * @var int
+     */
+    protected $success = 0;
+
+    /**
+     * @var int
+     */
+    protected $failure = 0;
+
     public function __construct(Config $config, $queues)
     {
         parent::__construct();
@@ -97,8 +108,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
 
-        $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
-//        $this->queues->register($this->queueNameList);
+        if ($this->config->testJobMax() > 0 ) {
+            $this->queues = new TestQueueCollection($this->config->testJobMax());
+        } else {
+            $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
+        }
 
         $this->logger->debug("Process {$this->id} started.");
 
@@ -113,10 +127,18 @@ class WorkerConsumer extends AbstractWorker implements Worker
         }
 
         $this->workerEndTime = Time::micro();
+        $this->beforeExit();
+        exit(0);
+    }
+
+    protected function beforeExit()
+    {
+        if (0 == $this->workerEndTime)
+            $this->workerEndTime = time();
 
         $duration = $this->workerEndTime - $this->workerStartTime;
-        $this->cliLogger->info("[run] duration {$duration} second");
-        exit(0);
+        $this->cliLogger->notice("[run] duration {$duration} second");
+        $this->cliLogger->notice("Success {$this->success} failure {$this->failure}");
     }
 
     protected function memoryGetUsage()
@@ -133,20 +155,21 @@ class WorkerConsumer extends AbstractWorker implements Worker
             } catch (\RedisException $e) {
                 $this->logger->error($e);
                 $this->redisFactory->reconnect();
-            } catch (BlockPopException $e) {
+            } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
-                $this->cliLogger->info("Worker {$this->id} is quitting.");
+                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
                 return;
             }
         }
+        // 可能出列的数据是空
         if (null == $job) {
-            $this->logger->debug("[execute] Job is null.");
+//            $this->logger->debug("[execute] Job is null.");
             return;
         }
 
         if (!$this->config->fast()) {
             $this->registry->start($job);
-            $this->logger->info("Job {$job->id()} is started");
+//            $this->logger->info("Job {$job->id()} is started");
         }
         try {
             $this->logger->info("Job call function {$job->func()}");
@@ -163,15 +186,19 @@ class WorkerConsumer extends AbstractWorker implements Worker
                 $this->logger->error($job->func());
                 $this->logger->error(json_encode($job->arguments()));
 
+                $this->failure += 1;
+
                 throw new \Exception($error['message']);
             }
+            $this->success += 1;
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
-            $this->logger->debug("Function execute duration {$duration}");
-            $this->cliLogger->info(sprintf("Job finished and result is %s", json_encode($result)));
+//            $this->cliLogger->notice("Function execute duration {$duration}");
+            $this->cliLogger->info(sprintf("The job {$job->id()} is finished and result is %s", json_encode($result)));
             if ($afterExecute - $beforeExecute >= $job->ttl()) {
                 $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $job->id(), $job->ttl()));
+//                return;
             }
 
             if (!$this->config->fast())

@@ -40,17 +40,17 @@ class Registry
             $this->logger->debug("Name of job is invalid.");
             return;
         }
+//        $this->logger->debug("The job {$job->id()} ttl is {$job->ttl()})");
         $ttl = time() + $job->ttl();
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
         $this->connection->zAdd("mqk:started", $ttl, $job->id());
-        $this->connection->set("job:{$job->id()}", json_encode($job->jsonSerialize()));
-        $this->connection->expire("job:{$job->id()}", 500);
+        $this->connection->set("job:{$job->id()}", json_encode($job->jsonSerialize()), 6000);
 
         if (empty($this->config->cluster()))
             $this->connection->exec();
-        $this->logger->info("{$job->id()} will at $ttl timeout.");
+//        $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 
     public function fail(Job $job)
@@ -64,12 +64,12 @@ class Registry
         $ttl = time() + $job->ttl();
         // TODO: 后续在Slow模式加入成功的任务保存
 //        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
-        $this->connection->zRem("mqk:started", $job->id());
+        $this->connection->zDelete("mqk:started", $job->id());
     }
 
     public function clear($queueName, $id)
     {
-        $this->connection->zDelete($queueName, $id);
+        $return = $this->connection->zDelete($queueName, $id);
     }
 
     public function getExpiredJob($queueName)
@@ -88,7 +88,7 @@ class Registry
         if (empty($id))
             return null;
 
-        $this->logger->debug("Found expire job {$id}.");
+//        $this->logger->debug("Found expire job {$id}.");
         return $id;
     }
 

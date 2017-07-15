@@ -12,9 +12,4 @@ interface QueueCollection
      * @return Job
      */
     function dequeue($block=true);
-
-    /**
-     * @return stringp[
-     */
-    function queueNames();
 }
