@@ -69,7 +69,7 @@ $calculator->sum(1, 1);
 ## Install
 
 ```shell
-$ composer require fatrellis/mqk
+$ composer require "fatrellis/mqk:0.0.2-alpha"
 ```
 
 ## 依赖
