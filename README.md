@@ -96,7 +96,7 @@ $ composer require "fatrellis/mqk:0.0.2-alpha"
 进行写入压力测试。先用`invoke`命令批量写入100,000条数据。然后用`monitor`命令观察任务的观察情况。
 
 ```shell
-$ vendor/bin/mqk invoke \\MQK\\Test\\Calculator::sum 1 1 --invokes 10000 --workers 10
+$ vendor/bin/mqk invoke \\MQK\\Test\\Calculator::sum 1 1 --invokes 500000 --workers 10
 
 Options
     --invokes -i 总的调用次数，例如1000次调用
@@ -110,10 +110,14 @@ $ mqk monitor
 2017-07-07 03:55:07,4000
 2017-07-07 03:55:08,0
 
-$ mqk monitor --redis redis-dsn://192.168.0.100
+$ bin/mqk monitor --redis redis-dsn://192.168.0.100
 
 Options
     --redis-dsn -s Redis服务器的DSN redis://127.0.0.1:1234
+```
+
+```shell
+$ vendor/bin/mqk run --burst --fast --quite -w 100
 ```
 
 ### 测试任务超时

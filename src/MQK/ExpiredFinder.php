@@ -51,7 +51,7 @@ class ExpiredFinder
      * @param bool $cluster
      */
     public function __construct(
-        \Redis $connection,
+        $connection,
         JobDAO $jobDAO,
         Registry $registry,
         QueueCollection $queues,
