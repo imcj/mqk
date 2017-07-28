@@ -24,10 +24,11 @@ class WorkerConsumerFactory implements WorkerFactory
      * @param $config Config
      * @param $queues Queue[]
      */
-    public function __construct(Config $config, $queues)
+    public function __construct(Config $config, $queues, $pipe)
     {
         $this->config = $config;
         $this->queues = $queues;
+        $this->pipe = $pipe;
     }
 
     /**
@@ -35,7 +36,7 @@ class WorkerConsumerFactory implements WorkerFactory
      */
     function create()
     {
-        $worker = new WorkerConsumer($this->config, $this->queues);
+        $worker = new WorkerConsumer($this->config, $this->queues, $this->pipe);
 
         return $worker;
     }

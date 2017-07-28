@@ -10,6 +10,7 @@ use MQK\Exception\JobMaxRetriesException;
 use MQK\Exception\TestTimeoutException;
 use MQK\Job\JobDAO;
 use MQK\LoggerFactory;
+use MQK\PIPE;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\RedisQueue;
@@ -90,12 +91,19 @@ class WorkerConsumer extends AbstractWorker implements Worker
      */
     protected $failure = 0;
 
-    public function __construct(Config $config, $queues)
+
+    /**
+     * @var PIPE
+     */
+    protected $pipe;
+
+    public function __construct(Config $config, $queues, PIPE $pipe)
     {
         parent::__construct();
 
         $this->config = $config;
         $this->queueNameList = $queues;
+        $this->pipe = $pipe;
     }
 
     public function run()
@@ -107,6 +115,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
+
+        $this->pipe->closeImSon();
 
         if ($this->config->testJobMax() > 0 ) {
             $this->queues = new TestQueueCollection($this->config->testJobMax());
@@ -121,10 +131,13 @@ class WorkerConsumer extends AbstractWorker implements Worker
         while ($this->alive) {
             $this->execute();
             $memoryUsage = $this->memoryGetUsage();
-            if ($memoryUsage > self::M * 10) {
+            if ($memoryUsage > self::M * 1024) {
                 break;
             }
         }
+        $id = (string)$this->id;
+        $this->pipe->write("Q:$id");
+        $this->logger->debug("[run] Sent quit command.");
 
         $this->workerEndTime = Time::micro();
         $this->beforeExit();
