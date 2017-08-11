@@ -2,6 +2,7 @@
 namespace MQK\Command;
 
 use MQK\Config;
+use MQK\Hook\HookNotification;
 use MQK\MasterProcess\MasterProcessFactory;
 use MQK\MasterProcess\MQKMasterProcessFactory;
 use MQK\Runner;
@@ -71,6 +72,10 @@ class RunCommand extends AbstractCommand
             $workerFactory = new EmptyWorkerFactory();
             $runner->setWorkerFactory($workerFactory);
         }
+
+        $hookNotification = new HookNotification();
+        $hookNotification->boot();
+
         $runner->run();
     }
 
