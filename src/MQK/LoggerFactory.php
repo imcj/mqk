@@ -52,7 +52,10 @@ class LoggerFactory
     {
         $logger = new Logger($name);
         $handler = new StreamHandler("php://stdout");
-        $pid = posix_getpid();
+        if (method_exists("posix_getpid"))
+            $pid = posix_getpid();
+        else
+            $pid = getmypid();
         $output = "[%datetime%] {$pid} %channel%.%level_name%: %message% %context% %extra%\n";
 
         $formatter = new LineFormatter($output);
