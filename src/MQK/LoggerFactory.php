@@ -52,7 +52,7 @@ class LoggerFactory
     {
         $logger = new Logger($name);
         $handler = new StreamHandler("php://stdout");
-        if (method_exists("posix_getpid"))
+        if (function_exists("posix_getpid"))
             $pid = posix_getpid();
         else
             $pid = getmypid();
