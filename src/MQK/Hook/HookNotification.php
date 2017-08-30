@@ -12,12 +12,12 @@ class HookNotification
     public function __construct()
     {
         if (class_exists("MQKHook")) {
-            $this->hook = new "MQKHook"();
+//            $this->hook = new "MQKHook"();
         }
     }
 
     public function boot()
     {
-        $this->hook->boot();
+//        $this->hook->boot();
     }
 }

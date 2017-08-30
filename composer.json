@@ -11,11 +11,17 @@
         "php": ">= 5.6",
         "monolog/monolog": "^1.23",
         "symfony/console": "^3.3",
-        "ad7six/dsn": "^0.4.0"
+        "ad7six/dsn": "^0.4.0",
+        "symfony/event-dispatcher": "^3.3",
+        "symfony/serializer": "^3.3",
+        "symfony/property-access": "^3.3"
     },
     "autoload":{
         "psr-4": {
-            "MQK\\": "src/MQK/"
+            "MQK\\": [
+                "src/MQK/",
+                "test/MQK/"
+            ]
         },
         "psr-0": {
             "": "src/"

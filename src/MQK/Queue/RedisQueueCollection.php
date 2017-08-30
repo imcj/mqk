@@ -15,10 +15,15 @@ class RedisQueueCollection implements QueueCollection
     private $connection;
 
     /**
-     * @var array
+     * @var Queue[]
      */
     private $queues;
 
+    /**
+     * Redis队列的名字列表
+     *
+     * @var string[]
+     */
     private $queueKeys = [];
 
     /**
@@ -32,6 +37,11 @@ class RedisQueueCollection implements QueueCollection
     private $redisFactory;
 
     /**
+     * @var MessageFactory
+     */
+    private $messageFactory;
+
+    /**
      * RedisQueueCollection constructor.
      * @param $connection \Redis
      * @param $queues Queue[]
@@ -42,6 +52,7 @@ class RedisQueueCollection implements QueueCollection
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->redisFactory = RedisFactory::shared();
         $this->register($queues);
+        $this->messageFactory = new MessageFactory();
     }
 
     /**
@@ -105,23 +116,25 @@ class RedisQueueCollection implements QueueCollection
         if (count($raw) < 2) {
             throw new \Exception("queue data count less 2.");
         }
-        list($queueKey, $jobJson) = $raw;
+        list($queueKey, $messageJson) = $raw;
 
-        if (empty($jobJson))
+        if (empty($messageJson))
             return null;
+
         try {
-            $jsonObject = json_decode($jobJson);
+            $messageJsonObject = json_decode($messageJson);
 //            $this->logger->debug("[dequeue] {$jsonObject->id}");
-//            $this->logger->debug($jobJson);
+//            $this->logger->debug($messageJson);
             // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
-            $job = Job::job($jsonObject);
+
+            $message = $this->messageFactory->messageWithJson($messageJsonObject);
         } catch (\Exception $e) {
-            $job = null;
+            $message = null;
         }
 //        if (null == $job) {
 //            $this->logger("Make job object error.", $raw);
 //            throw \Exception("Make job object error");
 //        }
-        return $job;
+        return $message;
     }
 }

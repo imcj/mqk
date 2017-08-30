@@ -3,6 +3,7 @@ namespace MQK;
 
 use Monolog\Logger;
 use MQK\Job\JobDAO;
+use MQK\Queue\Message;
 
 class Registry
 {
@@ -34,37 +35,37 @@ class Registry
         $this->connection = $connection;
     }
 
-    public function start(Job $job)
+    public function start(Message $message)
     {
-        if (strpos($job->id(), "_") > -1) {
+        if (strpos($message->id(), "_") > -1) {
             $this->logger->debug("Name of job is invalid.");
             return;
         }
 //        $this->logger->debug("The job {$job->id()} ttl is {$job->ttl()})");
-        $ttl = time() + $job->ttl();
+        $ttl = time() + $message->ttl();
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
-        $this->connection->zAdd("mqk:started", $ttl, $job->id());
-        $this->connection->set("job:{$job->id()}", json_encode($job->jsonSerialize()), 6000);
+        $this->connection->zAdd("mqk:started", $ttl, $message->id());
+        $this->connection->set("job:{$message->id()}", json_encode($message->jsonSerialize()), 6000);
 
         if (empty($this->config->cluster()))
             $this->connection->exec();
 //        $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 
-    public function fail(Job $job)
+    public function fail(Message $message)
     {
-        $ttl = time() + $job->ttl();
-        $this->connection->zAdd("mqk:fail", $ttl, $job->id());
+        $ttl = time() + $message->ttl();
+        $this->connection->zAdd("mqk:fail", $ttl, $message->id());
     }
 
-    public function finish(Job $job)
+    public function finish(Message $message)
     {
-        $ttl = time() + $job->ttl();
+        $ttl = time() + $message->ttl();
         // TODO: 后续在Slow模式加入成功的任务保存
 //        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
-        $this->connection->zDelete("mqk:started", $job->id());
+        $this->connection->zDelete("mqk:started", $message->id());
     }
 
     public function clear($queueName, $id)

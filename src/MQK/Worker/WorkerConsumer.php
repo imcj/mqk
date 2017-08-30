@@ -26,7 +26,7 @@ use MQK\Time;
  * Class WorkerConsumer
  * @package MQK\Worker
  */
-class WorkerConsumer extends AbstractWorker implements Worker
+class WorkerConsumer extends WorkerConsumerExector implements Worker
 {
     protected $config;
     protected $queue;
@@ -34,42 +34,42 @@ class WorkerConsumer extends AbstractWorker implements Worker
     /**
      * @var Logger
      */
-    private $logger;
+    protected $logger;
 
     /**
      * @var Logger
      */
-    private $cliLogger;
+    protected $cliLogger;
 
     /**
      * @var Registry
      */
-    private $registry;
+    protected $registry;
 
     /**
      * @var JobDAO
      */
-    private $jobDAO;
+    protected $jobDAO;
 
     /**
      * @var \Redis
      */
-    private $connection;
+    protected $connection;
 
     /**
      * @var QueueCollection
      */
-    private $queues;
+    protected $queues;
 
     /**
      * @var string[]
      */
-    private $queueNameList;
+    protected $queueNameList;
 
     /**
      * @var RedisFactory
      */
-    private $redisFactory;
+    protected $redisFactory;
 
     /**
      * @var float
@@ -104,6 +104,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $this->config = $config;
         $this->queueNameList = $queues;
         $this->pipe = $pipe;
+
+        $this->loadUserInitializeScript();
     }
 
     public function run()
@@ -159,71 +161,11 @@ class WorkerConsumer extends AbstractWorker implements Worker
         return memory_get_usage(false);
     }
 
-    function execute()
+    protected function loadUserInitializeScript()
     {
-        while (true) {
-            try {
-                $job = $this->queues->dequeue(!$this->config->burst());
-                break;
-            } catch (\RedisException $e) {
-                $this->logger->error($e);
-                $this->redisFactory->reconnect();
-            } catch (QueueIsEmptyException $e) {
-                $this->alive = false;
-                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
-                return;
-            }
-        }
-        // 可能出列的数据是空
-        if (null == $job) {
-//            $this->logger->debug("[execute] Job is null.");
-            return;
-        }
-
-        if (!$this->config->fast()) {
-            $this->registry->start($job);
-//            $this->logger->info("Job {$job->id()} is started");
-        }
-        try {
-            $this->logger->info("Job call function {$job->func()}");
-            $this->logger->info("retries {$job->retries()}");
-            $arguments = $job->arguments();
-            $beforeExecute = time();
-            $result = @call_user_func_array($job->func(), $arguments);
-
-            $error = error_get_last();
-            error_clear_last();
-
-            if (!empty($error)) {
-                $this->logger->error($error['message']);
-                $this->logger->error($job->func());
-                $this->logger->error(json_encode($job->arguments()));
-
-                $this->failure += 1;
-
-                throw new \Exception($error['message']);
-            }
-            $this->success += 1;
-
-            $afterExecute = time();
-            $duration = $afterExecute - $beforeExecute;
-//            $this->cliLogger->notice("Function execute duration {$duration}");
-            $this->cliLogger->info(sprintf("The job {$job->id()} is finished and result is %s", json_encode($result)));
-            if ($afterExecute - $beforeExecute >= $job->ttl()) {
-                $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $job->id(), $job->ttl()));
-//                return;
-            }
-
-            if (!$this->config->fast())
-                $this->registry->finish($job);
-        } catch (\Exception $exception) {
-
-            if ($exception instanceof TestTimeoutException)
-                $result = null;
-            else {
-                $this->logger->error($exception->getMessage());
-                $this->registry->fail($job);
-            }
-        }
+        $cwd = getcwd();
+        $initFilePath = "{$cwd}/init.php";
+        if (file_exists($initFilePath))
+            include_once $initFilePath;
     }
 }
