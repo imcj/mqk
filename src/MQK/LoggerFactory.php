@@ -19,7 +19,7 @@ class LoggerFactory
     /**
      * @var HandlerInterface[]
      */
-    private $handlers;
+    private $handlers = [];
 
     public function defaultLevel()
     {
