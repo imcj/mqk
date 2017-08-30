@@ -163,6 +163,11 @@ class Config
         return $this->quite;
     }
 
+    public function setQuite($yesOrNo)
+    {
+        $this->quite = $yesOrNo;
+    }
+
     public function beQuite()
     {
         $this->quite = true;
