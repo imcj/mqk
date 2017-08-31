@@ -35,7 +35,8 @@ class RunCommand extends AbstractCommand
             ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
             ->addOption("fast", 'f', InputOption::VALUE_NONE)
             ->addOption("test", 't', InputOption::VALUE_OPTIONAL)
-            ->addOption("empty-worker", '', InputOption::VALUE_NONE);
+            ->addOption("empty-worker", '', InputOption::VALUE_NONE)
+            ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "");
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -65,6 +66,15 @@ class RunCommand extends AbstractCommand
         $max = (int)$input->getOption("test");
         if ($max > 0)
             $config->setTestJobMax($max);
+
+        $config = $input->getOption("config");
+        if (!empty($config)) {
+            if (!file_exists($config)) {
+                $this->logger->warning("You specify config file, but not found");
+            } else {
+                $this->loadIniConfig($config);
+            }
+        }
 
         $runner = $this->masterProcessFactory->create();
 

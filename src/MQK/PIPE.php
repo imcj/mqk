@@ -24,7 +24,7 @@ class PIPE
 
     public function closeImFather()
     {
-        fclose($this->pipe[0]);
+        @fclose($this->pipe[0]);
     }
 
     public function closeImSon()

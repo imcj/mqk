@@ -7,6 +7,11 @@ class Config
     public static $default;
 
     /**
+     * @var string
+     */
+    private $dsn;
+
+    /**
      * @var Redis主机
      */
     private $host;
@@ -52,7 +57,7 @@ class Config
     private $quite = false;
 
     /**
-     * Redis 集群的服务器配置
+     * Redis 集群的服务器DSN配置
      * @var string[]
      */
     private $cluster = array();
@@ -69,6 +74,13 @@ class Config
      * @var bool
      */
     private $fast = false;
+
+    /**
+     * 启动脚本路径
+     *
+     * @var string
+     */
+    private $initScript = "";
 
     public function __construct(
         $host,
@@ -208,4 +220,28 @@ class Config
     {
         $this->testJobMax = $testJobMax;
     }
+
+    public function initScript()
+    {
+        return $this->initScript;
+    }
+
+    public function setInitScript($initScript)
+    {
+        $this->initScript = $initScript;
+    }
+
+    public function dsn()
+    {
+        return $this->dsn;
+    }
+
+    public function setDsn($dsn)
+    {
+        $this->dsn = Dsn::parse($dsn);
+        $this->host = $dsn->host;
+        $this->port = $dsn->port;
+        $this->password = $dsn->pass;
+    }
+
 }

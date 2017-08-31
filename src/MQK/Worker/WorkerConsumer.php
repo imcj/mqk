@@ -163,9 +163,21 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
 
     protected function loadUserInitializeScript()
     {
+        if ($this->config->initScript()) {
+            if (file_exists($this->config->initScript())) {
+                include_once $this->config->initScript();
+                return;
+            } else {
+//                $this->cliLogger->warning("You specify init script [{$this->config->initScript()}], but file not exists.");
+            }
+        }
         $cwd = getcwd();
         $initFilePath = "{$cwd}/init.php";
-        if (file_exists($initFilePath))
+
+        if (file_exists($initFilePath)) {
             include_once $initFilePath;
+        } else {
+//            $this->cliLogger->warning("{$initFilePath} not found, all event will miss.");
+        }
     }
 }
