@@ -56,14 +56,18 @@ class RedisFactory
 
     public function createRedis($dsn=null)
     {
-        if (null == $dsn) {
-            $dsn = "redis://:{$this->config->password()}@{$this->config->host()}:{$this->config->port()}";
-        }
-        $dsn = Dsn::parse($dsn);
+        if ($dsn) {
+            $dsn = Dsn::parse($dsn);
 
-        $this->host = $dsn->host;
-        $this->port = (int)$dsn->port;
-        $this->password = $dsn->pass;
+            $this->host = $dsn->host;
+            $this->port = (int)$dsn->port;
+            $this->password = $dsn->pass;
+        } else {
+            $this->host = $this->config->host();
+            $this->port = $this->config->port();
+            $this->password = $this->config->password();
+        }
+
 
         if (null != $this->connection) {
             return $this->connection;

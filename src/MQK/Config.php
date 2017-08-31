@@ -2,6 +2,8 @@
 
 namespace MQK;
 
+use AD7six\Dsn\Dsn;
+
 class Config
 {
     public static $default;
@@ -238,10 +240,15 @@ class Config
 
     public function setDsn($dsn)
     {
-        $this->dsn = Dsn::parse($dsn);
-        $this->host = $dsn->host;
-        $this->port = $dsn->port;
-        $this->password = $dsn->pass;
+        $this->dsn = $dsn;
+        $dsn = Dsn::parse($dsn);
+        if (property_exists($dsn, 'host'))
+            $this->host = $dsn->host;
+
+        if (property_exists($dsn, 'port'))
+            $this->port = $dsn->port;
+        if (property_exists($dsn, 'pass'))
+            $this->password = $dsn->pass;
     }
 
 }

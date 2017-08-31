@@ -46,6 +46,10 @@ abstract class AbstractCommand extends Command
         if (!empty($config['workers'])) {
             $conf->setWorkers((int)$config['workers']);
         }
+
+        if (!empty($config['dsn'])) {
+            $conf->setDsn($config['dsn']);
+        }
     }
 
 }
