@@ -242,12 +242,12 @@ class Config
     {
         $this->dsn = $dsn;
         $dsn = Dsn::parse($dsn);
-        if (property_exists($dsn, 'host'))
+        if ($dsn->host)
             $this->host = $dsn->host;
 
-        if (property_exists($dsn, 'port'))
+        if ($dsn->port)
             $this->port = $dsn->port;
-        if (property_exists($dsn, 'pass'))
+        if ($dsn->pass)
             $this->password = $dsn->pass;
     }
 
