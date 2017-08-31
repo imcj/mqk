@@ -51,6 +51,7 @@ class PIPE
         $exception = [];
 
         @stream_select($read, $write, $exception, 1.00);
+        pcntl_signal_dispatch();
         if (in_array($pipe, $read)) {
             $buffer = fgets($pipe);
             if ($buffer) {
