@@ -110,15 +110,17 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
 
     public function run()
     {
-        $this->redisFactory = RedisFactory::shared();
-        $this->connection = $this->redisFactory->reconnect();
+        $this->pipe->closeImSon();
 
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
+
+        $this->redisFactory = RedisFactory::shared();
+        $this->connection = $this->redisFactory->reconnect();
         $this->registry = new Registry($this->connection);
         $this->jobDAO = new JobDAO($this->connection);
 
-        $this->pipe->closeImSon();
+
 
         if ($this->config->testJobMax() > 0 ) {
             $this->queues = new TestQueueCollection($this->config->testJobMax());
@@ -126,6 +128,7 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
             $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
         }
 
+//        $this->logger->debug(var_export($this->connection, true));
         $this->logger->debug("Process {$this->id} started.");
 
         $this->workerStartTime = Time::micro();

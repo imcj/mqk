@@ -13,6 +13,7 @@ class WorkerConsumerExector extends AbstractWorker
 
     protected function execute()
     {
+        $now  = time();
         while (true) {
             try {
                 $message = $this->queues->dequeue(!$this->config->burst());
@@ -31,7 +32,7 @@ class WorkerConsumerExector extends AbstractWorker
 //            $this->logger->debug("[execute] Job is null.");
             return;
         }
-
+        $this->logger->debug("Pop a message {$message->id()} at {$now}.");
         if (!$this->config->fast()) {
             $this->registry->start($message);
 //            $this->logger->info("Job {$job->id()} is started");

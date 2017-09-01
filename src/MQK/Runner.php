@@ -132,11 +132,18 @@ class Runner implements MasterProcess
     {
         $this->dispatchedSignalInt = true;
         $this->pipe->dispatchedSignalInt = true;
-        $this->pipe->write("Q");
+        try {
+            $this->pipe->write("Q");
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+
+            $this->halt();
+        }
     }
 
     function signalChld($status)
     {
+        $this->logger->debug("Received SIGCHLD signal.");
         while (-1 != pcntl_waitpid(0, $status)) {
             pcntl_wexitstatus($status);
             $this->exists += 1;
@@ -181,12 +188,13 @@ class Runner implements MasterProcess
             try {
                 $buffer = $this->pipe->read();
             } catch (\Exception $e) {
+                $this->logger->error($e->getMessage());
                 $this->halt();
                 throw $e;
             }
 
             if (!$fast && $findExpiredJob) {
-                $this->logger->debug("Search expired job");
+//                $this->logger->debug("Search expired message");
                 $this->expiredFinder->process();
             }
 
@@ -203,6 +211,8 @@ class Runner implements MasterProcess
 
         $worker->setId($pid);
         $this->workers[$worker->id()] = $worker;
+
+        $this->logger->debug("Started new worker {$worker->id()}");
         return $worker;
     }
 

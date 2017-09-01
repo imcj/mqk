@@ -42,7 +42,7 @@ class Registry
             return;
         }
         $ttl = time() + $message->ttl();
-//        $this->logger->debug("A message {$message->id()} set expire date to {$message->ttl()})");
+        $this->logger->debug("Message {$message->id()} set expire date to $ttl)");
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
@@ -75,10 +75,11 @@ class Registry
 
     public function queryExpiredMessage($queueName)
     {
+        $now = time();
         $id = $this->connection->zRangeByScore(
             $queueName,
             0,
-            time(),
+            $now,
             array("limit" => array(0, 1)));
         if (is_array($id)) {
             if (empty($id))
@@ -89,7 +90,7 @@ class Registry
         if (empty($id))
             return null;
 
-//        $this->logger->debug("Found expire job {$id}.");
+        $this->logger->debug("Found expire ($now) message {$id}.");
         return $id;
     }
 
