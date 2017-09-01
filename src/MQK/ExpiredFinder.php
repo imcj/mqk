@@ -74,43 +74,43 @@ class ExpiredFinder
         /**
          * @var $queue Queue
          */
-        $id = $this->registry->getExpiredJob("mqk:started");
+        $id = $this->registry->queryExpiredMessage("mqk:started");
         if (null == $id)
             return;
 
         $this->registry->clear("mqk:started", $id);
         try {
-            $job = $this->jobDAO->find($id);
+            $message = $this->jobDAO->find($id);
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return;
         }
-//        $this->logger->debug("[process] Find job {$job->id()}");
-//        $this->logger->debug(json_encode($job->jsonSerialize()));
+        $this->logger->debug("Find expired message {$message->id()}");
+        $this->logger->debug(json_encode($message->jsonSerialize()));
         try {
-            $queue = $this->queues->get($job->queue());
+            $queue = $this->queues->get($message->queue());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            $this->logger->error(json_encode($job->jsonSerialize()));
+            $this->logger->error(json_encode($message->jsonSerialize()));
             return;
         }
 
-//        $this->logger->debug("The job {$job->id()} retries {$job->retries()}");
-        if ($job->retries() > 2) {
-            $this->clearRetryFailed($job);
+//        $this->logger->debug("The message {$message->id()} retries {$message->retries()}");
+        if ($message->retries() > 2) {
+            $this->clearRetryFailed($message);
             return;
         }
-        if (null == $job) {
+        if (null == $message) {
             $this->logger->error("[reassignExpredJob] Job is null");
         }
 
         if (!$this->cluster)
             $this->connection->multi();
 
-        $job->increaseRetries();
-//        $this->logger->debug(json_encode($job->jsonSerialize()));
-        $this->jobDAO->store($job);
-        $queue->enqueue($job);
+        $message->increaseRetries();
+//        $this->logger->debug(json_encode($message->jsonSerialize()));
+        $this->jobDAO->store($message);
+        $queue->enqueue($message);
 
         if (!$this->cluster)
             $this->connection->exec();

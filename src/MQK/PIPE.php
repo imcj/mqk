@@ -17,6 +17,8 @@ class PIPE
      */
     private $pipe;
 
+    public $dispatchedSignalInt = false;
+
     public function __construct()
     {
         $this->pipe = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
@@ -39,6 +41,25 @@ class PIPE
         return $this->pipe[$index];
     }
 
+    public function error_handler($errno, $errstr, $errfile, $errline, $errcontext = null)
+    {
+        $this->last_error = compact('errno', 'errstr', 'errfile', 'errline', 'errcontext');
+
+        // fwrite notice that the stream isn't ready
+        if (strstr($errstr, 'Resource temporarily unavailable')) {
+            // it's allowed to retry
+            return;
+        }
+        // stream_select warning that it has been interrupted by a signal
+        if (strstr($errstr, 'Interrupted system call')) {
+            throw new \Exception("Interrupted system call");
+            // it's allowed while processing signals
+            return;
+        }
+        // raise all other issues to exceptions
+        throw new \Exception($errstr, 0, $errno, $errfile, $errline);
+    }
+
     /**
      * TODO: 不处理 select
      * @return bool|null|string
@@ -50,7 +71,18 @@ class PIPE
         $write = [];
         $exception = [];
 
-        @stream_select($read, $write, $exception, 1.00);
+        if ($this->dispatchedSignalInt) {
+            exit();
+        }
+        set_error_handler([$this, "error_handler"]);
+        try {
+            stream_select($read, $write, $exception, 1.00);
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            restore_error_handler();
+        }
+
         pcntl_signal_dispatch();
         if (in_array($pipe, $read)) {
             $buffer = fgets($pipe);

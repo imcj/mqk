@@ -132,6 +132,7 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
 
         while ($this->alive) {
             $this->execute();
+
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 1024) {
                 break;
@@ -150,10 +151,9 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
     {
         if (0 == $this->workerEndTime)
             $this->workerEndTime = time();
-
         $duration = $this->workerEndTime - $this->workerStartTime;
-        $this->cliLogger->notice("[run] duration {$duration} second");
-        $this->cliLogger->notice("Success {$this->success} failure {$this->failure}");
+//        $this->logger->notice("[run] duration {$duration} second");
+//        $this->logger->notice("Success {$this->success} failure {$this->failure}");
     }
 
     protected function memoryGetUsage()

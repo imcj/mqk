@@ -2,6 +2,8 @@
 namespace MQK\Worker;
 
 
+use MQK\Exception\TestTimeoutException;
+
 class WorkerConsumerExector extends AbstractWorker
 {
     protected function initialize()
@@ -45,17 +47,16 @@ class WorkerConsumerExector extends AbstractWorker
             $messageClass = (string)get_class($message);
             $this->cliLogger->info("{$messageClass} {$message->id()} is finished");
             if ($afterExecute - $beforeExecute >= $message->ttl()) {
-                $this->logger->warn(sprintf("The job %s timed out for %d seconds.", $message->id(), $message->ttl()));
+                $this->logger->warn(sprintf("The message %s timed out for %d seconds.", $message->id(), $message->ttl()));
 //                return;
             }
 
             if (!$this->config->fast())
                 $this->registry->finish($message);
         } catch (\Exception $exception) {
-
-            if ($exception instanceof TestTimeoutException)
-                $result = null;
-            else {
+            if ($exception instanceof TestTimeoutException) {
+                $this->logger->debug("Catch timeout exception.");
+            } else {
                 $this->failure += 1;
 
                 $this->logger->error($exception->getMessage());

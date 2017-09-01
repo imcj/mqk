@@ -76,6 +76,8 @@ class Runner implements MasterProcess
      */
     protected $pipe;
 
+    protected $dispatchedSignalInt = false;
+
     public function __construct()
     {
         $queueFactory = new QueueFactory();
@@ -128,8 +130,9 @@ class Runner implements MasterProcess
 
     function sigintHandler($signo)
     {
-        $this->logger->debug("Pressed ctrl+C");
-        $this->halt();
+        $this->dispatchedSignalInt = true;
+        $this->pipe->dispatchedSignalInt = true;
+        $this->pipe->write("Q");
     }
 
     function signalChld($status)
@@ -166,8 +169,8 @@ class Runner implements MasterProcess
         $fast = $this->config->fast();
         $findExpiredJob = $this->findExpiredJob;
 
+        $buffer = null;
         while ($this->alive) {
-            $buffer = $this->pipe->read();
             if ($buffer) {
                 list($action, $data) = explode(":", $buffer);
                 if ($action == "Q") {
@@ -175,14 +178,16 @@ class Runner implements MasterProcess
                     unset($this->workers[(int)$data]);
                 }
             }
+            try {
+                $buffer = $this->pipe->read();
+            } catch (\Exception $e) {
+                $this->halt();
+                throw $e;
+            }
 
-            if ($fast) {
-            } else {
-                if ($findExpiredJob) {
-//                    $this->logger->debug("Search expired job");
-                    $this->expiredFinder->process();
-                }
-//                sleep(1);
+            if (!$fast && $findExpiredJob) {
+                $this->logger->debug("Search expired job");
+                $this->expiredFinder->process();
             }
 
         }
@@ -213,7 +218,6 @@ class Runner implements MasterProcess
                 $this->cliLogger->error("Kill process failure {$worker->id()}");
             }
         }
-//        sleep(2);
         exit(0);
     }
 

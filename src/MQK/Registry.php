@@ -41,17 +41,17 @@ class Registry
             $this->logger->debug("Name of job is invalid.");
             return;
         }
-//        $this->logger->debug("The job {$job->id()} ttl is {$job->ttl()})");
         $ttl = time() + $message->ttl();
+//        $this->logger->debug("A message {$message->id()} set expire date to {$message->ttl()})");
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
+
         $this->connection->zAdd("mqk:started", $ttl, $message->id());
         $this->connection->set("job:{$message->id()}", json_encode($message->jsonSerialize()), 6000);
 
         if (empty($this->config->cluster()))
             $this->connection->exec();
-//        $this->logger->info("{$job->id()} will at $ttl timeout.");
     }
 
     public function fail(Message $message)
@@ -73,7 +73,7 @@ class Registry
         $return = $this->connection->zDelete($queueName, $id);
     }
 
-    public function getExpiredJob($queueName)
+    public function queryExpiredMessage($queueName)
     {
         $id = $this->connection->zRangeByScore(
             $queueName,

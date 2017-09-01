@@ -1,10 +1,10 @@
 <?php
 namespace MQK\Job;
 
-use Connection\RedisConnectionProxy;
 use Monolog\Logger;
-use MQK\Job;
 use MQK\LoggerFactory;
+use MQK\Queue\Message;
+use MQK\Queue\MessageFactory;
 
 class JobDAO
 {
@@ -18,15 +18,21 @@ class JobDAO
      */
     private $connection;
 
+    /**
+     * @var MessageFactory
+     */
+    private $messageFactory;
+
     public function __construct($connection)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->messageFactory = MessageFactory::shared();
     }
 
     /**
      * @param $id
-     * @return Job
+     * @return Message
      */
     public function find($id)
     {
@@ -36,13 +42,20 @@ class JobDAO
             throw new \Exception("Job {$id} not found.");
         }
         $jsonObject = json_decode($raw);
-        return Job::job($jsonObject);
+        $message = $this->messageFactory->messageWithJson($jsonObject);
+
+        return $message;
     }
 
-    public function store(Job $job)
+    /**
+     * 持久化存储Message
+     *
+     * @param Message $message
+     */
+    public function store(Message $message)
     {
-        $raw = json_encode($job->jsonSerialize());
-        $this->connection->set("job:", $job->id(), $raw);
+        $raw = json_encode($message->jsonSerialize());
+        $this->connection->set("job:", $message->id(), $raw);
     }
 
     public function clear($job)

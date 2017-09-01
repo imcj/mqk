@@ -27,6 +27,8 @@ abstract class AbstractCommand extends Command
         $verbose = $input->getOption("verbose");
         if ($verbose) {
             LoggerFactory::shared()->setDefaultLevel(Logger::DEBUG);
+        } else {
+            LoggerFactory::shared()->setDefaultLevel(Logger::INFO);
         }
         $dsn = $input->getOption("redis-dsn");
         if (!empty($dsn)) {

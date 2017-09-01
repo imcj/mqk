@@ -51,14 +51,14 @@ class RedisQueue implements Queue
             $this->logger->error("[enqueue] {$message->id()} contains _", debug_backtrace());
         }
         $message->setQueue($this->name);
-        $jobJson = $message->jsonSerialize();
+        $messageJsonObject = $message->jsonSerialize();
         if ($message->retries()) {
-            $jobJson['retries'] = $message->retries();
+            $messageJsonObject['retries'] = $message->retries();
         }
-        $encoded = json_encode($jobJson);
-//        $this->logger->debug("[enqueue] {$job->id()}");
-//        $this->logger->debug($encoded);
-        $this->connection->lpush("{$this->key()}", $encoded);
+        $messageJson = json_encode($messageJsonObject);
+//        $this->logger->debug("[enqueue] {$message->id()}");
+//        $this->logger->debug($messageJson);
+        $this->connection->lpush("{$this->key()}", $messageJson);
     }
 
     public function name()

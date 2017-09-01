@@ -100,6 +100,11 @@ class Message implements \JsonSerializable
         $this->payload = $payload;
     }
 
+    public function increaseRetries()
+    {
+        $this->retries += 1;
+    }
+
     /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
