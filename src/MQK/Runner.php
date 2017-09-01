@@ -108,7 +108,7 @@ class Runner implements MasterProcess
         $queues = [$queueFactory->createQueue("default")];
 
         $this->pipe = new PIPE();
-        $this->workerFactory = new WorkerConsumerFactory($config, $queues, $this->pipe);
+        $this->workerFactory = new WorkerConsumerFactory($config, $queues);
 
         $this->expiredFinder = new ExpiredFinder($connection, $this->jobDAO, $this->registry, $this->queues);
 
@@ -131,9 +131,9 @@ class Runner implements MasterProcess
     function sigintHandler($signo)
     {
         $this->dispatchedSignalInt = true;
-        $this->pipe->dispatchedSignalInt = true;
         try {
             $this->pipe->write("Q");
+            $this->logger->debug("Wakeup signal.");
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
 
@@ -178,37 +178,25 @@ class Runner implements MasterProcess
 
         $buffer = null;
         while ($this->alive) {
-            if ($buffer) {
-                list($action, $data) = explode(":", $buffer);
-                if ($action == "Q") {
-                    $this->cliLogger->info("[run] Received quit command.");
-                    unset($this->workers[(int)$data]);
-                }
-            }
             try {
-                $buffer = $this->pipe->read();
+                $this->pipe->read();
             } catch (\Exception $e) {
+                // 被信号唤醒
                 $this->logger->error($e->getMessage());
                 $this->halt();
-                throw $e;
             }
 
             if (!$fast && $findExpiredJob) {
-//                $this->logger->debug("Search expired message");
                 $this->expiredFinder->process();
             }
 
         }
-        $this->logger->info("MasterProcess process quit.");
     }
 
     function spawn()
     {
         $worker = $this->workerFactory->create();
         $pid = $worker->start();
-
-        $this->pipe->closeImFather();
-
         $worker->setId($pid);
         $this->workers[$worker->id()] = $worker;
 
@@ -228,6 +216,7 @@ class Runner implements MasterProcess
                 $this->cliLogger->error("Kill process failure {$worker->id()}");
             }
         }
+        $this->logger->info("MasterProcess process quit.");
         exit(0);
     }
 
