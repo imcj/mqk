@@ -110,8 +110,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
 
     public function run()
     {
-        $this->pipe->closeImSon();
-
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->cliLogger = LoggerFactory::shared()->cliLogger();
 
@@ -127,8 +125,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         } else {
             $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
         }
-
-//        $this->logger->debug(var_export($this->connection, true));
         $this->logger->debug("Process {$this->id} started.");
 
         $this->workerStartTime = Time::micro();
