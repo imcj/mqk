@@ -76,6 +76,8 @@ class Runner implements MasterProcess
      */
     protected $selfPipe;
 
+    protected $signalList = [];
+
     protected $quiting = false;
     protected $quited = 0;
 
@@ -142,13 +144,9 @@ class Runner implements MasterProcess
             $this->logger->debug("Force quit.");
             exit(0);
         }
-        try {
-            $this->selfPipe->write("Q");
-            $this->logger->debug("Wakeup signal.");
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            $this->halt();
-        }
+        $this->signalList[] = $signo;
+        $this->logger->debug("Weakup signal.");
+        $this->selfPipe->write("Q");
     }
 
     function signalIncrement($status)
