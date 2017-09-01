@@ -36,7 +36,8 @@ class RunCommand extends AbstractCommand
             ->addOption("fast", 'f', InputOption::VALUE_NONE)
             ->addOption("test", 't', InputOption::VALUE_OPTIONAL)
             ->addOption("empty-worker", '', InputOption::VALUE_NONE)
-            ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "");
+            ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "")
+            ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -67,13 +68,24 @@ class RunCommand extends AbstractCommand
         if ($max > 0)
             $config->setTestJobMax($max);
 
-        $config = $input->getOption("config");
-        if (!empty($config)) {
-            if (!file_exists($config)) {
+        $configFilePath = $input->getOption("config");
+        if (!empty($configFilePath)) {
+            if (!file_exists($configFilePath)) {
                 $this->logger->warning("You specify config file, but not found");
             } else {
-                $this->loadIniConfig($config);
+                $this->loadIniConfig($configFilePath);
             }
+        }
+
+        $sentry = $input->getOption("sentry");
+        if (!empty($sentry)) {
+            $config->setSentry($sentry);
+
+            $client = new \Raven_Client($sentry);
+            $error_handler = new \Raven_ErrorHandler($client);
+            $error_handler->registerExceptionHandler();
+            $error_handler->registerErrorHandler();
+            $error_handler->registerShutdownFunction();
         }
 
         $runner = $this->masterProcessFactory->create();

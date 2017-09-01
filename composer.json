@@ -14,7 +14,8 @@
         "ad7six/dsn": "^0.4.0",
         "symfony/event-dispatcher": "^3.3",
         "symfony/serializer": "^3.3",
-        "symfony/property-access": "^3.3"
+        "symfony/property-access": "^3.3",
+        "sentry/sentry": "^1.7"
     },
     "autoload":{
         "psr-4": {
