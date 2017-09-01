@@ -132,17 +132,21 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         $this->logger->debug("[run] Sent quit command.");
 
         $this->workerEndTime = Time::micro();
-        $this->beforeExit();
+        $this->didQuit();
         exit(0);
     }
 
-    protected function beforeExit()
+    protected function didQuit()
     {
         if (0 == $this->workerEndTime)
             $this->workerEndTime = time();
         $duration = $this->workerEndTime - $this->workerStartTime;
         $this->logger->notice("[run] duration {$duration} second");
         $this->logger->notice("Success {$this->success} failure {$this->failure}");
+    }
+
+    protected function willExit()
+    {
     }
 
     protected function memoryGetUsage()

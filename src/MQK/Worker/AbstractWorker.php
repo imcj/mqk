@@ -16,7 +16,6 @@ abstract class AbstractWorker
      */
     protected $createdAt;
     protected $alive = true;
-
     const M = 1024 * 1024;
 
     public function __construct()
@@ -33,8 +32,8 @@ abstract class AbstractWorker
         } else if ($pid) {
             return $pid;
         }
-//        pcntl_signal(SIGQUIT, array(&$this, "signalQuitHandler"));
-//        pcntl_signal(SIGTERM, array(&$this, "signalTerminalHandler"));
+        pcntl_signal(SIGQUIT, array(&$this, "signalQuitHandler"));
+        pcntl_signal(SIGTERM, array(&$this, "signalTerminalHandler"));
 //        pcntl_signal(SIGUSR1, array(&$this, "signalUsr1Handler"));
         $this->id = posix_getpid();
 
@@ -45,20 +44,33 @@ abstract class AbstractWorker
 
     protected function signalUsr1Handler($signo)
     {
-        $this->beforeExit();
     }
 
     protected function signalTerminalHandler($signo)
     {
-        $this->beforeExit();
+        $this->logger->debug("Signal terminal.");
+        $this->willExit();
+        $this->alive = false;
     }
 
     protected function signalQuitHandler($signo)
     {
-        $this->beforeExit();
+        $this->willQuit();
+        $this->alive = false;
+        exit(0);
     }
 
-    protected function beforeExit()
+    protected function willExit()
+    {
+
+    }
+
+    protected function willQuit()
+    {
+
+    }
+
+    protected function didQuit()
     {
 
     }

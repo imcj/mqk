@@ -74,9 +74,10 @@ class Runner implements MasterProcess
     /**
      * @var PIPE
      */
-    protected $pipe;
+    protected $selfPipe;
 
-    protected $dispatchedSignalInt = false;
+    protected $quiting = false;
+    protected $quited = 0;
 
     public function __construct()
     {
@@ -107,41 +108,16 @@ class Runner implements MasterProcess
         $queueFactory = new QueueFactory();
         $queues = [$queueFactory->createQueue("default")];
 
-        $this->pipe = new PIPE();
+        $this->selfPipe = new PIPE();
         $this->workerFactory = new WorkerConsumerFactory($config, $queues);
 
         $this->expiredFinder = new ExpiredFinder($connection, $this->jobDAO, $this->registry, $this->queues);
 
-        pcntl_signal(SIGCHLD, array(&$this, "signal"));
+        pcntl_signal(SIGCHLD, array(&$this, "signalChildHandler"));
         pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
     }
 
-    function signal($status)
-    {
-        switch ($status) {
-            case SIGCHLD:
-                $this->signalChld($status);
-                break;
-            case STDIN:
-                $this->signalIncrement($status);
-                break;
-        }
-    }
-
-    function sigintHandler($signo)
-    {
-        $this->dispatchedSignalInt = true;
-        try {
-            $this->pipe->write("Q");
-            $this->logger->debug("Wakeup signal.");
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-
-            $this->halt();
-        }
-    }
-
-    function signalChld($status)
+    function signalChildHandler($status)
     {
         $this->logger->debug("Received SIGCHLD signal.");
         while (-1 != pcntl_waitpid(0, $status)) {
@@ -155,8 +131,23 @@ class Runner implements MasterProcess
             return;
         }
 
-        if (!$this->config->burst()) {
+        if (!$this->config->burst() && !$this->quiting) {
             $this->spawn();
+        }
+    }
+
+    function sigintHandler($signo)
+    {
+        if ($this->quiting) {
+            $this->logger->debug("Force quit.");
+            exit(0);
+        }
+        try {
+            $this->selfPipe->write("Q");
+            $this->logger->debug("Wakeup signal.");
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $this->halt();
         }
     }
 
@@ -179,11 +170,11 @@ class Runner implements MasterProcess
         $buffer = null;
         while ($this->alive) {
             try {
-                $this->pipe->read();
+                $this->selfPipe->read();
             } catch (\Exception $e) {
                 // 被信号唤醒
                 $this->logger->error($e->getMessage());
-                $this->halt();
+                $this->stop(true);
             }
 
             if (!$fast && $findExpiredJob) {
@@ -228,5 +219,36 @@ class Runner implements MasterProcess
     public function setWorkerFactory($workerFactory)
     {
         $this->workerFactory = $workerFactory;
+    }
+
+
+    public function stop($graceful = false)
+    {
+        $this->quiting =  true;
+        $signal = $graceful ? SIGTERM : SIGQUIT;
+        $limit = time() + 30;
+        $this->killall($signal);
+
+        while (time() < $limit) {
+            usleep(100000);
+        }
+        $this->killall(SIGQUIT);
+
+        $this->logger->info("MasterProcess process quit.");
+        exit(0);
+    }
+
+    protected function killall($signal)
+    {
+        $signalAction = $signal == SIGTERM ? "exit" : "quit";
+        /**
+         * @var $worker Worker
+         */
+        while ($worker = array_shift($this->workers)) {
+            $this->cliLogger->info("{$signalAction} process {$worker->id()}");
+            if (!posix_kill($worker->id(), $signal)) {
+                $this->cliLogger->error("{$signalAction} process failure {$worker->id()}");
+            }
+        }
     }
 }
