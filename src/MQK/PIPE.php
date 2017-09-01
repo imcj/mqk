@@ -99,10 +99,6 @@ class PIPE
      */
     public function write($data)
     {
-        $meta = @stream_get_meta_data($this->pipe[0]);
-        if (is_writable($meta['uri']))
-            fwrite($this->pipe[0], $data);
-        else
-            throw new \Exception("pipe zero can't writable.");
+        fwrite($this->pipe[0], $data);
     }
 }
