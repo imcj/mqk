@@ -84,6 +84,11 @@ class Config
      */
     private $initScript = "";
 
+    /**
+     * @var string
+     */
+    private $sentry;
+
     public function __construct(
         $host,
         $port,
@@ -251,4 +256,13 @@ class Config
             $this->password = $dsn->pass;
     }
 
+    public function sentry()
+    {
+        return $this->sentry;
+    }
+
+    public function setSentry($sentry)
+    {
+        $this->sentry = $sentry;
+    }
 }
