@@ -17,8 +17,6 @@ class PIPE
      */
     private $pipe;
 
-    public $dispatchedSignalInt = false;
-
     public function __construct()
     {
         $this->pipe = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
@@ -71,9 +69,6 @@ class PIPE
         $write = [];
         $exception = [];
 
-        if ($this->dispatchedSignalInt) {
-            exit();
-        }
         set_error_handler([$this, "error_handler"]);
         try {
             stream_select($read, $write, $exception, 1.00);

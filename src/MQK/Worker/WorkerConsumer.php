@@ -91,20 +91,12 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $failure = 0;
 
-
-    /**
-     * @var PIPE
-     */
-    protected $pipe;
-
-    public function __construct(Config $config, $queues, PIPE $pipe)
+    public function __construct(Config $config, $queues)
     {
         parent::__construct();
 
         $this->config = $config;
         $this->queueNameList = $queues;
-        $this->pipe = $pipe;
-
         $this->loadUserInitializeScript();
     }
 
@@ -137,8 +129,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
                 break;
             }
         }
-        $id = (string)$this->id;
-        $this->pipe->write("Q:$id");
         $this->logger->debug("[run] Sent quit command.");
 
         $this->workerEndTime = Time::micro();
@@ -151,8 +141,8 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         if (0 == $this->workerEndTime)
             $this->workerEndTime = time();
         $duration = $this->workerEndTime - $this->workerStartTime;
-//        $this->logger->notice("[run] duration {$duration} second");
-//        $this->logger->notice("Success {$this->success} failure {$this->failure}");
+        $this->logger->notice("[run] duration {$duration} second");
+        $this->logger->notice("Success {$this->success} failure {$this->failure}");
     }
 
     protected function memoryGetUsage()
