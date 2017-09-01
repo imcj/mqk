@@ -36,9 +36,11 @@ class K
         return $job;
     }
 
-    public static function dispatch(Event $event)
+    public static function dispatch(Event $event, $ttl = -1)
     {
         $message = self::messageFactory()->messageWithEvent($event);
+        if ($ttl > -1)
+            $message->setTtl($ttl);
         self::defaultQueue()->enqueue($message);
 
         return $message;
