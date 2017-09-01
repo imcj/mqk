@@ -18,6 +18,11 @@ class Calculator
         throw new TestTimeoutException("Test");
     }
 
+    public static function sumFailure($a, $b)
+    {
+        throw new \Exception("Got an exception");
+    }
+
     public static function sumTimeout($session, $a, $b)
     {
         echo "Sum test\n";

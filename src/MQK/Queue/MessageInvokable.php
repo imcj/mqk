@@ -17,7 +17,6 @@ class MessageInvokable extends Message
     public function __construct($id, $discriminator = "invokable", $queue = null, $ttl = 600, $payload = null)
     {
         parent::__construct($id, $discriminator, $queue, $ttl, $payload);
-        var_dump($payload);
 
         $this->func = $payload->func;
         $this->arguments = $payload->arguments;
