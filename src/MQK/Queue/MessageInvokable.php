@@ -25,7 +25,7 @@ class MessageInvokable extends Message
 
     public function __invoke()
     {
-        $arguments = json_decode($this->arguments);
+        $arguments = $this->arguments;
         $result = @call_user_func_array($this->func, $arguments);
 
         $error = error_get_last();
@@ -37,13 +37,15 @@ class MessageInvokable extends Message
 //
 //            throw new \Exception($error['message']);
 //        }
+
+        return $result;
     }
 
     public function jsonSerialize()
     {
         $payload = array(
             'func' => $this->func,
-            'arguments' => json_encode($this->arguments)
+            'arguments' => $this->arguments
         );
         $json = parent::jsonSerialize();
         $json['payload'] = $payload;
