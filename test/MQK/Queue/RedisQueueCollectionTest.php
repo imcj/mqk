@@ -52,4 +52,25 @@ class RedisQueueCollectionTest extends TestCase
 
         $this->assertTrue($assertYes);
     }
+
+    public function testDequeueMessageInvokableSync()
+    {
+        $queues = new RedisQueueCollection($this->connection, [$this->queue]);
+        $message = $queues->dequeue();
+        $this->assertInstanceOf(MessageInvokableSync::class, $message);
+    }
+
+    public function testMessageInvokableSync()
+    {
+        $sync = K::invokeSync(
+            array(
+                'MQK\Test\Sum::oneSecond',
+                'MQK\Test\Sum::oneSecond'
+            )
+        );
+
+        $sync->then(function($arg) {
+            var_dump($arg);
+        });
+    }
 }

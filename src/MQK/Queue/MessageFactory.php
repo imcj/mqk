@@ -23,23 +23,38 @@ class MessageFactory
         }
 
         switch ($discriminator) {
+            case "invokable_sync":
+                $messageClass = MessageInvokableSync::class;
+                break;
+
             case "invokable":
                 $messageClass = MessageInvokable::class;
                 break;
+
             default:
                 $messageClass = MessageEvent::class;
                 break;
         }
 
+        if ("invokable_sync" == $discriminator) {
+            $message = new $messageClass(
+                $messageJson->groupId,
+                $messageJson->id,
+                $discriminator,
+                $messageJson->queue,
+                $messageJson->ttl,
+                $messageJson->payload
+            );
+        } else {
+            $message = new $messageClass(
+                $messageJson->id,
+                $discriminator,
+                $messageJson->queue,
+                $messageJson->ttl,
+                $messageJson->payload
+            );
+        }
 
-
-        $message = new $messageClass(
-            $messageJson->id,
-            $discriminator,
-            $messageJson->queue,
-            $messageJson->ttl,
-            $messageJson->payload
-        );
 
         if (property_exists($messageJson, "retries")) {
             $message->setRetries($messageJson->retries);

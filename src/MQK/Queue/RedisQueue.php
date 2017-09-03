@@ -61,6 +61,17 @@ class RedisQueue implements Queue
         $this->connection->lpush("{$this->key()}", $messageJson);
     }
 
+    public function enqueueBatch($messages)
+    {
+        $this->connection->multi();
+        foreach ($messages as $message) {
+            $this->enqueue($message);
+        }
+        $this->connection->exec();
+    }
+
+    public function
+
     public function name()
     {
         return $this->name;

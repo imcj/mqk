@@ -41,20 +41,7 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $cliLogger;
 
-    /**
-     * @var Registry
-     */
-    protected $registry;
 
-    /**
-     * @var JobDAO
-     */
-    protected $jobDAO;
-
-    /**
-     * @var \Redis
-     */
-    protected $connection;
 
     /**
      * @var QueueCollection
@@ -65,11 +52,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      * @var string[]
      */
     protected $queueNameList;
-
-    /**
-     * @var RedisFactory
-     */
-    protected $redisFactory;
 
     /**
      * @var float
@@ -93,32 +75,16 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
 
     public function __construct(Config $config, $queues)
     {
-        parent::__construct();
+        parent::__construct($config, $queues);
 
-        $this->config = $config;
-        $this->queueNameList = $queues;
         $this->loadUserInitializeScript();
     }
 
     public function run()
     {
-        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->cliLogger = LoggerFactory::shared()->cliLogger();
+        parent::run();
 
-        $this->redisFactory = RedisFactory::shared();
-        $this->connection = $this->redisFactory->reconnect();
-        $this->registry = new Registry($this->connection);
-        $this->jobDAO = new JobDAO($this->connection);
-
-
-
-        if ($this->config->testJobMax() > 0 ) {
-            $this->queues = new TestQueueCollection($this->config->testJobMax());
-        } else {
-            $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
-        }
         $this->logger->debug("Process {$this->id} started.");
-
         $this->workerStartTime = Time::micro();
 
         while ($this->alive) {

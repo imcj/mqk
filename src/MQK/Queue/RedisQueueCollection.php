@@ -129,6 +129,7 @@ class RedisQueueCollection implements QueueCollection
 
             $message = $this->messageFactory->messageWithJson($messageJsonObject);
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
             $message = null;
         }
 //        if (null == $job) {

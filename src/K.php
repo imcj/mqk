@@ -41,6 +41,29 @@ class K
         return $message;
     }
 
+    public static function invokeSync($invokes)
+    {
+        foreach ($invokes as $invoke) {
+            $func = $invoke['func'];
+            $args = $invoke['arguments'];
+
+            // 设置一个KV保存所有Invoke的信息，Invoke每次执行完成的时候判断是否执行完成。
+            // 一个队列扫描，如果该队列存在消息超时则立刻响应InvokeSync
+            // 沿用以前的消息扫描机制，判断消息的类型如果是同步类型做不同的处理
+            // 估计需要一个周的时间。
+
+            $message = new \MQK\Queue\Message(uniqid());
+            $payload = new stdClass();
+            $payload->func = $func;
+            $payload->arguments = $args;
+            $message->setPayload($payload);
+        }
+
+        self::defaultQueue()->enqueue($message);
+
+        return $message;
+    }
+
     public static function dispatch(Event $event, $ttl = -1)
     {
         $message = self::messageFactory()->messageWithEvent($event);
