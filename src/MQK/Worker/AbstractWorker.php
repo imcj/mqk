@@ -42,6 +42,11 @@ abstract class AbstractWorker
         exit();
     }
 
+    protected function run()
+    {
+
+    }
+
     protected function signalUsr1Handler($signo)
     {
     }

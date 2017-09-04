@@ -29,7 +29,6 @@ use MQK\Time;
 class WorkerConsumer extends WorkerConsumerExector implements Worker
 {
     protected $config;
-    protected $queue;
 
     /**
      * @var Logger
@@ -40,36 +39,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      * @var Logger
      */
     protected $cliLogger;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var JobDAO
-     */
-    protected $jobDAO;
-
-    /**
-     * @var \Redis
-     */
-    protected $connection;
-
-    /**
-     * @var QueueCollection
-     */
-    protected $queues;
-
-    /**
-     * @var string[]
-     */
-    protected $queueNameList;
-
-    /**
-     * @var RedisFactory
-     */
-    protected $redisFactory;
 
     /**
      * @var float
@@ -101,41 +70,30 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $workerId;
 
-    public function __construct(Config $config, $queues, $masterId)
+    public function __construct(Config $config, $queueNameList, $masterId)
     {
-        parent::__construct();
+        parent::__construct($config, $queueNameList);
 
         $this->masterId = $masterId;
         $this->workerId = uniqid();
 
-        $this->config = $config;
-        $this->queueNameList = $queues;
         $this->loadUserInitializeScript();
     }
 
     public function run()
     {
-        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->cliLogger = LoggerFactory::shared()->cliLogger();
+        parent::run();
 
-        $this->redisFactory = RedisFactory::shared();
-        $this->connection = $this->redisFactory->reconnect();
-        $this->registry = new Registry($this->connection);
-        $this->jobDAO = new JobDAO($this->connection);
-
-
-
-        if ($this->config->testJobMax() > 0 ) {
-            $this->queues = new TestQueueCollection($this->config->testJobMax());
-        } else {
-            $this->queues = new RedisQueueCollection($this->connection, $this->queueNameList);
-        }
-        $this->logger->debug("Process {$this->id} started.");
-
+        $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
 
         while ($this->alive) {
-            $this->execute();
+            $success = $this->execute();
+
+            if ($success)
+                $this->success += 1;
+            else
+                $this->failure += 1;
 
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 1024) {
@@ -192,7 +150,7 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         $key = "mqk:{$this->masterId}:{$this->workerId}";
         $masterKey = "mqk:{$this->masterId}";
         $this->connection->multi();
-        $this->connection->hSet($key, "last_updated_at", time());
+        $this->connection->hSet($key, "updated_at", time());
         $this->connection->hSet($key, 'success', (int)$this->success);
         $this->connection->hSet($key, 'failure', (int)$this->failure);
         $this->connection->expire($key, 5);

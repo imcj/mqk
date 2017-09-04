@@ -112,8 +112,7 @@ class Runner implements MasterProcess
             $this->connection,
             $queueFactory->createQueues($this->nameList, $connection)
         );
-        $queueFactory = new QueueFactory();
-        $queues = [$queueFactory->createQueue("default")];
+        $queues = ["default"];
 
         $this->selfPipe = new PIPE();
         $this->workerFactory = new WorkerConsumerFactory($config, $queues);
@@ -260,7 +259,7 @@ class Runner implements MasterProcess
     {
         $key = "mqk:{$this->masterId}";
         $this->connection->multi();
-        $this->connection->hSet($key, "last_update", time());
+        $this->connection->hSet($key, "updated_at", time());
         $this->connection->expire($key, 5);
         $this->connection->exec();
     }
