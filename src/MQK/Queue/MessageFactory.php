@@ -63,6 +63,12 @@ class MessageFactory
         return $message;
     }
 
+    /**
+     * 派发事件时使用messageWithEvent构造Message对象用于消息入列
+     *
+     * @param $event
+     * @return MessageEvent
+     */
     public function messageWithEvent($event)
     {
         /**

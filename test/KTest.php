@@ -9,18 +9,13 @@ class KTest extends TestCase
         \K::invoke('MQK\Test\Calculator::sum', 1, 1);
     }
 
-    public function testSyncMulti()
+    public function testSync()
     {
-        $invoke = K::invokeSync(array(
-            "sum1" => array(
-                "method" => '\MQK\Test\Calculator::sum',
-                "arguments" => array(1, 1)
-            ),
-            'sum2' => array(
-                "method" => '\MQK\Test\Calculator::sum',
-                "arguments" => array(2, 2)
-            ),
-        ));
+        $invokeSync = new InvokeGroup(
+            'sum1', MessageInvokableSync::invoke('\MQK\Test\Calculator::sum', 1, 1),
+            'sum2', MessageInvokableSync::invoke('\MQK\Test\Calculator::sum', 2, 2)
+        );
+        $invoke = K::invokeSync($invokeSync);
 
         $this->assertArrayHasKey('sum1', $invoke);
         $this->assertArrayHasKey('sum2', $invoke);
