@@ -81,6 +81,11 @@ class Runner implements MasterProcess
     protected $quiting = false;
     protected $quited = 0;
 
+    /**
+     * @var string
+     */
+    protected $masterId;
+
     public function __construct()
     {
         $queueFactory = new QueueFactory();
@@ -156,7 +161,8 @@ class Runner implements MasterProcess
 
     public function run()
     {
-        $this->cliLogger->notice("MasterProcess work on " . posix_getpid());
+        $this->masterId = uniqid();
+        $this->cliLogger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
         $this->logger->debug("Starting {$this->config->workers()}.");
 
         for ($i = 0; $i < $this->config->workers(); $i++) {
@@ -174,7 +180,7 @@ class Runner implements MasterProcess
                 $this->logger->error($e->getMessage());
                 $this->stop(true);
             }
-
+            $this->updateHealth();
             if (!$fast && $findExpiredJob) {
                 $this->expiredFinder->process();
             }
@@ -184,7 +190,7 @@ class Runner implements MasterProcess
 
     function spawn()
     {
-        $worker = $this->workerFactory->create();
+        $worker = $this->workerFactory->create($this->masterId);
         $pid = $worker->start();
         $worker->setId($pid);
         $this->workers[$worker->id()] = $worker;
@@ -249,4 +255,14 @@ class Runner implements MasterProcess
             }
         }
     }
+
+    protected function updateHealth()
+    {
+        $key = "mqk:{$this->masterId}";
+        $this->connection->multi();
+        $this->connection->hSet($key, "last_update", time());
+        $this->connection->expire($key, 5);
+        $this->connection->exec();
+    }
+
 }

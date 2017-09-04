@@ -91,9 +91,22 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $failure = 0;
 
-    public function __construct(Config $config, $queues)
+    /**
+     * @var string
+     */
+    protected $masterId;
+
+    /**
+     * @var string
+     */
+    protected $workerId;
+
+    public function __construct(Config $config, $queues, $masterId)
     {
         parent::__construct();
+
+        $this->masterId = $masterId;
+        $this->workerId = uniqid();
 
         $this->config = $config;
         $this->queueNameList = $queues;
@@ -172,5 +185,17 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         } else {
 //            $this->cliLogger->warning("{$initFilePath} not found, all event will miss.");
         }
+    }
+
+    protected function updateHealth()
+    {
+        $key = "mqk:{$this->masterId}:{$this->workerId}";
+        $masterKey = "mqk:{$this->masterId}";
+        $this->connection->multi();
+        $this->connection->hSet($key, "last_updated_at", time());
+        $this->connection->hSet($key, 'success', (int)$this->success);
+        $this->connection->hSet($key, 'failure', (int)$this->failure);
+        $this->connection->expire($key, 5);
+        $this->connection->exec();
     }
 }

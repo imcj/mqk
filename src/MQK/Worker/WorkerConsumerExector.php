@@ -17,6 +17,7 @@ class WorkerConsumerExector extends AbstractWorker
         while (true) {
             try {
                 $message = $this->queues->dequeue(!$this->config->burst());
+                $this->updateHealth();
                 break;
             } catch (\RedisException $e) {
                 $this->logger->error($e);
@@ -39,6 +40,7 @@ class WorkerConsumerExector extends AbstractWorker
         }
         try {
             $beforeExecute = time();
+
             $message();
             $this->success += 1;
 
@@ -55,6 +57,8 @@ class WorkerConsumerExector extends AbstractWorker
             if (!$this->config->fast())
                 $this->registry->finish($message);
         } catch (\Exception $exception) {
+            $this->logger->error("Got an exception");
+            $this->logger->error($exception->getMessage());
             if ($exception instanceof TestTimeoutException) {
                 $this->logger->debug("Catch timeout exception.");
             } else {
@@ -64,5 +68,9 @@ class WorkerConsumerExector extends AbstractWorker
                 $this->registry->fail($message);
             }
         }
+    }
+
+    protected function updateHealth()
+    {
     }
 }
