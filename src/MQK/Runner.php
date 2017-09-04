@@ -81,6 +81,8 @@ class Runner implements MasterProcess
     protected $quiting = false;
     protected $quited = 0;
 
+    protected $spawning = false;
+
     /**
      * @var string
      */
@@ -118,9 +120,10 @@ class Runner implements MasterProcess
         $this->workerFactory = new WorkerConsumerFactory($config, $queues);
 
         $this->expiredFinder = new ExpiredFinder($connection, $this->jobDAO, $this->registry, $this->queues);
+    }
 
-        pcntl_signal(SIGCHLD, array(&$this, "signalChildHandler"));
-        pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
+    function signalQuitHandler($signo)
+    {
     }
 
     function signalChildHandler($status)
@@ -148,9 +151,9 @@ class Runner implements MasterProcess
             $this->logger->debug("Force quit.");
             exit(0);
         }
-        $this->signalList[] = $signo;
+        $this->quiting = true;
         $this->logger->debug("Weakup signal.");
-        $this->selfPipe->write("Q");
+        $this->selfPipe->write(".");
     }
 
     function signalIncrement($status)
@@ -167,16 +170,22 @@ class Runner implements MasterProcess
         for ($i = 0; $i < $this->config->workers(); $i++) {
             $worker = $this->spawn();
         }
+
+        pcntl_signal(SIGCHLD, array(&$this, "signalChildHandler"));
+        pcntl_signal(SIGINT, array(&$this, "sigintHandler"));
+//        pcntl_signal(SIGQUIT, array(&$this, 'signalQuitHandler'));
+
         $fast = $this->config->fast();
         $findExpiredJob = $this->findExpiredJob;
 
         $buffer = null;
         while ($this->alive) {
             try {
-                $this->selfPipe->read();
+                $buffer = $this->selfPipe->read();
             } catch (\Exception $e) {
                 // 被信号唤醒
                 $this->logger->error($e->getMessage());
+//                continue;
                 $this->stop(true);
             }
             $this->updateHealth();
@@ -247,7 +256,7 @@ class Runner implements MasterProcess
         /**
          * @var $worker Worker
          */
-        while ($worker = array_shift($this->workers)) {
+        foreach ($this->workers as $worker) {
             $this->cliLogger->info("{$signalAction} process {$worker->id()}");
             if (!posix_kill($worker->id(), $signal)) {
                 $this->cliLogger->error("{$signalAction} process failure {$worker->id()}");

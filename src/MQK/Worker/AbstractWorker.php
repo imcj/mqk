@@ -32,7 +32,7 @@ abstract class AbstractWorker
         } else if ($pid) {
             return $pid;
         }
-        pcntl_signal(SIGQUIT, array(&$this, "signalQuitHandler"));
+//        pcntl_signal(SIGQUIT, array(&$this, "signalQuitHandler"));
         pcntl_signal(SIGTERM, array(&$this, "signalTerminalHandler"));
 //        pcntl_signal(SIGUSR1, array(&$this, "signalUsr1Handler"));
         $this->id = posix_getpid();
