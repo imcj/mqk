@@ -100,7 +100,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
                 break;
             }
         }
-        $this->logger->debug("[run] Sent quit command.");
 
         $this->workerEndTime = Time::micro();
         $this->didQuit();

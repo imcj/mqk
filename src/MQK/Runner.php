@@ -162,7 +162,7 @@ class Runner implements MasterProcess
     {
         $this->masterId = uniqid();
         $this->cliLogger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
-        $this->logger->debug("Starting {$this->config->workers()}.");
+        $this->logger->debug("Starting {$this->config->workers()} workers.");
 
         for ($i = 0; $i < $this->config->workers(); $i++) {
             $worker = $this->spawn();

@@ -63,11 +63,13 @@ class WorkerConsumerExector extends AbstractWorker
 
     public function initialize()
     {
+//        LoggerFactory::renewSingleInstance();
         $loggerFactory = LoggerFactory::shared();
         $this->logger = $loggerFactory->getLogger("WorkerConsume");
         $this->cliLogger = $loggerFactory->cliLogger();
 
-        $this->connection = $this->redisFactory->reconnect();
+        $this->logger->debug("Start new redis connection.");
+        $this->connection = $this->redisFactory->createNewConnection();
         $this->registry = new Registry($this->connection);
         $this->queues = $this->buildQueues();
     }
@@ -86,7 +88,7 @@ class WorkerConsumerExector extends AbstractWorker
                 break;
             } catch (\RedisException $e) {
                 $this->logger->error($e);
-                $this->redisFactory->reconnect();
+                $this->connection = $this->redisFactory->reconnect();
             } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
                 $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
