@@ -31,11 +31,12 @@ class WorkerConsumerFactory implements WorkerFactory
     }
 
     /**
+     * @param string $masterId
      * @return Worker
      */
-    function create()
+    function create($masterId)
     {
-        $worker = new WorkerConsumer($this->config, $this->queues);
+        $worker = new WorkerConsumer($this->config, $this->queues, $masterId);
 
         return $worker;
     }

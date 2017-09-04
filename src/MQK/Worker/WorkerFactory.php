@@ -8,7 +8,8 @@ namespace MQK\Worker;
 interface WorkerFactory
 {
     /**
+     * @param  string $masterId
      * @return Worker
      */
-    function create();
+    function create($masterId);
 }
