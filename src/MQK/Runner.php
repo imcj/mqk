@@ -154,6 +154,7 @@ class Runner implements MasterProcess
         $this->quiting = true;
         $this->logger->debug("Weakup signal.");
         $this->selfPipe->write(".");
+//        $this->stop(true);
     }
 
     function signalIncrement($status)
@@ -185,8 +186,8 @@ class Runner implements MasterProcess
             } catch (\Exception $e) {
                 // 被信号唤醒
                 $this->logger->error($e->getMessage());
-//                continue;
                 $this->stop(true);
+//                continue;
             }
             $this->updateHealth();
             if (!$fast && $findExpiredJob) {

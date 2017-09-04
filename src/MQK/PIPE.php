@@ -75,7 +75,7 @@ class PIPE
         try {
             stream_select($read, $write, $exception, 1.00);
         } catch (\Exception $e) {
-            pcntl_signal_dispatch();
+//            pcntl_signal_dispatch();
             throw $e;
         } finally {
             restore_error_handler();
