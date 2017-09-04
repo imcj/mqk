@@ -30,10 +30,15 @@ class K
 
     public static function invoke($func, ...$args)
     {
-        $job = self::job($func, $args);
-        self::defaultQueue()->enqueue($job);
+        $message = new \MQK\Queue\Message(uniqid());
+        $payload = new stdClass();
+        $payload->func = $func;
+        $payload->arguments = $args;
+        $message->setPayload($payload);
 
-        return $job;
+        self::defaultQueue()->enqueue($message);
+
+        return $message;
     }
 
     public static function dispatch(Event $event, $ttl = -1)

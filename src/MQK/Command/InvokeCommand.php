@@ -122,14 +122,16 @@ class ProduceWorker extends AbstractWorker
         $queue = $queueFactory->createQueue("default");
 
         for ($i = 0; $i < $this->numbers; $i++) {
+            $payload = new \stdClass();
+            $payload->func = $this->funcName;
+            $payload->arguments = $this->arguments;
 
-            $job = new Job(null, $this->funcName, $this->arguments);
-            $job->setConnection($redis);
-            if (null != $this->ttl)
-                $job->setTtl($this->ttl);
+            $message = new \MQK\Queue\Message(uniqid(), "invokable", "default", $this->ttl ? $this->ttl : 600, $payload);
 
 
-            $queue->enqueue($job);
+
+
+            $queue->enqueue($message);
         }
     }
 }
