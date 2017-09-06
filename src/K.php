@@ -12,7 +12,7 @@ class K
     private static $queue;
 
     /**
-     * @var \MQK\Queue\MessageFactory
+     * @var \MQK\Queue\MessageAbstractFactory
      */
     private static $messageFactory;
 
@@ -105,7 +105,7 @@ class K
     static function messageFactory()
     {
         if (self::$messageFactory == null)
-            self::$messageFactory = new \MQK\Queue\MessageFactory();
+            self::$messageFactory = new \MQK\Queue\MessageAbstractFactory();
 
         return self::$messageFactory;
     }

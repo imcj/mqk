@@ -1,10 +1,11 @@
 <?php
 namespace MQK\Queue\MessageFactory;
 
-use MQK\Queue\Message;
-use MQK\Queue\MessageEvent;
 
-class MessageEventFactory implements MessageFactory
+use MQK\Queue\Message;
+use MQK\Queue\MessageInvokable;
+
+class MessageInvokableFactory implements MessageFactory
 {
 
     /**
@@ -15,7 +16,7 @@ class MessageEventFactory implements MessageFactory
      */
     public function withJsonObject($jsonObject)
     {
-        $message = new MessageEvent(
+        $message = new MessageInvokable(
             $jsonObject->id,
             $jsonObject->discriminator,
             $jsonObject->queue,

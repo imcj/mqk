@@ -37,7 +37,7 @@ class RedisQueueCollection implements QueueCollection
     private $redisFactory;
 
     /**
-     * @var MessageFactory
+     * @var MessageAbstractFactory
      */
     private $messageFactory;
 
@@ -52,7 +52,7 @@ class RedisQueueCollection implements QueueCollection
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->redisFactory = RedisFactory::shared();
         $this->register($queues);
-        $this->messageFactory = new MessageFactory();
+        $this->messageFactory = new MessageAbstractFactory();
     }
 
     /**

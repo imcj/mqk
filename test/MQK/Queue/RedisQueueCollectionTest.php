@@ -37,7 +37,7 @@ class RedisQueueCollectionTest extends TestCase
     public function testEnqueueEvent()
     {
         $event = new ComplexEvent(1);
-        $messageFactory = new MessageFactory();
+        $messageFactory = new MessageAbstractFactory();
         $message = $messageFactory->messageWithEvent($event);
         $this->queue->enqueue($message);
 

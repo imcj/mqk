@@ -1,12 +1,19 @@
 <?php
 namespace MQK\Queue;
 
+use MQK\CaseConverion;
 use MQK\SerializerFactory;
 use MQK\SingletonTrait;
 use phpDocumentor\Reflection\DocBlock\Serializer;
 
-class MessageFactory
+class MessageAbstractFactory
 {
+    /**
+     * Hash map of message factory cached
+     * @var array
+     */
+    private $messageFactories = [];
+
     use SingletonTrait;
 
     /**
@@ -16,44 +23,24 @@ class MessageFactory
     public function messageWithJson($messageJson)
     {
         $discriminator = "";
-        if (property_exists($messageJson, "discriminator")) {
+        if (!property_exists($messageJson, "discriminator")) {
+            $messageJson->discriminator = "invokable";
+        } else {
             $discriminator = $messageJson->discriminator;
+        }
+
+        $messageFactoryClassName = CaseConverion::snakeToCamel($discriminator) . "Factory";
+        $messageFactoryClass = "\\MQK\\Queue\\MessageFactory\\{$messageFactoryClassName}";
+        $messageFactoryInstance = null;
+
+        if (!isset($messageFactoryClass)) {
+            $messageFactoryInstance = new $messageFactoryClass();
+            $this->messageFactories[$messageFactoryClass] = $messageFactoryInstance;
         } else {
-            $discriminator = "invokable";
+            $messageFactoryInstance = $this->messageFactories[$messageFactoryClass];
         }
 
-        switch ($discriminator) {
-            case "invokable_sync":
-                $messageClass = MessageInvokableSync::class;
-                break;
-
-            case "invokable":
-                $messageClass = MessageInvokable::class;
-                break;
-
-            default:
-                $messageClass = MessageEvent::class;
-                break;
-        }
-
-        if ("invokable_sync" == $discriminator) {
-            $message = new $messageClass(
-                $messageJson->groupId,
-                $messageJson->id,
-                $discriminator,
-                $messageJson->queue,
-                $messageJson->ttl,
-                $messageJson->payload
-            );
-        } else {
-            $message = new $messageClass(
-                $messageJson->id,
-                $discriminator,
-                $messageJson->queue,
-                $messageJson->ttl,
-                $messageJson->payload
-            );
-        }
+        $message = $messageFactoryInstance->withJsonObject($messageJson);
 
 
         if (property_exists($messageJson, "retries")) {

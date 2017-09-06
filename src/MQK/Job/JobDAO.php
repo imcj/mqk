@@ -4,7 +4,7 @@ namespace MQK\Job;
 use Monolog\Logger;
 use MQK\LoggerFactory;
 use MQK\Queue\Message;
-use MQK\Queue\MessageFactory;
+use MQK\Queue\MessageAbstractFactory;
 
 class JobDAO
 {
@@ -19,7 +19,7 @@ class JobDAO
     private $connection;
 
     /**
-     * @var MessageFactory
+     * @var MessageAbstractFactory
      */
     private $messageFactory;
 
@@ -27,7 +27,7 @@ class JobDAO
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->messageFactory = MessageFactory::shared();
+        $this->messageFactory = MessageAbstractFactory::shared();
     }
 
     /**

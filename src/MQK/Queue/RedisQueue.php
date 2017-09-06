@@ -69,9 +69,7 @@ class RedisQueue implements Queue
         }
         $this->connection->exec();
     }
-
-    public function
-
+    
     public function name()
     {
         return $this->name;
