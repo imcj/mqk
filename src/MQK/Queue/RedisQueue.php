@@ -5,11 +5,12 @@ use Connection\Connection;
 use Monolog\Logger;
 use MQK\Job;
 use MQK\LoggerFactory;
+use MQK\RedisProxy;
 
 class RedisQueue implements Queue
 {
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
@@ -58,7 +59,13 @@ class RedisQueue implements Queue
         $messageJson = json_encode($messageJsonObject);
 //        $this->logger->debug("[enqueue] {$message->id()}");
 //        $this->logger->debug($messageJson);
-        $this->connection->lpush("{$this->key()}", $messageJson);
+        $success = $this->connection->lpush("{$this->key()}", $messageJson);
+
+        if (!$success) {
+            $error = $this->connection->getLastError();
+            $this->connection->clearLastError();
+            throw new \Exception($error);
+        }
     }
 
     public function enqueueBatch($messages)
@@ -73,5 +80,16 @@ class RedisQueue implements Queue
     public function name()
     {
         return $this->name;
+    }
+
+    /**
+     * 设置队列名
+     *
+     * @param $name
+     * @return void
+     */
+    function setName($name)
+    {
+        $this->name = $name;
     }
 }

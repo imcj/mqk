@@ -15,12 +15,16 @@ class MessageEventFactory implements MessageFactory
      */
     public function withJsonObject($jsonObject)
     {
+        if (property_exists($jsonObject, "payload"))
+            $payload = $jsonObject->payload;
+        else
+            $payload = null;
         $message = new MessageEvent(
             $jsonObject->id,
             $jsonObject->discriminator,
             $jsonObject->queue,
             $jsonObject->ttl,
-            $jsonObject->payload
+            $payload
         );
 
         return $message;

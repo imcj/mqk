@@ -31,6 +31,14 @@ interface Queue
     function name();
 
     /**
+     * 设置队列名
+     *
+     * @param $name
+     * @return void
+     */
+    function setName($name);
+
+    /**
      * 队列的键名
      *
      * @return string

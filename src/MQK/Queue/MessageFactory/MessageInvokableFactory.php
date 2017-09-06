@@ -4,6 +4,7 @@ namespace MQK\Queue\MessageFactory;
 
 use MQK\Queue\Message;
 use MQK\Queue\MessageInvokable;
+use MQK\Queue\Nothing;
 
 class MessageInvokableFactory implements MessageFactory
 {
@@ -16,12 +17,20 @@ class MessageInvokableFactory implements MessageFactory
      */
     public function withJsonObject($jsonObject)
     {
+        if (property_exists($jsonObject, "payload"))
+            $payload = $jsonObject->payload;
+        else {
+            $payload = new \stdClass();
+            $payload->func = Nothing::class;
+            $payload->arguments = [];
+        }
+
         $message = new MessageInvokable(
             $jsonObject->id,
             $jsonObject->discriminator,
             $jsonObject->queue,
             $jsonObject->ttl,
-            $jsonObject->payload
+            $payload
         );
 
         return $message;

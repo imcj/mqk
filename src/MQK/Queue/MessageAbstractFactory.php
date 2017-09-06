@@ -30,10 +30,10 @@ class MessageAbstractFactory
         }
 
         $messageFactoryClassName = CaseConverion::snakeToCamel($discriminator) . "Factory";
-        $messageFactoryClass = "\\MQK\\Queue\\MessageFactory\\{$messageFactoryClassName}";
+        $messageFactoryClass = "\\MQK\\Queue\\MessageFactory\\Message{$messageFactoryClassName}";
         $messageFactoryInstance = null;
 
-        if (!isset($messageFactoryClass)) {
+        if (!isset($this->messageFactories[$messageFactoryClass])) {
             $messageFactoryInstance = new $messageFactoryClass();
             $this->messageFactories[$messageFactoryClass] = $messageFactoryInstance;
         } else {
@@ -63,7 +63,7 @@ class MessageAbstractFactory
          */
         $serializer = SerializerFactory::shared()->serializer();
 
-        $message = new MessageEvent(uniqid(), "message_event");
+        $message = new MessageEvent(uniqid(), "event");
         $payload = new \stdClass();
 
         $eventClass = get_class($event);
