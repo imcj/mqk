@@ -2,15 +2,18 @@
 namespace MQK\Worker;
 
 
+use Monolog\Logger;
 use MQK\Config;
 use MQK\Exception\TestTimeoutException;
 use MQK\LoggerFactory;
+use MQK\Queue\MessageInvokableSync;
+use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
 
-class WorkerConsumerExector extends AbstractWorker
+class WorkerConsumerExector
 {
     /**
      * @var Config
@@ -23,55 +26,48 @@ class WorkerConsumerExector extends AbstractWorker
     protected $queues;
 
     /**
-     * @var \Redis
-     */
-    protected $connection;
-
-    /**
      * @var Registry
      */
     protected $registry;
 
     /**
-     * 队列的名字列表
-     *
-     * @var string
+     * @var Logger
      */
-    protected $queueNameList;
+    protected $logger;
 
     /**
-     * @var RedisFactory
+     * @var bool
      */
-    protected $redisFactory;
+    protected $burst = false;
+
+    /**
+     * @var bool
+     */
+    protected $fast = false;
+
+    /**
+     * @var MessageInvokableSyncController
+     */
+    protected $messageInvokableSyncController;
 
     /**
      * WorkerConsumerExector constructor.
      * @param Config $config
      * @param string[] $queueNameList
      */
-    public function __construct($config, $queueNameList)
-    {
-        $this->config = $config;
-        $this->queueNameList = $queueNameList;
-        $this->redisFactory = RedisFactory::shared();
-    }
-
-    protected function run()
-    {
-        $this->initialize();
-    }
-
-    public function initialize()
-    {
-//        LoggerFactory::renewSingleInstance();
-        $loggerFactory = LoggerFactory::shared();
-        $this->logger = $loggerFactory->getLogger("WorkerConsume");
-        $this->cliLogger = $loggerFactory->cliLogger();
-
-        $this->logger->debug("Start new redis connection.");
-        $this->connection = $this->redisFactory->createNewConnection();
-        $this->registry = new Registry($this->connection);
-        $this->queues = $this->buildQueues();
+    public function __construct(
+        $burst,
+        $fast,
+        RedisQueueCollection $queues,
+        Registry $registry,
+        MessageInvokableSyncController $messageInvokableSyncController
+        ) {
+        $this->burst = $burst;
+        $this->fast = $fast;
+        $this->queues = $queues;
+        $this->registry = $registry;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->messageInvokableSyncController = $messageInvokableSyncController;
     }
 
 
@@ -82,18 +78,8 @@ class WorkerConsumerExector extends AbstractWorker
     {
         $now  = time();
         while (true) {
-            try {
-                $message = $this->queues->dequeue(!$this->config->burst());
-                $this->updateHealth();
-                break;
-            } catch (\RedisException $e) {
-                $this->logger->error($e);
-                $this->connection = $this->redisFactory->reconnect();
-            } catch (QueueIsEmptyException $e) {
-                $this->alive = false;
-                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
-                return;
-            }
+            $message = $this->queues->dequeue(!$this->burst);
+            break;
         }
         // 可能出列的数据是空
         if (null == $message) {
@@ -101,7 +87,7 @@ class WorkerConsumerExector extends AbstractWorker
             return;
         }
         $this->logger->debug("Pop a message {$message->id()} at {$now}.");
-        if (!$this->config->fast()) {
+        if (!$this->fast) {
             $this->registry->start($message);
 //            $this->logger->info("Job {$job->id()} is started");
         }
@@ -109,20 +95,25 @@ class WorkerConsumerExector extends AbstractWorker
         $success = true;
         try {
             $beforeExecute = time();
+
             $message();
+            if ($message instanceof MessageInvokableSync) {
+                $this->messageInvokableSyncController->invoke($message);
+            }
+
             $success = true;
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
 //            $this->cliLogger->notice("Function execute duration {$duration}");
             $messageClass = (string)get_class($message);
-            $this->cliLogger->info("{$messageClass} {$message->id()} is finished");
+            $this->logger->info("{$messageClass} {$message->id()} is finished");
             if ($afterExecute - $beforeExecute >= $message->ttl()) {
                 $this->logger->warn(sprintf("The message %s timed out for %d seconds.", $message->id(), $message->ttl()));
 //                return;
             }
 
-            if (!$this->config->fast())
+            if (!$this->fast)
                 $this->registry->finish($message);
         } catch (\Exception $exception) {
             $this->logger->error("Got an exception");
@@ -137,11 +128,6 @@ class WorkerConsumerExector extends AbstractWorker
         }
 
         return $success;
-    }
-
-    protected function updateHealth()
-    {
-
     }
 
     protected function buildQueues()

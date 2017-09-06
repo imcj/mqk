@@ -24,11 +24,14 @@ class RedisQueue implements Queue
      */
     private $name;
 
-    public function __construct($name, $connection)
+    private $messageFactory;
+
+    public function __construct($name, $connection, $messageFactory)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->name = $name;
+        $this->messageFactory = $messageFactory;
     }
 
     public function connection()
@@ -57,8 +60,8 @@ class RedisQueue implements Queue
             $messageJsonObject['retries'] = $message->retries();
         }
         $messageJson = json_encode($messageJsonObject);
-//        $this->logger->debug("[enqueue] {$message->id()}");
-//        $this->logger->debug($messageJson);
+        $this->logger->debug("[enqueue] {$message->id()}");
+        $this->logger->debug($messageJson);
         $success = $this->connection->lpush("{$this->key()}", $messageJson);
 
         if (!$success) {
@@ -80,6 +83,31 @@ class RedisQueue implements Queue
     public function name()
     {
         return $this->name;
+    }
+
+    public function dequeue($block=true)
+    {
+        $messageJsonObject = $this->connection->listPop($this->key, $block, 1);
+
+        if (null == $messageJsonObject)
+            return null;
+
+        try {
+            $messageJsonObject = json_decode($messageJsonObject);
+//            $this->logger->debug("[dequeue] {$jsonObject->id}");
+//            $this->logger->debug($messageJsonObject);
+            // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
+
+            $message = $this->messageFactory->messageWithJson($messageJsonObject);
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $message = null;
+        }
+//        if (null == $job) {
+//            $this->logger("Make job object error.", $raw);
+//            throw \Exception("Make job object error");
+//        }
+        return $message;
     }
 
     /**

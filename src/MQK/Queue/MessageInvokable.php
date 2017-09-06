@@ -6,8 +6,24 @@ use MQK\SerializerFactory;
 
 class MessageInvokable extends Message
 {
-    private $func;
-    private $arguments;
+    /**
+     * 方法名
+     *
+     * @var string
+     */
+    protected $func;
+
+    /**
+     * 方法调用参数
+     *
+     * @var array
+     */
+    protected $arguments;
+
+    /**
+     * @var mixed
+     */
+    protected $returns;
 
     /**
      * @var Serializer
@@ -26,7 +42,8 @@ class MessageInvokable extends Message
     public function __invoke()
     {
         $arguments = $this->arguments;
-        $result = @call_user_func_array($this->func, $arguments);
+        $returns = @call_user_func_array($this->func, $arguments);
+        $this->returns = $returns;
 
         $error = error_get_last();
         error_clear_last();
@@ -38,7 +55,7 @@ class MessageInvokable extends Message
 //            throw new \Exception($error['message']);
 //        }
 
-        return $result;
+        return $returns;
     }
 
     public function jsonSerialize()

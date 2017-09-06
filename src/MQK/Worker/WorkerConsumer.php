@@ -26,7 +26,7 @@ use MQK\Time;
  * Class WorkerConsumer
  * @package MQK\Worker
  */
-class WorkerConsumer extends WorkerConsumerExector implements Worker
+class WorkerConsumer extends AbstractWorker implements Worker
 {
     protected $config;
 
@@ -70,9 +70,14 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $workerId;
 
+    /**
+     * @var WorkerConsumerExector
+     */
+    protected $exector;
+
     public function __construct(Config $config, $queueNameList, $masterId)
     {
-        parent::__construct($config, $queueNameList);
+        parent::__construct();
 
         $this->masterId = $masterId;
         $this->workerId = uniqid();
@@ -84,11 +89,17 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
     {
         parent::run();
 
+        $this->exector = new WorkerConsumerExector($this->config, $this->createQueues(), $this->createRegistry());
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
 
         while ($this->alive) {
-            $success = $this->execute();
+            try {
+                $success = $this->exector->execute();
+            } catch (QueueIsEmptyException $e) {
+                $this->alive = false;
+                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
+            }
 
             if ($success)
                 $this->success += 1;

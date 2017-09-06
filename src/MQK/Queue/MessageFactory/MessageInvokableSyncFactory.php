@@ -18,7 +18,7 @@ class MessageInvokableSyncFactory implements MessageFactory
     {
         $message = new MessageInvokableSync(
             $jsonObject->groupId,
-            $jsonObject->numberOfGroup,
+            $jsonObject->numberOfInvoke,
             $jsonObject->id,
             $jsonObject->discriminator,
             $jsonObject->queue,

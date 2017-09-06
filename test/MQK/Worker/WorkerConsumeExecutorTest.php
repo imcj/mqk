@@ -1,9 +1,15 @@
 <?php
 namespace MQK\Worker;
 use MQK\Config;
+use MQK\Job\JobDAO;
+use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\MessageInvokableSync;
+use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\RedisQueue;
+use MQK\Queue\RedisQueueCollection;
 use MQK\RedisFactory;
+use MQK\RedisProxy;
+use MQK\Registry;
 use PHPUnit\Framework\TestCase;
 
 class WorkerConsumeExecutorTest extends TestCase
@@ -21,10 +27,11 @@ class WorkerConsumeExecutorTest extends TestCase
     public function setUp()
     {
         RedisFactory::shared()->createRedis();
-        $this->connection = new \Redis();
-        $this->connection->connect('127.0.0.1');
+        $this->connection = new RedisProxy('127.0.0.1');
+        $this->connection->connect();
 
-        $this->queue = new RedisQueue("default", $this->connection);
+        $messageFactory = new MessageAbstractFactory();
+        $this->queue = new RedisQueue("default", $this->connection, $messageFactory);
         $this->connection->flushAll();
     }
 
@@ -57,10 +64,32 @@ class WorkerConsumeExecutorTest extends TestCase
 
     public function testExecuteWithMultiInvokes()
     {
-//        $message;
-//        $message->promise()->then(function($invokes) {
-//
-//        });
+        $messageFactory = new MessageAbstractFactory();
+        $payload = new \stdClass();
+        $payload->func = '\MQK\Test\Calculator::sum';
+        $payload->arguments = [1, 2];
+
+        $groupId = uniqid();
+        $messageId = uniqid();
+        $message = new MessageInvokableSync($groupId, 2, $messageId, 'invokable_sync', 'default', 600, $payload);
+        $message2 = new MessageInvokableSync($groupId, 2, uniqid(), 'invokable_sync', 'default', 600, $payload);
+
+        $this->queue->enqueue($message);
+        $this->queue->enqueue($message2);
+
+        $registry = new Registry($this->connection);
+        $queues = new RedisQueueCollection($this->connection, [new RedisQueue("default", $this->connection, $messageFactory)]);
+
+        $messageDAO = new JobDAO($this->connection);
+        $controller = new MessageInvokableSyncController($this->connection, new RedisQueue("", $this->connection, $messageFactory), $messageDAO);
+        $executor = new WorkerConsumerExector(false, false, $queues, $registry, $controller);
+
+        $success = $executor->execute();
+        $success = $executor->execute();
+
+        $value = $this->connection->blPop(["queue_{$groupId}"], 1);
+        $message = $messageDAO->find($groupId);
+        assert(true);
     }
 
 }

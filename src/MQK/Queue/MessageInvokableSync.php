@@ -12,17 +12,17 @@ class MessageInvokableSync extends MessageInvokable
     /**
      * @var integer
      */
-    protected $numberOfGroup;
+    protected $numberOfInvoke;
 
     /**
      * @var Queue
      */
     protected $queue;
 
-    public function __construct($groupId, $numberOfGroup, $id, $discriminator = "invokable_sync", $queue = null, $ttl = 600, $payload = null)
+    public function __construct($groupId, $numberOfInvoke, $id, $discriminator = "invokable_sync", $queue = null, $ttl = 600, $payload = null)
     {
         $this->groupId = $groupId;
-        $this->numberOfGroup = $numberOfGroup;
+        $this->numberOfInvoke = $numberOfInvoke;
         parent::__construct($id, "invokable_sync", $queue, $ttl, $payload);
     }
 
@@ -36,30 +36,9 @@ class MessageInvokableSync extends MessageInvokable
         $this->groupId = $groupId;
     }
 
-    public function __invoke()
+    public function numberOfInvoke()
     {
-        $result = parent::__invoke();
-
-        $redis = RedisFactory::shared()->createRedis();
-
-        // 如果是一条消息直接通知结束。
-        // 如果是多条消息，进入流程。
-
-        if ($this->invokeNumbers > 1) {
-//            $group = $redis->hGet("group:{$this->groupId}");
-//
-//            if (count($group->completed) >= $this->invokeNumbers) {
-//                $queue->enqueue($message);
-//            }
-        } else {
-            // 只有一条同步调用时节省一次kv的访问
-            $message = null;
-
-            $this->logger->debug("只有一条消息，通知客户端返回结果。");
-            $queue->enqueue($message);
-        }
-
-        return $result;
+        return $this->numberOfInvoke;
     }
 
     public function watch($handler)
@@ -80,7 +59,7 @@ class MessageInvokableSync extends MessageInvokable
     {
         $json = parent::jsonSerialize();
         $json['groupId'] = $this->groupId;
-        $json['numberOfGroup'] = $this->numberOfGroup;
+        $json['numberOfInvoke'] = $this->numberOfInvoke;
         return $json;
     }
 }

@@ -85,7 +85,6 @@ class RedisQueueCollection implements QueueCollection
     {
         $messageJsonObject = $this->connection->listPop($this->queueKeys, $block, 1);
 
-
         if (null == $messageJsonObject)
             return null;
 

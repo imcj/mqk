@@ -8,7 +8,7 @@ use MQK\Queue\Message;
 class Registry
 {
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
