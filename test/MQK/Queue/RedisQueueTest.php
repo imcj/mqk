@@ -2,6 +2,7 @@
 namespace MQK\Queue;
 
 
+use MQK\RedisProxy;
 use PHPUnit\Framework\TestCase;
 
 class RedisQueueTest extends TestCase
@@ -13,8 +14,8 @@ class RedisQueueTest extends TestCase
 
     public function setUp()
     {
-        $this->connection = new \Redis();
-        $this->connection->connect('127.0.0.1');
+        $this->connection = new RedisProxy('127.0.0.1');
+        $this->connection->connect();
         $this->connection->flushAll();
     }
 
@@ -29,7 +30,7 @@ class RedisQueueTest extends TestCase
         $groupId = uniqid();
         $messageId = uniqid();
 
-        $message = new MessageInvokableSync($groupId, $messageId, 'default', 600, $payload);
+        $message = new MessageInvokableSync($groupId, 1, $messageId, 'default', 'default', 600, $payload);
         $queue->enqueue($message);
 
         list($queueKey, $messageValue) = $this->connection->blPop($queue->key(), 10);

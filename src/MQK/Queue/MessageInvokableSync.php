@@ -9,9 +9,20 @@ class MessageInvokableSync extends MessageInvokable
 {
     private $groupId;
 
-    public function __construct($groupId, $id, $discriminator = "invokable_sync", $queue = null, $ttl = 600, $payload = null)
+    /**
+     * @var integer
+     */
+    protected $numberOfGroup;
+
+    /**
+     * @var Queue
+     */
+    protected $queue;
+
+    public function __construct($groupId, $numberOfGroup, $id, $discriminator = "invokable_sync", $queue = null, $ttl = 600, $payload = null)
     {
         $this->groupId = $groupId;
+        $this->numberOfGroup = $numberOfGroup;
         parent::__construct($id, "invokable_sync", $queue, $ttl, $payload);
     }
 
@@ -42,6 +53,8 @@ class MessageInvokableSync extends MessageInvokable
 //            }
         } else {
             // 只有一条同步调用时节省一次kv的访问
+            $message = null;
+
             $this->logger->debug("只有一条消息，通知客户端返回结果。");
             $queue->enqueue($message);
         }
@@ -67,6 +80,7 @@ class MessageInvokableSync extends MessageInvokable
     {
         $json = parent::jsonSerialize();
         $json['groupId'] = $this->groupId;
+        $json['numberOfGroup'] = $this->numberOfGroup;
         return $json;
     }
 }
