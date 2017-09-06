@@ -31,13 +31,14 @@ class MessageInvokableSyncController
 
     public function invoke(MessageInvokableSync $message)
     {
+        $this->messageDAO->store($message);
         if ($message->numberOfInvoke() == 1) {
-            $message = new MessageInvokableSyncReply([$message->id()], $message->groupId());
+            $message = new MessageInvokableSyncReply([], $message->groupId());
             $this->queue->setName($message->groupId());
-            $this->messageDAO->store($message);
             $this->queue->enqueue($message);
         } else {
             $invoked = $this->connection->incr("mqk:invoked:{$message->groupId()}");
+
             if ($invoked >= $message->numberOfInvoke()) {
                 $message = new MessageInvokableSyncReply([], $message->groupId());
                 $this->queue->setName($message->groupId());

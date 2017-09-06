@@ -16,6 +16,10 @@ class MessageInvokableSyncFactory implements MessageFactory
      */
     public function withJsonObject($jsonObject)
     {
+        $returns = null;
+        if (property_exists($jsonObject, 'returns'))
+            $returns = $jsonObject->returns;
+
         $message = new MessageInvokableSync(
             $jsonObject->groupId,
             $jsonObject->numberOfInvoke,
@@ -25,6 +29,9 @@ class MessageInvokableSyncFactory implements MessageFactory
             $jsonObject->ttl,
             $jsonObject->payload
         );
+
+        if (null != $returns)
+            $message->setReturns($returns);
 
         return $message;
     }

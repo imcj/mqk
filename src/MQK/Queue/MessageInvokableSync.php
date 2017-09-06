@@ -60,6 +60,7 @@ class MessageInvokableSync extends MessageInvokable
         $json = parent::jsonSerialize();
         $json['groupId'] = $this->groupId;
         $json['numberOfInvoke'] = $this->numberOfInvoke;
+
         return $json;
     }
 }

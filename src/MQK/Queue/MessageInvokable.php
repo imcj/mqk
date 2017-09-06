@@ -58,6 +58,16 @@ class MessageInvokable extends Message
         return $returns;
     }
 
+    public function returns()
+    {
+        return $this->returns;
+    }
+
+    public function setReturns($returns)
+    {
+        $this->returns = $returns;
+    }
+
     public function jsonSerialize()
     {
         $payload = array(
@@ -66,6 +76,10 @@ class MessageInvokable extends Message
         );
         $json = parent::jsonSerialize();
         $json['payload'] = $payload;
+
+        if (null != $this->returns) {
+            $json['returns'] = $this->returns;
+        }
 
         return $json;
     }

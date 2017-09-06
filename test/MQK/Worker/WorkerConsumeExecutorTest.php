@@ -71,10 +71,10 @@ class WorkerConsumeExecutorTest extends TestCase
 
         $groupId = uniqid();
         $messageId = uniqid();
-        $message = new MessageInvokableSync($groupId, 2, $messageId, 'invokable_sync', 'default', 600, $payload);
+        $message1 = new MessageInvokableSync($groupId, 2, $messageId, 'invokable_sync', 'default', 600, $payload);
         $message2 = new MessageInvokableSync($groupId, 2, uniqid(), 'invokable_sync', 'default', 600, $payload);
 
-        $this->queue->enqueue($message);
+        $this->queue->enqueue($message1);
         $this->queue->enqueue($message2);
 
         $registry = new Registry($this->connection);
@@ -89,6 +89,12 @@ class WorkerConsumeExecutorTest extends TestCase
 
         $value = $this->connection->blPop(["queue_{$groupId}"], 1);
         $message = $messageDAO->find($groupId);
+
+        $invokedMessage1 = $messageDAO->find($message1->id());
+        $invokedMessage2 = $messageDAO->find($message2->id());
+
+        $this->assertEquals(3, $invokedMessage1->returns());
+        $this->assertEquals(3, $invokedMessage2->returns());
         assert(true);
     }
 
