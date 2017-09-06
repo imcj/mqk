@@ -9,6 +9,8 @@ use Monolog\Logger;
 
 class LoggerFactory
 {
+    use SingletonTrait;
+
     private $defaultLevel = Logger::WARNING;
 
     /**
@@ -83,14 +85,5 @@ class LoggerFactory
         }
 
         return $this->getLogger("", $level);
-    }
-
-    public static function shared()
-    {
-        if (null == self::$shared) {
-            self::$shared = new LoggerFactory();
-        }
-
-        return self::$shared;
     }
 }

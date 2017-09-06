@@ -29,7 +29,6 @@ use MQK\Time;
 class WorkerConsumer extends WorkerConsumerExector implements Worker
 {
     protected $config;
-    protected $queue;
 
     /**
      * @var Logger
@@ -40,18 +39,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      * @var Logger
      */
     protected $cliLogger;
-
-
-
-    /**
-     * @var QueueCollection
-     */
-    protected $queues;
-
-    /**
-     * @var string[]
-     */
-    protected $queueNameList;
 
     /**
      * @var float
@@ -73,9 +60,22 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $failure = 0;
 
-    public function __construct(Config $config, $queues)
+    /**
+     * @var string
+     */
+    protected $masterId;
+
+    /**
+     * @var string
+     */
+    protected $workerId;
+
+    public function __construct(Config $config, $queueNameList, $masterId)
     {
-        parent::__construct($config, $queues);
+        parent::__construct($config, $queueNameList);
+
+        $this->masterId = $masterId;
+        $this->workerId = uniqid();
 
         $this->loadUserInitializeScript();
     }
@@ -84,18 +84,22 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
     {
         parent::run();
 
-        $this->logger->debug("Process {$this->id} started.");
+        $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
 
         while ($this->alive) {
-            $this->execute();
+            $success = $this->execute();
+
+            if ($success)
+                $this->success += 1;
+            else
+                $this->failure += 1;
 
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 1024) {
                 break;
             }
         }
-        $this->logger->debug("[run] Sent quit command.");
 
         $this->workerEndTime = Time::micro();
         $this->didQuit();
@@ -138,5 +142,17 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         } else {
 //            $this->cliLogger->warning("{$initFilePath} not found, all event will miss.");
         }
+    }
+
+    protected function updateHealth()
+    {
+        $key = "mqk:{$this->masterId}:{$this->workerId}";
+        $masterKey = "mqk:{$this->masterId}";
+        $this->connection->multi();
+        $this->connection->hSet($key, "updated_at", time());
+        $this->connection->hSet($key, 'success', (int)$this->success);
+        $this->connection->hSet($key, 'failure', (int)$this->failure);
+        $this->connection->expire($key, 5);
+        $this->connection->exec();
     }
 }

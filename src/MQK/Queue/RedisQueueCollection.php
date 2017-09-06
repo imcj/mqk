@@ -85,7 +85,7 @@ class RedisQueueCollection implements QueueCollection
         for ($i = 0; $i < 3; $i++) {
             try {
                 if ($block) {
-                    $raw = $this->connection->blPop($this->queueKeys, 2);
+                    $raw = $this->connection->blPop($this->queueKeys, 1);
                     if (!$raw)
                         return null;
                 } else {

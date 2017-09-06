@@ -48,7 +48,7 @@ class Registry
             $this->connection->multi();
 
         $this->connection->zAdd("mqk:started", $ttl, $message->id());
-        $this->connection->set("job:{$message->id()}", json_encode($message->jsonSerialize()), 6000);
+        $this->connection->set("mqk:message:{$message->id()}", json_encode($message->jsonSerialize()), 600);
 
         if (empty($this->config->cluster()))
             $this->connection->exec();

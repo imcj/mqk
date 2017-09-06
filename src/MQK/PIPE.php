@@ -20,6 +20,8 @@ class PIPE
     public function __construct()
     {
         $this->pipe = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        stream_set_blocking($this->pipe[0], 1);
+        stream_set_blocking($this->pipe[1], 1);
     }
 
     public function closeImFather()
@@ -73,19 +75,19 @@ class PIPE
         try {
             stream_select($read, $write, $exception, 1.00);
         } catch (\Exception $e) {
+//            pcntl_signal_dispatch();
             throw $e;
         } finally {
             restore_error_handler();
         }
 
-        pcntl_signal_dispatch();
+
         if (in_array($pipe, $read)) {
             $buffer = fgets($pipe);
             if ($buffer) {
                 return $buffer;
             }
         }
-
         return null;
     }
 

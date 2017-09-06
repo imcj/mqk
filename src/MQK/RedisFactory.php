@@ -78,6 +78,12 @@ class RedisFactory
         return $this->connection;
     }
 
+    public function createNewConnection()
+    {
+        $this->connect();
+        return $this->connection;
+    }
+
     /**
      * Redis重连
      *

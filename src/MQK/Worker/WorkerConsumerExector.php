@@ -63,11 +63,13 @@ class WorkerConsumerExector extends AbstractWorker
 
     public function initialize()
     {
+//        LoggerFactory::renewSingleInstance();
         $loggerFactory = LoggerFactory::shared();
         $this->logger = $loggerFactory->getLogger("WorkerConsume");
         $this->cliLogger = $loggerFactory->cliLogger();
 
-        $this->connection = $this->redisFactory->reconnect();
+        $this->logger->debug("Start new redis connection.");
+        $this->connection = $this->redisFactory->createNewConnection();
         $this->registry = new Registry($this->connection);
         $this->queues = $this->buildQueues();
     }
@@ -82,10 +84,11 @@ class WorkerConsumerExector extends AbstractWorker
         while (true) {
             try {
                 $message = $this->queues->dequeue(!$this->config->burst());
+                $this->updateHealth();
                 break;
             } catch (\RedisException $e) {
                 $this->logger->error($e);
-                $this->redisFactory->reconnect();
+                $this->connection = $this->redisFactory->reconnect();
             } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
                 $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
@@ -102,7 +105,8 @@ class WorkerConsumerExector extends AbstractWorker
             $this->registry->start($message);
 //            $this->logger->info("Job {$job->id()} is started");
         }
-        $success = false;
+
+        $success = true;
         try {
             $beforeExecute = time();
             $message();
@@ -121,17 +125,23 @@ class WorkerConsumerExector extends AbstractWorker
             if (!$this->config->fast())
                 $this->registry->finish($message);
         } catch (\Exception $exception) {
+            $this->logger->error("Got an exception");
+            $this->logger->error($exception->getMessage());
+            $success = false;
             if ($exception instanceof TestTimeoutException) {
                 $this->logger->debug("Catch timeout exception.");
             } else {
-                $success = false;
-
                 $this->logger->error($exception->getMessage());
                 $this->registry->fail($message);
             }
         }
 
         return $success;
+    }
+
+    protected function updateHealth()
+    {
+
     }
 
     protected function buildQueues()

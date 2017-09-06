@@ -13,29 +13,30 @@ class WorkerConsumerFactory implements WorkerFactory
     private $config;
 
     /**
-     * @var Queue[]
+     * @var string[]
      */
-    private $queues;
+    private $queueNameList;
 
     /**
      * TODO: 把 config 改成需要用到的属性
      *
      * WorkerConsumerFactory constructor.
      * @param $config Config
-     * @param $queues Queue[]
+     * @param $queues string
      */
-    public function __construct(Config $config, $queues)
+    public function __construct(Config $config, $queueNameList)
     {
         $this->config = $config;
-        $this->queues = $queues;
+        $this->queueNameList = $queueNameList;
     }
 
     /**
+     * @param string $masterId
      * @return Worker
      */
-    function create()
+    function create($masterId)
     {
-        $worker = new WorkerConsumer($this->config, $this->queues);
+        $worker = new WorkerConsumer($this->config, $this->queueNameList, $masterId);
 
         return $worker;
     }
