@@ -6,7 +6,7 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\Exception\QueueIsEmptyException;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\LoggerFactory;
 use MQK\PIPE;
 use MQK\Queue\MessageAbstractFactory;
@@ -190,7 +190,7 @@ class WorkerConsumer extends AbstractWorker implements Worker
         $registry = new Registry($connection);
 
         $notifyQueue = $queueFactory->createQueue("");
-        $messageDAO = new JobDAO($connection);
+        $messageDAO = new MessageDAO($connection);
         $controller = new MessageInvokableSyncController(
             $connection,
             $notifyQueue,

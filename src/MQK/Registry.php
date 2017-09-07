@@ -2,7 +2,7 @@
 namespace MQK;
 
 use Monolog\Logger;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\Queue\Message;
 
 class Registry
@@ -25,7 +25,6 @@ class Registry
     public function __construct($connection)
     {
         $this->connection = $connection;
-        $this->jobDAO = new JobDAO($this->connection);
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->config = Config::defaultConfig();
     }

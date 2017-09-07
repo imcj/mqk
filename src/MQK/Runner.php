@@ -1,7 +1,7 @@
 <?php
 namespace MQK;
 use MQK\Exception\JobMaxRetriesException;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\MasterProcess\MasterProcess;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\Queue;
@@ -35,9 +35,9 @@ class Runner implements MasterProcess
     private $registry;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
-    private $jobDAO;
+    private $messageDAO;
 
     /**
      * @var Logger
@@ -108,7 +108,7 @@ class Runner implements MasterProcess
 
         $this->config = $config;
         $this->registry = new Registry($this->connection);
-        $this->jobDAO = new JobDAO($this->connection);
+        $this->messageDAO = new MessageDAO($this->connection);
 
         $this->queues = new RedisQueueCollection(
             $this->connection,
@@ -119,7 +119,7 @@ class Runner implements MasterProcess
         $this->selfPipe = new PIPE();
         $this->workerFactory = new WorkerConsumerFactory($config, $queues);
 
-        $this->expiredFinder = new ExpiredFinder($this->connection, $this->jobDAO, $this->registry, $this->queues);
+        $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
     }
 
     function signalQuitHandler($signo)

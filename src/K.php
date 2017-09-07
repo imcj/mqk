@@ -8,7 +8,7 @@ use MQK\Config;
 use MQK\Queue\QueueFactory;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\Invokes;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 
 class K
 {
@@ -27,7 +27,7 @@ class K
     private static $queueFactory;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
     private static $messageDAO;
 
@@ -149,7 +149,7 @@ class K
     static function createMessageDAO()
     {
         if (null == self::$messageDAO)
-            self::$messageDAO = new JobDAO(self::createConnection());
+            self::$messageDAO = new MessageDAO(self::createConnection());
 
         return self::$messageDAO;
     }

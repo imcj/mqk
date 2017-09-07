@@ -6,7 +6,7 @@ use MQK\LoggerFactory;
 use MQK\Queue\Message;
 use MQK\Queue\MessageAbstractFactory;
 
-class JobDAO
+class MessageDAO
 {
     /**
      * @var Logger

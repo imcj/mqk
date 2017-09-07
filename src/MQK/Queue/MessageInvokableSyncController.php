@@ -2,7 +2,7 @@
 namespace MQK\Queue;
 
 
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\RedisProxy;
 
 class MessageInvokableSyncController
@@ -18,11 +18,11 @@ class MessageInvokableSyncController
     private $queue;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
     private $messageDAO;
 
-    public function __construct(RedisProxy $connection, Queue $queue, JobDAO $messageDAO)
+    public function __construct(RedisProxy $connection, Queue $queue, MessageDAO $messageDAO)
     {
         $this->connection = $connection;
         $this->queue = $queue;

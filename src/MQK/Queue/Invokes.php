@@ -2,7 +2,7 @@
 namespace MQK\Queue;
 
 
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\LoggerFactory;
 
 class Invokes
@@ -16,7 +16,7 @@ class Invokes
     private $logger;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
     private $messageDAO;
 

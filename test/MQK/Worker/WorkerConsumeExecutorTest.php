@@ -1,7 +1,7 @@
 <?php
 namespace MQK\Worker;
 use MQK\Config;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\MessageInvokableSync;
 use MQK\Queue\MessageInvokableSyncController;
@@ -80,7 +80,7 @@ class WorkerConsumeExecutorTest extends TestCase
         $registry = new Registry($this->connection);
         $queues = new RedisQueueCollection($this->connection, [new RedisQueue("default", $this->connection, $messageFactory)]);
 
-        $messageDAO = new JobDAO($this->connection);
+        $messageDAO = new MessageDAO($this->connection);
         $controller = new MessageInvokableSyncController($this->connection, new RedisQueue("", $this->connection, $messageFactory), $messageDAO);
         $executor = new WorkerConsumerExector(false, false, $queues, $registry, $controller);
 
