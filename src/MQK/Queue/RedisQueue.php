@@ -1,9 +1,7 @@
 <?php
 namespace MQK\Queue;
 
-use Connection\Connection;
 use Monolog\Logger;
-use MQK\Job;
 use MQK\LoggerFactory;
 use MQK\RedisProxy;
 
@@ -26,7 +24,7 @@ class RedisQueue implements Queue
 
     private $messageFactory;
 
-    public function __construct($name, $connection, $messageFactory)
+    public function __construct($name, RedisProxy $connection, $messageFactory)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
@@ -39,7 +37,7 @@ class RedisQueue implements Queue
         return $this->connection;
     }
 
-    public function setConnection($connection)
+    public function setConnection(RedisProxy $connection)
     {
         $this->connection = $connection;
     }
@@ -60,7 +58,7 @@ class RedisQueue implements Queue
             $messageJsonObject['retries'] = $message->retries();
         }
         $messageJson = json_encode($messageJsonObject);
-        $this->logger->debug("[enqueue] {$message->id()}");
+        $this->logger->debug("enqueue {$message->id()} to {$message->queue()}");
         $this->logger->debug($messageJson);
         $success = $this->connection->lpush("{$this->key()}", $messageJson);
 
@@ -119,5 +117,15 @@ class RedisQueue implements Queue
     function setName($name)
     {
         $this->name = $name;
+    }
+
+    public static function create($connection, $queues, $messageFactory)
+    {
+        $returns = [];
+        foreach ($queues as $queue) {
+            $returns[] = new RedisQueue($queue, $connection, $messageFactory);
+        }
+
+        return $returns;
     }
 }

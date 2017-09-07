@@ -34,18 +34,24 @@ class MessageInvokable extends Message
     {
         parent::__construct($id, $discriminator, $queue, $ttl, $payload);
 
-        $this->func = $payload->func;
-        $this->arguments = $payload->arguments;
+        if (null != $payload) {
+            $this->setPayload($payload);
+        }
         $this->serializer = SerializerFactory::shared()->serializer();
     }
 
     public function __invoke()
     {
         $arguments = $this->arguments;
+        var_dump($this->func);
+        var_dump($arguments);
         $returns = @call_user_func_array($this->func, $arguments);
         $this->returns = $returns;
+        var_dump($returns);
 
         $error = error_get_last();
+        if ($error)
+            throw new $error;
         error_clear_last();
 //        if (!empty($error)) {
 //            $this->logger->error($error['message']);
@@ -66,6 +72,15 @@ class MessageInvokable extends Message
     public function setReturns($returns)
     {
         $this->returns = $returns;
+    }
+
+    public function setPayload($payload)
+    {
+        if (property_exists($payload, 'func')) {
+            $this->func = $payload->func;
+            $this->arguments = $payload->arguments;
+        }
+        parent::setPayload($payload);
     }
 
     public function jsonSerialize()

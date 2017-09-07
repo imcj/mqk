@@ -13,6 +13,12 @@ class Calculator
         return $a + $b;
     }
 
+    public static function sumSleep($a, $b, $second)
+    {
+        usleep($second * 1000000);
+        return self::sum($a, $b);
+    }
+
     public static function sumCrash($a, $b)
     {
         throw new TestTimeoutException("Test");

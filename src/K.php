@@ -3,6 +3,12 @@ use MQK\Job;
 use MQK\Queue\Queue;
 use MQK\Queue\RedisQueue;
 use Symfony\Component\EventDispatcher\Event;
+use MQK\RedisFactory;
+use MQK\Config;
+use MQK\Queue\QueueFactory;
+use MQK\Queue\MessageAbstractFactory;
+use MQK\Queue\Invokes;
+use MQK\Job\JobDAO;
 
 class K
 {
@@ -15,6 +21,15 @@ class K
      * @var \MQK\Queue\MessageAbstractFactory
      */
     private static $messageFactory;
+
+    private static $connection;
+
+    private static $queueFactory;
+
+    /**
+     * @var JobDAO
+     */
+    private static $messageDAO;
 
     public static function setup($config)
     {
@@ -30,7 +45,7 @@ class K
 
     public static function invoke($func, ...$args)
     {
-        $message = new \MQK\Queue\Message(uniqid());
+        $message = new \MQK\Queue\MessageInvokable(uniqid());
         $payload = new stdClass();
         $payload->func = $func;
         $payload->arguments = $args;
@@ -64,9 +79,23 @@ class K
         return $message;
     }
 
+    public static function invokeAsync(Invokes $invokes)
+    {
+        $connection = self::createConnection();
+        $messageDAO = self::createMessageDAO();
+        foreach ($invokes->invokes() as $invoke) {
+            $invokes->setConnection($connection);
+            $invokes->setMessageDAO($messageDAO);
+            self::defaultQueue()->enqueue($invoke->createMessage());
+        }
+
+        return $invokes;
+    }
+
+
     public static function dispatch(Event $event, $ttl = -1)
     {
-        $message = self::messageFactory()->messageWithEvent($event);
+        $message = self::createMessageFactory()->messageWithEvent($event);
         if ($ttl > -1)
             $message->setTtl($ttl);
         self::defaultQueue()->enqueue($message);
@@ -94,19 +123,43 @@ class K
         return $job;
     }
 
-    static function defaultQueue()
+    static function createConnection()
     {
-        if (null == self::$queue)
-            self::$queue = (new \MQK\Queue\QueueFactory())->createQueue("default");
-
-        return self::$queue;
+        if (null == self::$connection) {
+            $factory = RedisFactory::shared();
+            self::$connection = $factory->createConnection();
+        }
+        return self::$connection;
     }
 
-    static function messageFactory()
+    static function createMessageFactory()
     {
-        if (self::$messageFactory == null)
-            self::$messageFactory = new \MQK\Queue\MessageAbstractFactory();
-
+        if (null == self::$messageFactory)
+            self::$messageFactory = new MessageAbstractFactory();
         return self::$messageFactory;
+    }
+
+    static function createQueueFactory($connection)
+    {
+        if (null == self::$queueFactory)
+            self::$queueFactory = new QueueFactory($connection, self::createMessageFactory());
+        return self::$queueFactory;
+    }
+
+    static function createMessageDAO()
+    {
+        if (null == self::$messageDAO)
+            self::$messageDAO = new JobDAO(self::createConnection());
+
+        return self::$messageDAO;
+    }
+
+    static function defaultQueue()
+    {
+        if (null == self::$queue) {
+            self::$queue = self::createQueueFactory(self::createConnection())->createQueue("default");
+        }
+
+        return self::$queue;
     }
 }

@@ -6,17 +6,17 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\Exception\QueueIsEmptyException;
-use MQK\Exception\JobMaxRetriesException;
-use MQK\Exception\TestTimeoutException;
 use MQK\Job\JobDAO;
 use MQK\LoggerFactory;
 use MQK\PIPE;
-use MQK\Queue\Queue;
-use MQK\Queue\QueueCollection;
+use MQK\Queue\MessageAbstractFactory;
+use MQK\Queue\MessageInvokableSyncController;
+use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Queue\TestQueueCollection;
 use MQK\RedisFactory;
+use MQK\RedisProxy;
 use MQK\Registry;
 use MQK\Time;
 
@@ -75,12 +75,21 @@ class WorkerConsumer extends AbstractWorker implements Worker
      */
     protected $exector;
 
+    /**
+     * @var RedisProxy
+     */
+    protected $connection;
+
+    protected $queueNameList;
+
     public function __construct(Config $config, $queueNameList, $masterId)
     {
         parent::__construct();
 
+        $this->config = $config;
         $this->masterId = $masterId;
         $this->workerId = uniqid();
+        $this->queueNameList = $queueNameList;
 
         $this->loadUserInitializeScript();
     }
@@ -89,7 +98,8 @@ class WorkerConsumer extends AbstractWorker implements Worker
     {
         parent::run();
 
-        $this->exector = new WorkerConsumerExector($this->config, $this->createQueues(), $this->createRegistry());
+        $this->exector = $this->createExector();
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
 
@@ -153,6 +163,49 @@ class WorkerConsumer extends AbstractWorker implements Worker
         } else {
 //            $this->cliLogger->warning("{$initFilePath} not found, all event will miss.");
         }
+    }
+
+    protected function createConnection()
+    {
+        $connection = RedisFactory::shared()->createConnection();
+        return $connection;
+    }
+
+    protected function createExector()
+    {
+        $this->connection = $connection = $this->createConnection();
+        $messageFactory = new MessageAbstractFactory();
+        assert($connection instanceof  RedisProxy);
+
+        $queueFactory = new QueueFactory($connection, $messageFactory);
+
+        $queues = new RedisQueueCollection(
+            $connection,
+            RedisQueue::create(
+                $connection,
+                $this->queueNameList,
+                $messageFactory
+            )
+        );
+        $registry = new Registry($connection);
+
+        $notifyQueue = $queueFactory->createQueue("");
+        $messageDAO = new JobDAO($connection);
+        $controller = new MessageInvokableSyncController(
+            $connection,
+            $notifyQueue,
+            $messageDAO
+        );
+
+        $exector = new WorkerConsumerExector(
+            $this->config->burst(),
+            $this->config->fast(),
+            $queues,
+            $registry,
+            $controller
+        );
+
+        return $exector;
     }
 
     protected function updateHealth()

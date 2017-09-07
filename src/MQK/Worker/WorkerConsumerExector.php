@@ -16,11 +16,6 @@ use MQK\Registry;
 class WorkerConsumerExector
 {
     /**
-     * @var Config
-     */
-    protected $config;
-
-    /**
      * @var QueueCollection
      */
     protected $queues;
@@ -52,8 +47,6 @@ class WorkerConsumerExector
 
     /**
      * WorkerConsumerExector constructor.
-     * @param Config $config
-     * @param string[] $queueNameList
      */
     public function __construct(
         $burst,
@@ -132,15 +125,11 @@ class WorkerConsumerExector
 
     protected function buildQueues()
     {
-        if ($this->config->testJobMax() > 0 ) {
-            return new TestQueueCollection($this->config->testJobMax());
-        } else {
-            $queues = [];
-            foreach ($this->queueNameList as $name) {
-                $queues[] = new RedisQueue($name, $this->connection);
-            }
-            return new RedisQueueCollection($this->connection, $queues);
+        $queues = [];
+        foreach ($this->queueNameList as $name) {
+            $queues[] = new RedisQueue($name, $this->connection);
         }
+        return new RedisQueueCollection($this->connection, $queues);
     }
 
 }

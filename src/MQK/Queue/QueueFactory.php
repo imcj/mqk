@@ -1,19 +1,24 @@
 <?php
 namespace MQK\Queue;
 
-use MQK\RedisFactory;
+use MQK\RedisProxy;
 
 class QueueFactory
 {
     /**
-     * @var RedisFactory
+     * @var RedisProxy
      */
-    private $redisFactory;
+    private $connection;
 
-    // TODO: 构造函数传入 Redis 实例
-    public function __construct()
+    /**
+     * @var MessageAbstractFactory
+     */
+    private $factory;
+
+    public function __construct($connection, MessageAbstractFactory $factory)
     {
-        $this->redisFactory = new RedisFactory();
+        $this->connection = $connection;
+        $this->factory = $factory;
     }
 
     /**
@@ -21,22 +26,24 @@ class QueueFactory
      */
     public function createQueue($name)
     {
-        return new RedisQueue($name, $this->redisFactory->createRedis());
+        return new RedisQueue($name, $this->connection, $this->factory);
     }
 
     /**
      * 创建一个队列的列表
      *
-     * @param $nameList ['default', 'fast']
-     * @param $redis \Redis connection
+     * @param $connection
+     * @param $queues
+     * @param $messageFactory
      * @return Queue[]
      */
-    public function createQueues($nameList, $redis)
+    public function createQueues($queues)
     {
-        $queues = [];
-        foreach ($nameList as $name) {
-            $queues[] = new RedisQueue($name, $redis);
+        $returns = [];
+        foreach ($queues as $queue) {
+            $returns[] = $this->createQueue($queue);
         }
-        return $queues;
+
+        return $returns;
     }
 }

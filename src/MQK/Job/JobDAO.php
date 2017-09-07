@@ -36,6 +36,7 @@ class JobDAO
      */
     public function find($id)
     {
+        assert($id != null);
         $raw = $this->connection->get("mqk:message:{$id}");
         if (null == $raw || false === $raw) {
             $this->logger->error("Message {$id} not found.");
