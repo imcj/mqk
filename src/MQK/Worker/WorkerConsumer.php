@@ -29,8 +29,6 @@ use MQK\Process\AbstractWorker;
  */
 class WorkerConsumer extends AbstractWorker
 {
-    protected $executor;
-
     protected $config;
 
     /**
@@ -74,9 +72,9 @@ class WorkerConsumer extends AbstractWorker
     protected $workerId;
 
     /**
-     * @var WorkerConsumerExector
+     * @var WorkerConsumerExecutor
      */
-    protected $exector;
+    protected $executor;
 
     /**
      * @var RedisProxy
@@ -104,7 +102,7 @@ class WorkerConsumer extends AbstractWorker
     {
         parent::run();
 
-        $this->exector = $this->createExector();
+        $this->executor = $this->createExector();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
@@ -112,7 +110,7 @@ class WorkerConsumer extends AbstractWorker
 
         while ($this->alive) {
             try {
-                $success = $this->exector->execute();
+                $success = $this->executor->execute();
             } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
                 $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
@@ -200,7 +198,7 @@ class WorkerConsumer extends AbstractWorker
             $messageDAO
         );
 
-        $exector = new WorkerConsumerExector(
+        $exector = new WorkerConsumerExecutor(
             $this->config->burst(),
             $this->config->fast(),
             $queues,

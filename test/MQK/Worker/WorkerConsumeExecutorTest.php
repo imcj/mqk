@@ -49,7 +49,7 @@ class WorkerConsumeExecutorTest extends TestCase
         $message = new MessageInvokableSync($groupId, $messageId, "invokable_sync", 'default', 600, $payload);
         $queue->enqueue($message);
 
-        $executor = new WorkerConsumerExector(Config::defaultConfig(), ["default"]);
+        $executor = new WorkerConsumerExecutor(Config::defaultConfig(), ["default"]);
         $executor->initialize();
 
         $success = $executor->execute();
@@ -82,7 +82,7 @@ class WorkerConsumeExecutorTest extends TestCase
 
         $messageDAO = new MessageDAO($this->connection);
         $controller = new MessageInvokableSyncController($this->connection, new RedisQueue("", $this->connection, $messageFactory), $messageDAO);
-        $executor = new WorkerConsumerExector(false, false, $queues, $registry, $controller);
+        $executor = new WorkerConsumerExecutor(false, false, $queues, $registry, $controller);
 
         $success = $executor->execute();
         $success = $executor->execute();

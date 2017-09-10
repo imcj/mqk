@@ -3,17 +3,14 @@ namespace MQK\Worker;
 
 
 use Monolog\Logger;
-use MQK\Config;
 use MQK\Exception\TestTimeoutException;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageInvokableSync;
 use MQK\Queue\MessageInvokableSyncController;
-use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
-use MQK\RedisFactory;
 use MQK\Registry;
 
-class WorkerConsumerExector
+class WorkerConsumerExecutor
 {
     /**
      * @var QueueCollection
@@ -76,13 +73,11 @@ class WorkerConsumerExector
         }
         // 可能出列的数据是空
         if (null == $message) {
-            $this->logger->debug("Pop message is null.");
             return;
         }
         $this->logger->debug("Pop a message {$message->id()} at {$now}.");
         if (!$this->fast) {
             $this->registry->start($message);
-//            $this->logger->info("Job {$job->id()} is started");
         }
 
         $success = true;
@@ -98,12 +93,11 @@ class WorkerConsumerExector
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
-//            $this->cliLogger->notice("Function execute duration {$duration}");
+            $this->logger->info("Message execute duration {$duration}");
             $messageClass = (string)get_class($message);
-            $this->logger->info("{$messageClass} {$message->id()} is finished");
+            $this->logger->debug("{$messageClass} {$message->id()} is finished");
             if ($afterExecute - $beforeExecute >= $message->ttl()) {
                 $this->logger->warn(sprintf("The message %s timed out for %d seconds.", $message->id(), $message->ttl()));
-//                return;
             }
 
             if (!$this->fast)
@@ -122,14 +116,4 @@ class WorkerConsumerExector
 
         return $success;
     }
-
-    protected function buildQueues()
-    {
-        $queues = [];
-        foreach ($this->queueNameList as $name) {
-            $queues[] = new RedisQueue($name, $this->connection);
-        }
-        return new RedisQueueCollection($this->connection, $queues);
-    }
-
 }
