@@ -108,7 +108,7 @@ class WorkerConsumer extends AbstractWorker
     {
         parent::run();
 
-        $this->executor = $this->createExector();
+        $this->executor = $this->createExecutor();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
@@ -169,7 +169,7 @@ class WorkerConsumer extends AbstractWorker
         if (file_exists($initFilePath)) {
             include_once $initFilePath;
         } else {
-//            $this->cliLogger->warning("{$initFilePath} not found, all event will miss.");
+            $this->logger->warning("{$initFilePath} not found, all event will miss.");
         }
     }
 
@@ -179,7 +179,7 @@ class WorkerConsumer extends AbstractWorker
         return $connection;
     }
 
-    protected function createExector()
+    protected function createExecutor()
     {
         $this->connection = $connection = $this->createConnection();
         $messageFactory = new MessageAbstractFactory();
