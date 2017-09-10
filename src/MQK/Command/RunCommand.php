@@ -2,9 +2,6 @@
 namespace MQK\Command;
 
 use MQK\Config;
-use MQK\Hook\HookNotification;
-use MQK\MasterProcess\MasterProcessFactory;
-use MQK\MasterProcess\MQKMasterProcessFactory;
 use MQK\Runner;
 use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,16 +10,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class RunCommand extends AbstractCommand
 {
-    /**
-     * @var MasterProcessFactory
-     */
-    protected $masterProcessFactory;
-
     public function __construct($name = null)
     {
         parent::__construct($name);
-
-        $this->masterProcessFactory = new MQKMasterProcessFactory();
     }
 
     protected function configure()
@@ -88,26 +78,13 @@ class RunCommand extends AbstractCommand
             $error_handler->registerShutdownFunction();
         }
 
-        $runner = $this->masterProcessFactory->create();
+        $runner = new Runner();
 
         if ((boolean)$input->getOption("empty-worker")) {
             $workerFactory = new EmptyWorkerFactory();
             $runner->setWorkerFactory($workerFactory);
         }
 
-        $hookNotification = new HookNotification();
-        $hookNotification->boot();
-
         $runner->run();
-    }
-
-    public function masterProcessFactory()
-    {
-        return $this->masterProcessFactory;
-    }
-
-    public function setMasterProcessFactory($masterProcessFactory)
-    {
-        $this->masterProcessFactory = $masterProcessFactory;
     }
 }

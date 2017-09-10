@@ -19,6 +19,7 @@ use MQK\Queue\TestQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
 use MQK\Time;
+use MQK\Process\AbstractWorker;
 
 /**
  * Woker的具体实现，在进程内调度Queue和Job完成具体任务
@@ -26,8 +27,10 @@ use MQK\Time;
  * Class WorkerConsumer
  * @package MQK\Worker
  */
-class WorkerConsumer extends WorkerConsumerExector implements Worker
+class WorkerConsumer extends AbstractWorker
 {
+    protected $executor;
+
     protected $config;
 
     /**
@@ -70,12 +73,14 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
      */
     protected $workerId;
 
+    const M = 1024 * 1024;
+
     public function __construct(Config $config, $queueNameList, $masterId)
     {
-        parent::__construct($config, $queueNameList);
-
         $this->masterId = $masterId;
         $this->workerId = uniqid();
+        $this->config = $config;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->loadUserInitializeScript();
     }
@@ -84,6 +89,7 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
     {
         parent::run();
 
+        $this->executor = new WorkerConsumerExector();
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
 
@@ -113,10 +119,6 @@ class WorkerConsumer extends WorkerConsumerExector implements Worker
         $duration = $this->workerEndTime - $this->workerStartTime;
         $this->logger->notice("[run] duration {$duration} second");
         $this->logger->notice("Success {$this->success} failure {$this->failure}");
-    }
-
-    protected function willExit()
-    {
     }
 
     protected function memoryGetUsage()

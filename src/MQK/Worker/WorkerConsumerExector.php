@@ -10,7 +10,7 @@ use MQK\Queue\RedisQueueCollection;
 use MQK\RedisFactory;
 use MQK\Registry;
 
-class WorkerConsumerExector extends AbstractWorker
+class WorkerConsumerExector
 {
     /**
      * @var Config

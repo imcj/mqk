@@ -4,6 +4,7 @@ namespace MQK\Worker;
 
 use MQK\Config;
 use MQK\Queue\Queue;
+use MQK\Process\WorkerFactory;
 
 class WorkerConsumerFactory implements WorkerFactory
 {
@@ -17,6 +18,8 @@ class WorkerConsumerFactory implements WorkerFactory
      */
     private $queueNameList;
 
+    private $masterId;
+
     /**
      * TODO: 把 config 改成需要用到的属性
      *
@@ -24,19 +27,19 @@ class WorkerConsumerFactory implements WorkerFactory
      * @param $config Config
      * @param $queues string
      */
-    public function __construct(Config $config, $queueNameList)
+    public function __construct(Config $config, $queueNameList, $masterId)
     {
         $this->config = $config;
         $this->queueNameList = $queueNameList;
+        $this->masterId = $masterId;
     }
 
     /**
-     * @param string $masterId
      * @return Worker
      */
-    function create($masterId)
+    function create()
     {
-        $worker = new WorkerConsumer($this->config, $this->queueNameList, $masterId);
+        $worker = new WorkerConsumer($this->config, $this->queueNameList, $this->masterId);
 
         return $worker;
     }
