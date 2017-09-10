@@ -6,7 +6,6 @@
             "email": "fa.trellis@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
     "require": {
         "php": ">= 5.6",
         "monolog/monolog": "^1.23",
@@ -15,7 +14,8 @@
         "symfony/event-dispatcher": "^3.3",
         "symfony/serializer": "^3.3",
         "symfony/property-access": "^3.3",
-        "sentry/sentry": "^1.7"
+        "sentry/sentry": "^1.7",
+        "fatrellis/process": "^0.0.2"
     },
     "autoload":{
         "psr-4": {
