@@ -40,11 +40,6 @@ class Runner extends Master
     private $messageDAO;
 
     /**
-     * @var Logger
-     */
-    private $cliLogger;
-
-    /**
      * @var QueueCollection
      */
     private $queues;
@@ -70,7 +65,7 @@ class Runner extends Master
             $this->connection = $redisFactory->createConnection();
         } catch (\RedisException $e) {
             if ("Failed to AUTH connection" == $e->getMessage()) {
-                $this->cliLogger->error($e->getMessage());
+                $this->logger->error($e->getMessage());
                 exit(1);
             }
         }
@@ -78,7 +73,6 @@ class Runner extends Master
         $queueFactory = new QueueFactory($this->connection, new MessageAbstractFactory());
         $config = Config::defaultConfig();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->cliLogger = LoggerFactory::shared()->cliLogger();
 
         $this->config = $config;
         $this->registry = new Registry($this->connection);
