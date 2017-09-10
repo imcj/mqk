@@ -4,17 +4,14 @@ namespace MQK\Worker;
 
 
 use Monolog\Logger;
-use MQK\Config;
 use MQK\Exception\QueueIsEmptyException;
 use MQK\Job\MessageDAO;
 use MQK\LoggerFactory;
-use MQK\PIPE;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
-use MQK\Queue\TestQueueCollection;
 use MQK\RedisFactory;
 use MQK\RedisProxy;
 use MQK\Registry;
