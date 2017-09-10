@@ -1,15 +1,14 @@
 <?php
 namespace MQK\Queue;
 
-use Connection\Connection;
 use Monolog\Logger;
-use MQK\Job;
 use MQK\LoggerFactory;
+use MQK\RedisProxy;
 
 class RedisQueue implements Queue
 {
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
@@ -23,11 +22,14 @@ class RedisQueue implements Queue
      */
     private $name;
 
-    public function __construct($name, $connection)
+    private $messageFactory;
+
+    public function __construct($name, RedisProxy $connection, $messageFactory)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->name = $name;
+        $this->messageFactory = $messageFactory;
     }
 
     public function connection()
@@ -35,7 +37,7 @@ class RedisQueue implements Queue
         return $this->connection;
     }
 
-    public function setConnection($connection)
+    public function setConnection(RedisProxy $connection)
     {
         $this->connection = $connection;
     }
@@ -56,13 +58,74 @@ class RedisQueue implements Queue
             $messageJsonObject['retries'] = $message->retries();
         }
         $messageJson = json_encode($messageJsonObject);
-//        $this->logger->debug("[enqueue] {$message->id()}");
-//        $this->logger->debug($messageJson);
-        $this->connection->lpush("{$this->key()}", $messageJson);
+        $this->logger->debug("enqueue {$message->id()} to {$message->queue()}");
+        $this->logger->debug($messageJson);
+        $success = $this->connection->lpush("{$this->key()}", $messageJson);
+
+        if (!$success) {
+            $error = $this->connection->getLastError();
+            $this->connection->clearLastError();
+            throw new \Exception($error);
+        }
+    }
+
+    public function enqueueBatch($messages)
+    {
+        $this->connection->multi();
+        foreach ($messages as $message) {
+            $this->enqueue($message);
+        }
+        $this->connection->exec();
     }
 
     public function name()
     {
         return $this->name;
+    }
+
+    public function dequeue($block=true)
+    {
+        $messageJsonObject = $this->connection->listPop($this->key, $block, 1);
+
+        if (null == $messageJsonObject)
+            return null;
+
+        try {
+            $messageJsonObject = json_decode($messageJsonObject);
+//            $this->logger->debug("[dequeue] {$jsonObject->id}");
+//            $this->logger->debug($messageJsonObject);
+            // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
+
+            $message = $this->messageFactory->messageWithJson($messageJsonObject);
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $message = null;
+        }
+//        if (null == $job) {
+//            $this->logger("Make job object error.", $raw);
+//            throw \Exception("Make job object error");
+//        }
+        return $message;
+    }
+
+    /**
+     * 设置队列名
+     *
+     * @param $name
+     * @return void
+     */
+    function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    public static function create($connection, $queues, $messageFactory)
+    {
+        $returns = [];
+        foreach ($queues as $queue) {
+            $returns[] = new RedisQueue($queue, $connection, $messageFactory);
+        }
+
+        return $returns;
     }
 }

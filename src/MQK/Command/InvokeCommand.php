@@ -66,7 +66,7 @@ class InvokeCommand extends AbstractCommand
     }
 }
 
-class ProduceWorker extends AbstractWorker
+class ProduceWorker extends \MQK\Process\AbstractWorker
 {
     /**
      * @var int
@@ -126,7 +126,7 @@ class ProduceWorker extends AbstractWorker
             $payload->func = $this->funcName;
             $payload->arguments = $this->arguments;
 
-            $message = new \MQK\Queue\Message(uniqid(), "invokable", "default", $this->ttl ? $this->ttl : 600, $payload);
+            $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", "default", $this->ttl ? $this->ttl : 600, $payload);
 
 
 

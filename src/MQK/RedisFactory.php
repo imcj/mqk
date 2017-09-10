@@ -54,7 +54,21 @@ class RedisFactory
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
-    public function createRedis($dsn=null)
+    public function createRedis($dsn = null)
+    {
+
+        $this->setupConfig($dsn);
+
+        if (null != $this->connection) {
+            return $this->connection;
+        }
+
+        $this->connect();
+
+        return $this->connection;
+    }
+
+    function setupConfig($dsn)
     {
         if ($dsn) {
             $dsn = Dsn::parse($dsn);
@@ -67,15 +81,6 @@ class RedisFactory
             $this->port = $this->config->port();
             $this->password = $this->config->password();
         }
-
-
-        if (null != $this->connection) {
-            return $this->connection;
-        }
-
-        $this->connect();
-
-        return $this->connection;
     }
 
     public function createNewConnection()
@@ -90,7 +95,7 @@ class RedisFactory
      * @param int $max 最大重连次数
      * @return \Redis
      */
-    public function reconnect($max=3)
+    public function reconnect($max = 3)
     {
         $this->retires += 1;
         $this->logger->info("Redis retry {$this->retires} times.");
@@ -102,6 +107,32 @@ class RedisFactory
 
         $this->connect();
         return $this->connection;
+    }
+
+    public function createConnection()
+    {
+        $this->setupConfig(null);
+        $connection = null;
+        if (!empty($this->config->cluster())) {
+            $servers = [];
+            foreach ($this->config->cluster() as $cluster) {
+                $dsn = Dsn::parse($cluster);
+                $servers[] = $dsn->host . ":" . $dsn->port;
+
+            }
+            $connection = new \RedisCluster(NULL, $servers);
+        } else {
+            $this->logger->debug("Connection to redis {$this->host}.");
+            $connection = new RedisProxy($this->host, $this->port);
+            $connection->connect();
+            if (strlen($this->password) > 0) {
+                $connection->auth($this->password);
+            }
+
+            $connection->ping();
+        }
+
+        return $connection;
     }
 
     function connect()

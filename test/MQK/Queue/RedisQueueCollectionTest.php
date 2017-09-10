@@ -1,6 +1,7 @@
 <?php
 namespace MQK\Queue;
 
+use MQK\RedisProxy;
 use PHPUnit\Framework\TestCase;
 
 class RedisQueueCollectionTest extends TestCase
@@ -11,14 +12,14 @@ class RedisQueueCollectionTest extends TestCase
     private $queue;
 
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
     public function setUp()
     {
-        $this->connection = new \Redis();
-        $this->connection->connect('127.0.0.1');
+        $this->connection = new RedisProxy('127.0.0.1');
+        $this->connection->connect();
 
         $this->queue = new RedisQueue("default", $this->connection);
         $this->connection->flushAll();
@@ -37,7 +38,7 @@ class RedisQueueCollectionTest extends TestCase
     public function testEnqueueEvent()
     {
         $event = new ComplexEvent(1);
-        $messageFactory = new MessageFactory();
+        $messageFactory = new MessageAbstractFactory();
         $message = $messageFactory->messageWithEvent($event);
         $this->queue->enqueue($message);
 
@@ -51,5 +52,26 @@ class RedisQueueCollectionTest extends TestCase
         $messageEvent();
 
         $this->assertTrue($assertYes);
+    }
+
+    public function testDequeueMessageInvokableSync()
+    {
+        $queues = new RedisQueueCollection($this->connection, [$this->queue]);
+        $message = $queues->dequeue();
+        $this->assertInstanceOf(MessageInvokableSync::class, $message);
+    }
+
+    public function testMessageInvokableSync()
+    {
+        $sync = K::invokeSync(
+            array(
+                'MQK\Test\Sum::oneSecond',
+                'MQK\Test\Sum::oneSecond'
+            )
+        );
+
+        $sync->then(function($arg) {
+            var_dump($arg);
+        });
     }
 }
