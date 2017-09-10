@@ -29,8 +29,6 @@ use MQK\Process\AbstractWorker;
  */
 class WorkerConsumer extends AbstractWorker
 {
-    protected $config;
-
     /**
      * @var Logger
      */
@@ -85,13 +83,21 @@ class WorkerConsumer extends AbstractWorker
 
     protected $queueNameList;
 
-    public function __construct(Config $config, $queueNameList, $masterId)
+    protected $initScript = false;
+
+    protected $burst = false;
+
+    protected $fast = false;
+
+    public function __construct($queueNameList, $masterId, $initScript, $burst, $fast)
     {
         $this->masterId = $masterId;
         $this->workerId = uniqid();
-        $this->config = $config;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->queueNameList = $queueNameList;
+        $this->initScript = $initScript;
+        $this->burst = $burst;
+        $this->fast = $fast;
 
         $this->loadUserInitializeScript();
 
@@ -126,6 +132,7 @@ class WorkerConsumer extends AbstractWorker
                 break;
             }
         }
+        $this->logger->debug("here");
 
         $this->workerEndTime = Time::micro();
         $this->didQuit();
@@ -148,12 +155,12 @@ class WorkerConsumer extends AbstractWorker
 
     protected function loadUserInitializeScript()
     {
-        if ($this->config->initScript()) {
-            if (file_exists($this->config->initScript())) {
-                include_once $this->config->initScript();
+        if ($this->initScript) {
+            if (file_exists($this->initScript)) {
+                include_once $this->initScript;
                 return;
             } else {
-//                $this->cliLogger->warning("You specify init script [{$this->config->initScript()}], but file not exists.");
+                $this->logger->warning("You specify init script [{$this->initScript()}], but file not exists.");
             }
         }
         $cwd = getcwd();
@@ -199,8 +206,8 @@ class WorkerConsumer extends AbstractWorker
         );
 
         $exector = new WorkerConsumerExecutor(
-            $this->config->burst(),
-            $this->config->fast(),
+            $this->burst,
+            $this->fast,
             $queues,
             $registry,
             $controller

@@ -89,7 +89,13 @@ class Runner extends Master
             $queueFactory->createQueues($this->nameList, $this->connection)
         );
         $queues = ["default"];
-        $this->workerClassOrFactory = new WorkerConsumerFactory($config, $queues, $this->masterId);
+        $this->workerClassOrFactory = new WorkerConsumerFactory(
+            $queues,
+            $this->masterId,
+            $config->initScript(),
+            $config->burst(),
+            $config->fast()
+        );
         $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
 
         parent::__construct($this->workerClassOrFactory, $this->config->workers(), $this->config->burst(), $this->logger );

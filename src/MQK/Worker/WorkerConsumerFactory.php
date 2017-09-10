@@ -9,16 +9,17 @@ use MQK\Process\WorkerFactory;
 class WorkerConsumerFactory implements WorkerFactory
 {
     /**
-     * @var Config
-     */
-    private $config;
-
-    /**
      * @var string[]
      */
     private $queueNameList;
 
     private $masterId;
+
+    private $initScript;
+
+    private $burst;
+
+    private $fast;
 
     /**
      * TODO: 把 config 改成需要用到的属性
@@ -27,11 +28,13 @@ class WorkerConsumerFactory implements WorkerFactory
      * @param $config Config
      * @param $queues string
      */
-    public function __construct(Config $config, $queueNameList, $masterId)
+    public function __construct($queueNameList, $masterId, $initScript, $burst, $fast)
     {
-        $this->config = $config;
         $this->queueNameList = $queueNameList;
         $this->masterId = $masterId;
+        $this->initScript = $initScript;
+        $this->burst = $burst;
+        $this->fast = $fast;
     }
 
     /**
@@ -39,7 +42,13 @@ class WorkerConsumerFactory implements WorkerFactory
      */
     function create()
     {
-        $worker = new WorkerConsumer($this->config, $this->queueNameList, $this->masterId);
+        $worker = new WorkerConsumer(
+            $this->queueNameList,
+            $this->masterId,
+            $this->initScript,
+            $this->burst,
+            $this->fast
+        );
 
         return $worker;
     }
