@@ -66,7 +66,7 @@ class InvokeCommand extends AbstractCommand
     }
 }
 
-class ProduceWorker extends AbstractWorker
+class ProduceWorker extends \MQK\Process\AbstractWorker
 {
     /**
      * @var int
