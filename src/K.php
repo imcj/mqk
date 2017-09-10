@@ -35,14 +35,6 @@ class K
     {
     }
 
-    static function job($func, $args)
-    {
-        $job = new Job(null, $func, $args);
-        $job->setConnection(self::defaultQueue()->connection());
-
-        return $job;
-    }
-
     public static function invoke($func, ...$args)
     {
         $message = new \MQK\Queue\MessageInvokable(uniqid());
@@ -112,15 +104,6 @@ class K
     public static function addListener($name, $callback)
     {
         \MQK\Queue\MessageEventBus::shared()->addListener($name, $callback);
-    }
-
-    public static function delay($second, $func, ...$args)
-    {
-        $job = self::job($func, $args);
-        $job->setDelay($second);
-        self::defaultQueue()->enqueue($job);
-
-        return $job;
     }
 
     static function createConnection()
