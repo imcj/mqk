@@ -2,7 +2,7 @@
 namespace MQK;
 
 
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 
@@ -18,9 +18,9 @@ class ExpiredFinder
     private $connection;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
-    private $jobDAO;
+    private $messageDAO;
 
     /**
      * @var Registry
@@ -45,20 +45,20 @@ class ExpiredFinder
     /**
      * ExpiredFinder constructor.
      * @param \Redis $connection
-     * @param JobDAO $jobDAO
+     * @param MessageDAO $messageDAO
      * @param Registry $registry
      * @param QueueCollection $queues
      * @param bool $cluster
      */
     public function __construct(
         $connection,
-        JobDAO $jobDAO,
+        MessageDAO $messageDAO,
         Registry $registry,
         QueueCollection $queues,
         $cluster = false) {
 
         $this->connection = $connection;
-        $this->jobDAO = $jobDAO;
+        $this->messageDAO = $messageDAO;
         $this->registry = $registry;
         $this->queues = $queues;
         $this->cluster = $cluster;
@@ -80,7 +80,7 @@ class ExpiredFinder
 
         $this->registry->clear("mqk:started", $id);
         try {
-            $message = $this->jobDAO->find($id);
+            $message = $this->messageDAO->find($id);
         } catch(\Exception $e) {
             $this->logger->error($e->getMessage());
             return;
@@ -109,7 +109,7 @@ class ExpiredFinder
 
         $message->increaseRetries();
 //        $this->logger->debug(json_encode($message->jsonSerialize()));
-        $this->jobDAO->store($message);
+        $this->messageDAO->store($message);
         $queue->enqueue($message);
 
         if (!$this->cluster)
@@ -126,6 +126,6 @@ class ExpiredFinder
     {
         $this->logger->warning("超过最大重试次数 {$job->id()}");
         $this->registry->clear("mqk:started", $job->id());
-        $this->jobDAO->clear($job);
+        $this->messageDAO->clear($job);
     }
 }

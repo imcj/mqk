@@ -3,7 +3,7 @@
 use PHPUnit\Framework\TestCase;
 use MQK\ExpiredFinder;
 use MQK\RedisFactory;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\Registry;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Queue\QueueFactory;
@@ -27,7 +27,7 @@ class TimeoutFinderTest extends TestCase
         /**
          * @var $connection Redis
          */
-        $connection = $jobDAO = $registry = $queueCollection = null;
+        $connection = $messageDAO = $registry = $queueCollection = null;
 
         $redisFactory = RedisFactory::shared();
         $connection = $redisFactory->createRedis();
@@ -35,7 +35,7 @@ class TimeoutFinderTest extends TestCase
         $queueFactory = new QueueFactory();
         $queueList = $queueFactory->createQueues([$queueName], $connection);
 
-        $jobDAO = new JobDAO($connection);
+        $messageDAO = new MessageDAO($connection);
         $registry = new Registry($connection);
         $queueCollection = new RedisQueueCollection($connection, $queueList);
 
@@ -47,7 +47,7 @@ class TimeoutFinderTest extends TestCase
         $this->assertEquals(1, count($found));
 
         // TODO: 超时任务列表的查询，一次只查询有限的数据量。
-        $finder = new ExpiredFinder($connection, $jobDAO, $registry, $queueCollection);
+        $finder = new ExpiredFinder($connection, $messageDAO, $registry, $queueCollection);
         $finder->process();
 
         $job = $queueCollection->dequeue(false);

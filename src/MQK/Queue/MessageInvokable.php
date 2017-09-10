@@ -6,8 +6,24 @@ use MQK\SerializerFactory;
 
 class MessageInvokable extends Message
 {
-    private $func;
-    private $arguments;
+    /**
+     * 方法名
+     *
+     * @var string
+     */
+    protected $func;
+
+    /**
+     * 方法调用参数
+     *
+     * @var array
+     */
+    protected $arguments;
+
+    /**
+     * @var mixed
+     */
+    protected $returns;
 
     /**
      * @var Serializer
@@ -17,19 +33,25 @@ class MessageInvokable extends Message
     public function __construct($id, $discriminator = "invokable", $queue = null, $ttl = 600, $payload = null)
     {
         parent::__construct($id, $discriminator, $queue, $ttl, $payload);
-        var_dump($payload);
 
-        $this->func = $payload->func;
-        $this->arguments = $payload->arguments;
+        if (null != $payload) {
+            $this->setPayload($payload);
+        }
         $this->serializer = SerializerFactory::shared()->serializer();
     }
 
     public function __invoke()
     {
-        $arguments = json_decode($this->arguments);
-        $result = @call_user_func_array($this->func, $arguments);
+        $arguments = $this->arguments;
+        var_dump($this->func);
+        var_dump($arguments);
+        $returns = @call_user_func_array($this->func, $arguments);
+        $this->returns = $returns;
+        var_dump($returns);
 
         $error = error_get_last();
+        if ($error)
+            throw new $error;
         error_clear_last();
 //        if (!empty($error)) {
 //            $this->logger->error($error['message']);
@@ -38,16 +60,41 @@ class MessageInvokable extends Message
 //
 //            throw new \Exception($error['message']);
 //        }
+
+        return $returns;
+    }
+
+    public function returns()
+    {
+        return $this->returns;
+    }
+
+    public function setReturns($returns)
+    {
+        $this->returns = $returns;
+    }
+
+    public function setPayload($payload)
+    {
+        if (property_exists($payload, 'func')) {
+            $this->func = $payload->func;
+            $this->arguments = $payload->arguments;
+        }
+        parent::setPayload($payload);
     }
 
     public function jsonSerialize()
     {
         $payload = array(
             'func' => $this->func,
-            'arguments' => json_encode($this->arguments)
+            'arguments' => $this->arguments
         );
         $json = parent::jsonSerialize();
         $json['payload'] = $payload;
+
+        if (null != $this->returns) {
+            $json['returns'] = $this->returns;
+        }
 
         return $json;
     }

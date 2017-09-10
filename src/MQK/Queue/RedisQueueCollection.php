@@ -6,11 +6,12 @@ use MQK\Exception\QueueIsEmptyException;
 use MQK\Job;
 use MQK\LoggerFactory;
 use MQK\RedisFactory;
+use MQK\RedisProxy;
 
 class RedisQueueCollection implements QueueCollection
 {
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
@@ -37,7 +38,7 @@ class RedisQueueCollection implements QueueCollection
     private $redisFactory;
 
     /**
-     * @var MessageFactory
+     * @var MessageAbstractFactory
      */
     private $messageFactory;
 
@@ -52,7 +53,7 @@ class RedisQueueCollection implements QueueCollection
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->redisFactory = RedisFactory::shared();
         $this->register($queues);
-        $this->messageFactory = new MessageFactory();
+        $this->messageFactory = new MessageAbstractFactory();
     }
 
     /**
@@ -82,53 +83,20 @@ class RedisQueueCollection implements QueueCollection
 
     public function dequeue($block=true)
     {
-        for ($i = 0; $i < 3; $i++) {
-            try {
-                if ($block) {
-                    $raw = $this->connection->blPop($this->queueKeys, 1);
-                    if (!$raw)
-                        return null;
-                } else {
-                    foreach ($this->queueKeys as $queueKey) {
-                        $raw = $this->connection->lPop($queueKey);
-                        if ($raw) {
-                            $raw = array($queueKey, $raw);
-                            break;
-                        } else {
-                            throw new QueueIsEmptyException(null);
-                        }
-                    }
-                }
-                break;
-            } catch (\RedisException $e) {
-                // e 0
-                // read error on connection
-                $this->logger->error($e->getCode());
-                $this->logger->error($e->getMessage());
-                if ("read error on connection" == $e->getMessage()) {
-                    $this->redisFactory->reconnect(3);
-                    continue;
-                }
+        $messageJsonObject = $this->connection->listPop($this->queueKeys, $block, 1);
 
-                throw $e;
-            }
-        }
-        if (count($raw) < 2) {
-            throw new \Exception("queue data count less 2.");
-        }
-        list($queueKey, $messageJson) = $raw;
-
-        if (empty($messageJson))
+        if (null == $messageJsonObject)
             return null;
 
         try {
-            $messageJsonObject = json_decode($messageJson);
+            $messageJsonObject = json_decode($messageJsonObject);
 //            $this->logger->debug("[dequeue] {$jsonObject->id}");
-//            $this->logger->debug($messageJson);
+//            $this->logger->debug($messageJsonObject);
             // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率
 
             $message = $this->messageFactory->messageWithJson($messageJsonObject);
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
             $message = null;
         }
 //        if (null == $job) {

@@ -4,9 +4,9 @@ namespace MQK\Job;
 use Monolog\Logger;
 use MQK\LoggerFactory;
 use MQK\Queue\Message;
-use MQK\Queue\MessageFactory;
+use MQK\Queue\MessageAbstractFactory;
 
-class JobDAO
+class MessageDAO
 {
     /**
      * @var Logger
@@ -19,7 +19,7 @@ class JobDAO
     private $connection;
 
     /**
-     * @var MessageFactory
+     * @var MessageAbstractFactory
      */
     private $messageFactory;
 
@@ -27,7 +27,7 @@ class JobDAO
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->messageFactory = MessageFactory::shared();
+        $this->messageFactory = MessageAbstractFactory::shared();
     }
 
     /**
@@ -36,10 +36,11 @@ class JobDAO
      */
     public function find($id)
     {
-        $raw = $this->connection->get("job:{$id}");
+        assert($id != null);
+        $raw = $this->connection->get("mqk:message:{$id}");
         if (null == $raw || false === $raw) {
-            $this->logger->error("Job {$id} not found.");
-            throw new \Exception("Job {$id} not found.");
+            $this->logger->error("Message {$id} not found.");
+            throw new \Exception("Message {$id} not found.");
         }
         $jsonObject = json_decode($raw);
         $message = $this->messageFactory->messageWithJson($jsonObject);
@@ -54,12 +55,14 @@ class JobDAO
      */
     public function store(Message $message)
     {
+        $messageId = $message->id();
+        $this->logger->debug("Store message {$messageId}");
         $raw = json_encode($message->jsonSerialize());
-        $this->connection->set("job:", $message->id(), $raw);
+        $this->connection->set("mqk:message:$messageId", $raw);
     }
 
     public function clear($job)
     {
-        $this->connection->hDel("job", $job->id());
+        $this->connection->hDel("mqk:message:", $job->id());
     }
 }

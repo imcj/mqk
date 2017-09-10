@@ -1,8 +1,9 @@
 <?php
 namespace MQK;
 use MQK\Exception\JobMaxRetriesException;
-use MQK\Job\JobDAO;
+use MQK\Job\MessageDAO;
 use MQK\MasterProcess\MasterProcess;
+use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\QueueFactory;
@@ -34,9 +35,9 @@ class Runner extends Master
     private $registry;
 
     /**
-     * @var JobDAO
+     * @var MessageDAO
      */
-    private $jobDAO;
+    private $messageDAO;
 
     /**
      * @var Logger
@@ -64,14 +65,9 @@ class Runner extends Master
 
     public function __construct()
     {
-        $queueFactory = new QueueFactory();
         $redisFactory = RedisFactory::shared();
-        $config = Config::defaultConfig();
-        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->cliLogger = LoggerFactory::shared()->cliLogger();
-
         try {
-            $connection = $redisFactory->createRedis();
+            $this->connection = $redisFactory->createConnection();
         } catch (\RedisException $e) {
             if ("Failed to AUTH connection" == $e->getMessage()) {
                 $this->cliLogger->error($e->getMessage());
@@ -79,19 +75,22 @@ class Runner extends Master
             }
         }
 
+        $queueFactory = new QueueFactory($this->connection, new MessageAbstractFactory());
+        $config = Config::defaultConfig();
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->cliLogger = LoggerFactory::shared()->cliLogger();
+
         $this->config = $config;
-        $this->connection = $connection;
-        $this->registry = new Registry($connection);
-        $this->jobDAO = new JobDAO($connection);
+        $this->registry = new Registry($this->connection);
+        $this->messageDAO = new MessageDAO($this->connection);
 
         $this->queues = new RedisQueueCollection(
             $this->connection,
-            $queueFactory->createQueues($this->nameList, $connection)
+            $queueFactory->createQueues($this->nameList, $this->connection)
         );
         $queues = ["default"];
-
         $this->workerClassOrFactory = new WorkerConsumerFactory($config, $queues, $this->masterId);
-        $this->expiredFinder = new ExpiredFinder($connection, $this->jobDAO, $this->registry, $this->queues);
+        $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
     }
 
     protected function didSelect()
