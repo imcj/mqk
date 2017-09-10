@@ -91,17 +91,22 @@ class Runner extends Master
         $queues = ["default"];
         $this->workerClassOrFactory = new WorkerConsumerFactory($config, $queues, $this->masterId);
         $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
+
+        parent::__construct($this->workerClassOrFactory, $this->config->workers(), $this->config->burst(), $this->logger );
+    }
+
+    public function run()
+    {
+        parent::run();
+        $this->logger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
     }
 
     protected function didSelect()
     {
         $this->masterId = uniqid();
-        $this->cliLogger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
-        $this->logger->debug("Starting {$this->config->workers()} workers.");
 
         $fast = $this->config->fast();
         $findExpiredJob = $this->findExpiredJob;
-
 
         $this->updateHealth();
         if (!$fast && $findExpiredJob) {

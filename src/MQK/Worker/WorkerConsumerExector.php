@@ -76,7 +76,7 @@ class WorkerConsumerExector
         }
         // 可能出列的数据是空
         if (null == $message) {
-//            $this->logger->debug("[execute] Job is null.");
+            $this->logger->debug("Pop message is null.");
             return;
         }
         $this->logger->debug("Pop a message {$message->id()} at {$now}.");

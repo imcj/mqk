@@ -22,14 +22,11 @@ class MessageAbstractFactory
      */
     public function messageWithJson($messageJson)
     {
-        $discriminator = "";
         if (!property_exists($messageJson, "discriminator")) {
             $messageJson->discriminator = "invokable";
-        } else {
-            $discriminator = $messageJson->discriminator;
         }
 
-        $messageFactoryClassName = CaseConverion::snakeToCamel($discriminator) . "Factory";
+        $messageFactoryClassName = CaseConverion::snakeToCamel($messageJson->discriminator) . "Factory";
         $messageFactoryClass = "\\MQK\\Queue\\MessageFactory\\Message{$messageFactoryClassName}";
         $messageFactoryInstance = null;
 
