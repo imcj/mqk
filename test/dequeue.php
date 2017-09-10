@@ -60,6 +60,3 @@ $app = new \Symfony\Component\Console\Application();
 $app->add($command);
 $app->add(new LoopCommand());
 $app->run();
-
-//$worker = $workerFactory->create();
-//$worker->run();

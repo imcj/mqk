@@ -1,20 +1,13 @@
 <?php
 namespace MQK;
-use MQK\Exception\JobMaxRetriesException;
+
+declare(ticks=1);
 use MQK\Job\MessageDAO;
-use MQK\MasterProcess\MasterProcess;
 use MQK\Queue\MessageAbstractFactory;
-use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\QueueFactory;
-use MQK\Queue\RedisQueue;
-declare(ticks=1);
-
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Worker\Worker;
-use MQK\Worker\WorkerConsumer;
 use MQK\Worker\WorkerConsumerFactory;
 use MQK\Worker\WorkerFactory;
 use MQK\Process\MasterProcess as Master;
