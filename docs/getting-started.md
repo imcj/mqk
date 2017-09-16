@@ -35,31 +35,6 @@ $ vendor/bin/mqk run -vvv
 \K::invoke('Calculator::sum', 1, 2);
 ```
 
-异步RPC 新版用法
----------------
-
-在0.0.1版本加入，目前没有实现。
-
-定义
-
-```php
-class Calculator
-{
-    use InvokeTrait;
-    
-    public function sum($a, $b)
-    {
-        return $a + $b;
-    }
-}
-```
-
-调用
-
-```php
-Calculator::sum(1, 2);
-```
-
 更多
 ----
 
