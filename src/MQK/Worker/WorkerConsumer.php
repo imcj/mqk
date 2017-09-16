@@ -5,6 +5,9 @@ namespace MQK\Worker;
 
 use Monolog\Logger;
 use MQK\Exception\QueueIsEmptyException;
+use MQK\Health\HealthReporter;
+use MQK\Health\HealthReporterRedis;
+use MQK\Health\WorkerHealth;
 use MQK\Job\MessageDAO;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageAbstractFactory;
@@ -15,6 +18,7 @@ use MQK\Queue\RedisQueueCollection;
 use MQK\RedisFactory;
 use MQK\RedisProxy;
 use MQK\Registry;
+use MQK\SerializerFactory;
 use MQK\Time;
 use MQK\Process\AbstractWorker;
 
@@ -71,11 +75,6 @@ class WorkerConsumer extends AbstractWorker
      */
     protected $executor;
 
-    /**
-     * @var RedisProxy
-     */
-    protected $connection;
-
     const M = 1024 * 1024;
 
     protected $queueNameList;
@@ -85,6 +84,11 @@ class WorkerConsumer extends AbstractWorker
     protected $burst = false;
 
     protected $fast = false;
+
+    /**
+     * @var HealthReporter
+     */
+    protected $healthRepoter;
 
     public function __construct($queueNameList, $masterId, $initScript, $burst, $fast)
     {
@@ -105,7 +109,20 @@ class WorkerConsumer extends AbstractWorker
     {
         parent::run();
 
-        $this->executor = $this->createExecutor();
+        $health = new WorkerHealth();
+        $health->setId($this->workerId);
+        $health->setProcessId($this->id);
+
+        $connection = $this->createConnection();
+        $this->healthRepoter = new HealthReporterRedis(
+            $health,
+            $connection,
+            SerializerFactory::shared()->serializer(),
+            1
+        );
+        $this->healthRepoter->report(WorkerHealth::STARTED);
+
+        $this->executor = $this->createExecutor($connection);
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
@@ -113,7 +130,9 @@ class WorkerConsumer extends AbstractWorker
 
         while ($this->alive) {
             try {
+                $this->healthRepoter->report(WorkerHealth::EXECUTING);
                 $success = $this->executor->execute();
+                $this->healthRepoter->report(WorkerHealth::EXECUTED);
             } catch (QueueIsEmptyException $e) {
                 $this->alive = false;
                 $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
@@ -121,15 +140,15 @@ class WorkerConsumer extends AbstractWorker
 
             if ($success)
                 $this->success += 1;
-            else
-                $this->failure += 1;
 
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 1024) {
                 break;
             }
+
+            $health->setDuration(Time::micro() - $this->workerStartTime);
         }
-        $this->logger->debug("here");
+
 
         $this->workerEndTime = Time::micro();
         $this->didQuit();
@@ -176,9 +195,8 @@ class WorkerConsumer extends AbstractWorker
         return $connection;
     }
 
-    protected function createExecutor()
+    protected function createExecutor($connection)
     {
-        $this->connection = $connection = $this->createConnection();
         $messageFactory = new MessageAbstractFactory();
         assert($connection instanceof  RedisProxy);
 
@@ -207,7 +225,8 @@ class WorkerConsumer extends AbstractWorker
             $this->fast,
             $queues,
             $registry,
-            $controller
+            $controller,
+            $this->healthRepoter
         );
 
         return $exector;

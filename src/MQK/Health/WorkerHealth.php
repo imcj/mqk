@@ -4,10 +4,11 @@ namespace MQK\Health;
 class WorkerHealth
 {
     const STARTED = "started";
-    const DEQUEUED = "dequeued";
+    const WILL_DEQUEUE = "will_queue";
+    const DID_DEQUEUE = "did_queue";
     const EXECUTING = "executing";
     const EXECUTED = "executed";
-    const QUITtING = "quitting";
+    const QUITTING = "quitting";
     const QUITED = "quited";
 
     /**
@@ -96,6 +97,13 @@ class WorkerHealth
      */
     public function setStatus(string $status)
     {
+        $this->lastUpdatedAt = time();
+        $datetime = new \DateTime();
+        $datetime->setTimestamp($this->lastUpdatedAt);
+        $datetime->setTimezone(new \DateTimeZone("Asia/Shanghai"));
+        $format = $datetime->format('Y-m-d H:i:s');
+        $this->setLastUpdatedAtHuman($format);
+
         $this->status = $status;
     }
 

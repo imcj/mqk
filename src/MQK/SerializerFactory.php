@@ -5,6 +5,7 @@ namespace MQK;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 class SerializerFactory
@@ -16,8 +17,10 @@ class SerializerFactory
      */
     public function serializer()
     {
+        $propertyNormalizer = new PropertyNormalizer(null, new CamelCaseToSnakeCaseNameConverter());
+        // new ObjectNormalizer(null, new CamelCaseToSnakeCaseNameConverter())
         $serializer = new Serializer(
-            [new ObjectNormalizer(null, new CamelCaseToSnakeCaseNameConverter())],
+            [$propertyNormalizer],
             [new JsonEncoder()]
         );
 

@@ -43,11 +43,8 @@ class MessageInvokable extends Message
     public function __invoke()
     {
         $arguments = $this->arguments;
-        var_dump($this->func);
-        var_dump($arguments);
         $returns = @call_user_func_array($this->func, $arguments);
         $this->returns = $returns;
-        var_dump($returns);
 
         $error = error_get_last();
         if ($error)

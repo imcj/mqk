@@ -4,6 +4,8 @@ namespace MQK\Worker;
 
 use Monolog\Logger;
 use MQK\Exception\TestTimeoutException;
+use MQK\Health\HealthReporter;
+use MQK\Health\WorkerHealth;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageInvokableSync;
 use MQK\Queue\MessageInvokableSyncController;
@@ -43,6 +45,16 @@ class WorkerConsumerExecutor
     protected $messageInvokableSyncController;
 
     /**
+     * @var HealthReporter
+     */
+    protected $healthRepoter;
+
+    /**
+     * @var int
+     */
+    protected $consumed = 0;
+
+    /**
      * WorkerConsumerExector constructor.
      */
     public function __construct(
@@ -50,14 +62,16 @@ class WorkerConsumerExecutor
         $fast,
         RedisQueueCollection $queues,
         Registry $registry,
-        MessageInvokableSyncController $messageInvokableSyncController
-        ) {
+        MessageInvokableSyncController $messageInvokableSyncController,
+        HealthReporter $healthReporter) {
+
         $this->burst = $burst;
         $this->fast = $fast;
         $this->queues = $queues;
         $this->registry = $registry;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->messageInvokableSyncController = $messageInvokableSyncController;
+        $this->healthRepoter = $healthReporter;
     }
 
 
@@ -67,14 +81,16 @@ class WorkerConsumerExecutor
     public function execute()
     {
         $now  = time();
-        while (true) {
-            $message = $this->queues->dequeue(!$this->burst);
-            break;
-        }
+
+        $message = $this->queues->dequeue(!$this->burst);
+
         // 可能出列的数据是空
         if (null == $message) {
-            return;
+            return false;
         }
+        $this->consumed += 1;
+        $this->healthRepoter->health()->setConsumed($this->consumed);
+        $this->healthRepoter->report(WorkerHealth::DID_DEQUEUE);
         $this->logger->debug("Pop a message {$message->id()} at {$now}.");
         if (!$this->fast) {
             $this->registry->start($message);
@@ -83,8 +99,9 @@ class WorkerConsumerExecutor
         $success = true;
         try {
             $beforeExecute = time();
-
+            $this->healthRepoter->report(WorkerHealth::EXECUTING);
             $message();
+            $this->healthRepoter->report(WorkerHealth::EXECUTED);
             if ($message instanceof MessageInvokableSync) {
                 $this->messageInvokableSyncController->invoke($message);
             }
