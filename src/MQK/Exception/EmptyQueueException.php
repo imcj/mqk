@@ -5,7 +5,7 @@ namespace MQK\Exception;
 use MQK\Queue\Queue;
 use Throwable;
 
-class QueueIsEmptyException extends \Exception
+class EmptyQueueException extends \Exception
 {
     public function __construct($queue, $code = 0, Throwable $previous = null)
     {

@@ -1,6 +1,7 @@
 <?php
 namespace MQK;
 
+use MQK\Exception\EmptyQueueException;
 
 class RedisProxy
 {
@@ -63,7 +64,7 @@ class RedisProxy
                             $raw = array($queueKey, $raw);
                             break;
                         } else {
-                            throw new QueueIsEmptyException(null);
+                            throw new EmptyQueueException(null);
                         }
                     }
                 }
