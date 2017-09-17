@@ -4,7 +4,7 @@ namespace MQK\Worker;
 
 
 use Monolog\Logger;
-use MQK\Exception\QueueIsEmptyException;
+use MQK\Exception\EmptyQueueException;
 use MQK\Health\HealthReporter;
 use MQK\Health\HealthReporterRedis;
 use MQK\Health\WorkerHealth;
@@ -133,13 +133,14 @@ class WorkerConsumer extends AbstractWorker
                 $this->healthRepoter->report(WorkerHealth::EXECUTING);
                 $success = $this->executor->execute();
                 $this->healthRepoter->report(WorkerHealth::EXECUTED);
-            } catch (QueueIsEmptyException $e) {
-                $this->alive = false;
-                $this->cliLogger->info("When the burst, queue is empty worker {$this->id} will quitting.");
-            }
 
-            if ($success)
-                $this->success += 1;
+                if ($success)
+                    $this->success += 1;
+
+            } catch (EmptyQueueException $e) {
+                $this->alive = false;
+                $this->logger->info("When the burst, queue is empty worker {$this->id} will quitting.");
+            }
 
             $memoryUsage = $this->memoryGetUsage();
             if ($memoryUsage > self::M * 1024) {
