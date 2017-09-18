@@ -1,0 +1,11 @@
+logging:
+  level: INFO
+#  handlers:
+#    - StreamHandler
+
+#  handlers:
+#    -
+#      handler:
+#        class: StreamHandler
+#        stream: app.log
+#        level: INFO
