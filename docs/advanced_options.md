@@ -1,8 +1,7 @@
 高级选项
 ========
 
-在启动MQK的时候可以指定处理的队列。`vendor/bin/mqk --queue default --queue low`，MQK按照队列的先后顺序
-排列队列处理的优先级。
+使用命令行参数指定处理的队列。`vendor/bin/mqk --queue default --queue low`，按照先后顺序处理优先级。
 
 MQK的优先级处理非常简单，在上面的例子中，当`default`队列的内容消费完后，会从`low`队列中取，如果`default`队列
 一直存在消息，那么`low`队列可能永远都执行不到。当然，也不是绝对，具体细节在下面可以讲到。

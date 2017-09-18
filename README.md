@@ -62,9 +62,7 @@ $ vendor/bin/mqk run
 
 - [新手入门](docs/getting-started.md)
 - [基本使用说明](docs/basic.md)
-- [异步RPC](docs/async_rpc.md)
-- [同步RPC](docs/sync_rpc.md)
-- [并发RPC](docs/parallel_sync_rpc.md)
+- [RPC](docs/rpc.md)
 - [事件](docs/event.md)
 - [最佳实践](docs/practices.md)
 - [配置](docs/config.md)
