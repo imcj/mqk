@@ -23,7 +23,7 @@ queues:
 ```php
 class Caculator
 {
-    public $queue = "default";
+    public static $queue = "default";
 }
 ```
 
