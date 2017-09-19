@@ -1,7 +1,7 @@
 <?php
 namespace MQK\Worker;
 use MQK\Config;
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\MessageInvokableSync;
 use MQK\Queue\MessageInvokableSyncController;

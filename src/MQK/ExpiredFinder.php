@@ -2,7 +2,7 @@
 namespace MQK;
 
 
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
 

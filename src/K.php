@@ -1,14 +1,11 @@
 <?php
-use MQK\Job;
-use MQK\Queue\Queue;
-use MQK\Queue\RedisQueue;
-use Symfony\Component\EventDispatcher\Event;
-use MQK\RedisFactory;
-use MQK\Config;
-use MQK\Queue\QueueFactory;
-use MQK\Queue\MessageAbstractFactory;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Invokes;
-use MQK\Job\MessageDAO;
+use MQK\Queue\MessageAbstractFactory;
+use MQK\Queue\Queue;
+use MQK\Queue\QueueFactory;
+use MQK\RedisFactory;
+use Symfony\Component\EventDispatcher\Event;
 
 class K
 {

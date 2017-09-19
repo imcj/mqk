@@ -2,8 +2,6 @@
 namespace MQK\Queue;
 
 use Monolog\Logger;
-use MQK\Exception\EmptyQueueException;
-use MQK\Job;
 use MQK\LoggerFactory;
 use MQK\RedisFactory;
 use MQK\RedisProxy;

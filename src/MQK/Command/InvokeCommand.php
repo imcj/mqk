@@ -3,17 +3,16 @@ namespace MQK\Command;
 
 use Monolog\Logger;
 use MQK\Config;
-use MQK\Job;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\QueueFactory;
 use MQK\RedisFactory;
 use MQK\RedisProxy;
 use MQK\Worker\AbstractWorker;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 
 class InvokeCommand extends AbstractCommand
 {

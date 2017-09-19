@@ -2,7 +2,7 @@
 namespace MQK\Queue;
 
 
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\RedisProxy;
 
 class MessageInvokableSyncController

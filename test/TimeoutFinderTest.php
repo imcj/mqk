@@ -3,7 +3,7 @@
 use PHPUnit\Framework\TestCase;
 use MQK\ExpiredFinder;
 use MQK\RedisFactory;
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Registry;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Queue\QueueFactory;

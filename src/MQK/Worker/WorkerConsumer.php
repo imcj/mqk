@@ -8,7 +8,7 @@ use MQK\Exception\EmptyQueueException;
 use MQK\Health\HealthReporter;
 use MQK\Health\HealthReporterRedis;
 use MQK\Health\WorkerHealth;
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\MessageInvokableSyncController;

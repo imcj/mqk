@@ -1,7 +1,6 @@
 <?php
 namespace MQK\Queue;
 use MQK\Exception\EmptyQueueException;
-use MQK\Job;
 use MQK\RedisFactory;
 
 /**

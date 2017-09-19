@@ -2,7 +2,7 @@
 namespace MQK;
 
 use Monolog\Logger;
-use MQK\Job\MessageDAO;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Message;
 
 class Registry

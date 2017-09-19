@@ -1,5 +1,5 @@
 <?php
-namespace MQK\Job;
+namespace MQK\Queue\Message;
 
 use Monolog\Logger;
 use MQK\LoggerFactory;
