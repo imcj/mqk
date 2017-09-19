@@ -25,13 +25,14 @@ class YamlConfigProcessor
     public function process()
     {
         $yaml = $this->yaml;
+        $levels = Logger::getLevels();
         if (isset($yaml['logging']) && isset($yaml['logging']['level'])) {
             $level = $yaml['logging']['level'];
 
             if (!empty($level)) {
-                $levelMap = Logger::getLevels();
-                if (array_key_exists($level, $levelMap)) {
-                    LoggerFactory::shared()->setDefaultLevel($levelMap[$level]);
+                $this->validateLoggingLevel($level);
+                if (array_key_exists($level, $levels)) {
+                    LoggerFactory::shared()->setDefaultLevel($levels[$level]);
                 }
             }
         }
@@ -49,26 +50,40 @@ class YamlConfigProcessor
                 $key = current(array_keys($handlerListItem));
                 $value = current(array_values($handlerListItem));
 
-                $className = $namespace . $key;
+                if (!isset($handlerListItem['class'])) {
+                    throw new \Exception("Does not exists handler class name");
+                    continue;
+                }
+                $className = $namespace . $handlerListItem['class'];
 
                 if (class_exists($className)) {
                     // 12345 54321 5211314 from kiki
                     //
                     // This code from my wife, not me.
 
-                    $arguments = $value;
+                    if (isset($handlerListItem['arguments'])) {
+                        $arguments = $handlerListItem['arguments'];
+                        if (is_string($arguments))
+                            $arguments = [$arguments];
+                    } else {
+                        $arguments = [];
+                    }
 
                     $handlerClass = new \ReflectionClass($className);
-                    $handler = $handlerClass->newInstance();
+                    if (1 <= count($arguments))
+                        $handler = $handlerClass->newInstanceArgs($arguments);
+                    else
+                        $handler = $handlerClass->newInstance();
 
 
-                    if (null == $handlerListItem['level'])
-                        $handler->setLevel($level);
+                    if (isset($handlerListItem['level'])) {
+                        $level = $handlerListItem['level'];
+                        $this->validateLoggingLevel($level);
+                        $handler->setLevel($levels[$level]);
+                    }
 
-                    $handlers[] = $handler;
                 } else {
-                    $handlerClass = new \ReflectionClass($className);
-                    $handler = $handlerClass->newInstance();
+                    throw new \Exception("Does not exists handler class");
                 }
             } else {
 
@@ -76,6 +91,8 @@ class YamlConfigProcessor
 
                 if (class_exists($className))
                     $handler = new $className;
+                else
+                    throw new \Exception("Does not exists handler class");
             }
 
             if (null !== $handler) {
@@ -84,5 +101,17 @@ class YamlConfigProcessor
         }
 
         LoggerFactory::shared()->setHandlers($handlers);
+    }
+
+    /**
+     * @param int $level
+     * @throws \Exception
+     */
+    function validateLoggingLevel($level)
+    {
+        $levels = Logger::getLevels();
+        if (!isset($levels[$level])) {
+            throw new \Exception("{$level} not in mono levels");
+        }
     }
 }

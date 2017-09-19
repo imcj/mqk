@@ -1,7 +1,6 @@
 <?php
 namespace MQK;
 
-use Monolog\Handler\AbstractHandler;
 use Monolog\Logger;
 use MQK\Logging\Handlers\StreamHandler;
 use PHPUnit\Framework\TestCase;
@@ -14,11 +13,26 @@ const LOGGING_DEFAULT_TEST_CONFIG_YAML = "logging:
 const LOGGING_STREAM_TEST_CONFIG_YAML = "logging:
   logging: INFO
   handlers:
-    -
-      handler:
-        class: StreamHandler
-        stream: app.log
-        level: INFO";
+    - class: StreamHandler
+      arguments: app.log
+      stream: app.log
+      level: INFO";
+
+const LOGGING_WRONG_LEVEL_TEST_CONFIG_YAML = "logging:
+  level: INFORMATION 
+  handlers:
+    - class: StreamHandler
+      arguments: app.log
+      stream: app.log
+      level: INFO";
+
+const LOGGING_STREAM_WRONG_LEVEL_TEST_CONFIG_YAML = "logging:
+  level: INFO
+  handlers:
+    - class: StreamHandler
+      arguments: app.log
+      stream: app.log
+      level: INFORMATION";
 
 class YamlConfigProcessorTest extends TestCase
 {
@@ -51,8 +65,6 @@ class YamlConfigProcessorTest extends TestCase
 
     public function testStreamHandler()
     {
-        // 重构 LoggerFactory的状态由Logger配置和LoggerFactory共同完成
-        // 而不是在YamlCOnfigProcessorTest内进行修改
         $yaml = Yaml::parse(LOGGING_STREAM_TEST_CONFIG_YAML);
         $config = new Config(null, null, null);
         $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
@@ -72,7 +84,31 @@ class YamlConfigProcessorTest extends TestCase
         $this->assertEquals("app.log", $defaultHandler->getUrl());
         $this->assertEquals(Logger::INFO, $defaultHandler->getLevel());
         $this->assertInstanceOf(StreamHandler::class, $defaultHandler);
+    }
 
-        assert(true);
+    public function testHandlerSetLevelButWrongLevelName()
+    {
+        $yaml = Yaml::parse(LOGGING_STREAM_WRONG_LEVEL_TEST_CONFIG_YAML);
+        $config = new Config(null, null, null);
+        $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
+
+        try {
+            $yamlConfigProcessor->process();
+        } catch (\Exception $e) {
+            $this->assertEquals("INFORMATION not in mono levels", $e->getMessage());
+        }
+    }
+
+    public function testSetLevelButWrongLevelName()
+    {
+        $yaml = Yaml::parse(LOGGING_WRONG_LEVEL_TEST_CONFIG_YAML);
+        $config = new Config(null, null, null);
+        $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
+
+        try {
+            $yamlConfigProcessor->process();
+        } catch (\Exception $e) {
+            $this->assertEquals("INFORMATION not in mono levels", $e->getMessage());
+        }
     }
 }
