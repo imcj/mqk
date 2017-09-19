@@ -8,6 +8,8 @@ use MQK\Process\WorkerFactory;
 
 class WorkerConsumerFactory implements WorkerFactory
 {
+    private $redisDsn;
+
     /**
      * @var string[]
      */
@@ -28,8 +30,15 @@ class WorkerConsumerFactory implements WorkerFactory
      * @param $config Config
      * @param $queues string
      */
-    public function __construct($queueNameList, $masterId, $initScript, $burst, $fast)
-    {
+    public function __construct(
+        $redisDsn,
+        $queueNameList,
+        $masterId,
+        $initScript,
+        $burst,
+        $fast) {
+
+        $this->redisDsn = $redisDsn;
         $this->queueNameList = $queueNameList;
         $this->masterId = $masterId;
         $this->initScript = $initScript;
@@ -43,6 +52,7 @@ class WorkerConsumerFactory implements WorkerFactory
     function create()
     {
         $worker = new WorkerConsumer(
+            $this->redisDsn,
             $this->queueNameList,
             $this->masterId,
             $this->initScript,

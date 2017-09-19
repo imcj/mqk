@@ -1,7 +1,6 @@
 <?php
 namespace MQK\Queue;
 
-
 use MQK\RedisProxy;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +13,7 @@ class RedisQueueTest extends TestCase
 
     public function setUp()
     {
-        $this->connection = new RedisProxy('127.0.0.1');
+        $this->connection = new RedisProxy('redis://127.0.0.1');
         $this->connection->connect();
         $this->connection->flushAll();
     }

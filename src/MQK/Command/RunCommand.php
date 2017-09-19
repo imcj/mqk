@@ -19,10 +19,9 @@ class RunCommand extends AbstractCommand
     {
         $this->setName("run")
             ->addOption("workers", "w", InputOption::VALUE_OPTIONAL, "", 1)
-            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
+            ->addOption("redis", "s", InputOption::VALUE_OPTIONAL)
             ->addOption("burst", 'b', InputOption::VALUE_NONE)
             ->addOption("quite", '', InputOption::VALUE_NONE)
-            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
             ->addOption("fast", 'f', InputOption::VALUE_NONE)
             ->addOption("test", 't', InputOption::VALUE_OPTIONAL)
             ->addOption("empty-worker", '', InputOption::VALUE_NONE)
@@ -45,10 +44,6 @@ class RunCommand extends AbstractCommand
         $quite = $input->getOption("quite");
         if ($quite)
             $config->beQuite();
-
-        $cluster = $input->getOption("cluster");
-        if (!empty($cluster))
-            $config->setCluster($cluster);
 
         $fast = $input->getOption("fast");
         if ($fast)

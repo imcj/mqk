@@ -2,7 +2,6 @@
 namespace MQK\Test;
 
 use MQK\Exception\TestTimeoutException;
-use MQK\RedisFactory;
 use MQK\Time;
 
 class Calculator

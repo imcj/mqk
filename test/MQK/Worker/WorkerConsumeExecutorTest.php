@@ -27,7 +27,8 @@ class WorkerConsumeExecutorTest extends TestCase
     public function setUp()
     {
         RedisFactory::shared()->createRedis();
-        $this->connection = new RedisProxy('127.0.0.1');
+
+        $this->connection = new RedisProxy('redis://127.0.0.1');
         $this->connection->connect();
 
         $messageFactory = new MessageAbstractFactory();

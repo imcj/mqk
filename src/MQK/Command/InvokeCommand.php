@@ -5,8 +5,10 @@ use Monolog\Logger;
 use MQK\Config;
 use MQK\Job;
 use MQK\LoggerFactory;
+use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\QueueFactory;
 use MQK\RedisFactory;
+use MQK\RedisProxy;
 use MQK\Worker\AbstractWorker;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -22,7 +24,7 @@ class InvokeCommand extends AbstractCommand
             ->addOption("ttl", "t", InputOption::VALUE_OPTIONAL)
             ->addOption("workers", "w", InputOption::VALUE_OPTIONAL)
             ->addOption("invokes", "i", InputOption::VALUE_OPTIONAL)
-            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
+            ->addOption("redis", "s", InputOption::VALUE_OPTIONAL)
             ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
     }
 
@@ -53,7 +55,7 @@ class InvokeCommand extends AbstractCommand
         $processes = [];
         $block = $invokes / $workers;
         for ($i = 0; $i < $workers; $i++) {
-            $worker = new ProduceWorker($functionName, $funcAndArguments, $block, $ttl);
+            $worker = new ProduceWorker($config->redis(), $functionName, $funcAndArguments, $block, $ttl);
             $worker->start();
             $processes[] = $worker;
         }
@@ -61,8 +63,6 @@ class InvokeCommand extends AbstractCommand
         foreach ($processes as $worker) {
             $worker->join();
         }
-
-
     }
 }
 
@@ -88,15 +88,16 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
      */
     private $ttl;
 
+    private $redisDsn;
+
     /**
      * @var Logger
      */
-    private $cliLogger;
+    private $logger;
 
-    public function __construct($funcName, $arguments, $numbers, $ttl = null)
+    public function __construct($redisDsn, $funcName, $arguments, $numbers, $ttl = null)
     {
-        parent::__construct();
-
+        $this->redisDsn = $redisDsn;
         $this->funcName = $funcName;
         $this->arguments = $arguments;
         $this->numbers = $numbers;
@@ -107,19 +108,20 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
     {
         echo "Start process {$this->id}.\n";
 
-        $queueFactory = new QueueFactory();
-        $this->cliLogger = LoggerFactory::shared()->cliLogger();
+        $redis = new RedisProxy($this->redisDsn);
 
         try {
-            $redis = RedisFactory::shared()->createRedis();
+            $redis->connect();
         } catch (\RedisException $e) {
             if ("Failed to AUTH connection" == $e->getMessage()) {
-                $this->cliLogger->error($e->getMessage());
+                $this->logger->error($e->getMessage());
                 exit(1);
             }
         }
-
+        $messageAbstractFactory = new MessageAbstractFactory();
+        $queueFactory = new QueueFactory($redis, $messageAbstractFactory);
         $queue = $queueFactory->createQueue("default");
+        $this->logger = LoggerFactory::shared()->cliLogger();
 
         for ($i = 0; $i < $this->numbers; $i++) {
             $payload = new \stdClass();
@@ -127,10 +129,6 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
             $payload->arguments = $this->arguments;
 
             $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", "default", $this->ttl ? $this->ttl : 600, $payload);
-
-
-
-
             $queue->enqueue($message);
         }
     }

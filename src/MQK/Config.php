@@ -11,23 +11,7 @@ class Config
     /**
      * @var string
      */
-    private $dsn;
-
-    /**
-     * @var Redis主机
-     */
-    private $host;
-
-    /**
-     * Redis 端口
-     * @var int
-     */
-    private $port;
-
-    /**
-     * @var string Redis密码
-     */
-    private $password;
+    private $redis;
 
     /**
      * Worker的数量
@@ -49,7 +33,7 @@ class Config
      *
      * @var bool
      */
-    private $burst;
+    private $burst = false;
 
     /**
      * 安静模式，安静模式下不输出任何内容。
@@ -89,47 +73,6 @@ class Config
      */
     private $sentry;
 
-    public function __construct(
-        $host,
-        $port,
-        $password
-    ) {
-        $this->host = $host;
-        $this->port = $port;
-        $this->password = $password;
-        $this->burst = false;
-    }
-
-    public function host()
-    {
-        return $this->host;
-    }
-
-    public function setHost($host)
-    {
-        $this->host = $host;
-    }
-
-    public function port()
-    {
-        return $this->port;
-    }
-
-    public function setPort($port)
-    {
-        $this->port = $port;
-    }
-
-    public function password()
-    {
-        return $this->password;
-    }
-
-    public function setPassword($password)
-    {
-        $this->password = $password;
-    }
-
     public function workers()
     {
         if (!$this->workers) {
@@ -156,12 +99,7 @@ class Config
     public static function defaultConfig()
     {
         if (null == self::$default) {
-            self::$default = new Config(
-                "127.0.0.1",
-                null,
-                "",
-                ""
-            );
+            self::$default = new Config();
         }
 
         return self::$default;
@@ -238,22 +176,14 @@ class Config
         $this->initScript = $initScript;
     }
 
-    public function dsn()
+    public function redis()
     {
-        return $this->dsn;
+        return $this->redis;
     }
 
-    public function setDsn($dsn)
+    public function setRedis($redis)
     {
-        $this->dsn = $dsn;
-        $dsn = Dsn::parse($dsn);
-        if ($dsn->host)
-            $this->host = $dsn->host;
-
-        if ($dsn->port)
-            $this->port = $dsn->port;
-        if ($dsn->pass)
-            $this->password = $dsn->pass;
+        $this->redis = $redis;
     }
 
     public function sentry()

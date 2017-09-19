@@ -15,7 +15,7 @@
         "symfony/serializer": "^3.3",
         "symfony/property-access": "^3.3",
         "sentry/sentry": "^1.7",
-        "fatrellis/process": "^0.0.2",
+        "fatrellis/process": "dev-master",
         "symfony/yaml": "^3.3"
     },
     "autoload":{

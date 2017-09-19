@@ -18,7 +18,7 @@ class Runner extends Master
     private $config;
 
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
@@ -53,9 +53,11 @@ class Runner extends Master
 
     public function __construct()
     {
-        $redisFactory = RedisFactory::shared();
+        $config = Config::defaultConfig();
+        $dsn = $config->redis();
         try {
-            $this->connection = $redisFactory->createConnection();
+            $this->connection = new RedisProxy($dsn);
+            $this->connection->connect();
         } catch (\RedisException $e) {
             if ("Failed to AUTH connection" == $e->getMessage()) {
                 $this->logger->error($e->getMessage());
@@ -64,7 +66,6 @@ class Runner extends Master
         }
 
         $queueFactory = new QueueFactory($this->connection, new MessageAbstractFactory());
-        $config = Config::defaultConfig();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->config = $config;
@@ -77,6 +78,7 @@ class Runner extends Master
         );
         $queues = ["default"];
         $this->workerClassOrFactory = new WorkerConsumerFactory(
+            $config->redis(),
             $queues,
             $this->masterId,
             $config->initScript(),

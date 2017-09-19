@@ -1,6 +1,7 @@
 <?php
 namespace MQK;
 
+use AD7six\Dsn\Dsn;
 use MQK\Exception\EmptyQueueException;
 
 class RedisProxy
@@ -13,34 +14,34 @@ class RedisProxy
     /**
      * @var string
      */
-    private $host;
-
-    /**
-     * @var integer
-     */
-    private $port;
+    private $dsn;
 
     /**
      * @var RedisFactory
      */
-    private $redisFactory;
+    private $factory;
 
-    public function __construct($host, $port = 6379)
+    private $retries = 0;
+
+    private $max = 3;
+
+    private $logger;
+
+    public function __construct($dsn)
     {
-        $this->host = $host;
-        $this->port = $port;
-
-        $this->connection = new \Redis();
+        $this->dsn = $dsn;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
-    public function connect()
+    public function connect($renew = false)
     {
-        $this->connection->connect($this->host, $this->port);
-    }
-
-    public function auth($password)
-    {
-        $this->connection = $password;
+        if (null == $this->connection) {
+            $this->connection = new \Redis();
+        }
+        $dsn = Dsn::parse($this->dsn);
+        $this->connection->connect($dsn->host, $dsn->port);
+        $this->connection->auth($dsn->password);
+        assert("+PONG" == $this->connection->ping());
     }
 
     /**
@@ -75,7 +76,15 @@ class RedisProxy
                 $this->logger->error($e->getCode());
                 $this->logger->error($e->getMessage());
                 if ("read error on connection" == $e->getMessage()) {
-                    $this->redisFactory->reconnect(3);
+                    $this->retires += 1;
+                    $this->logger->info("Redis retry {$this->retires} times.");
+                    if ($this->retires >= $this->max) {
+                        $this->logger->info("Max retries {$this->max} will be quit.");
+                        sleep(1);
+                        exit(0);
+                    }
+
+                    $this->connect(true);
                     continue;
                 }
 

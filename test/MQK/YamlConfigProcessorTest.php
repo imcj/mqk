@@ -41,7 +41,7 @@ class YamlConfigProcessorTest extends TestCase
         // 重构 LoggerFactory的状态由Logger配置和LoggerFactory共同完成
         // 而不是在YamlCOnfigProcessorTest内进行修改
         $yaml = Yaml::parse(LOGGING_DEFAULT_TEST_CONFIG_YAML);
-        $config = new Config(null, null, null);
+        $config = new Config();
         $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
         $yamlConfigProcessor->process();
 
@@ -66,7 +66,7 @@ class YamlConfigProcessorTest extends TestCase
     public function testStreamHandler()
     {
         $yaml = Yaml::parse(LOGGING_STREAM_TEST_CONFIG_YAML);
-        $config = new Config(null, null, null);
+        $config = new Config();
         $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
         $yamlConfigProcessor->process();
 
@@ -89,7 +89,7 @@ class YamlConfigProcessorTest extends TestCase
     public function testHandlerSetLevelButWrongLevelName()
     {
         $yaml = Yaml::parse(LOGGING_STREAM_WRONG_LEVEL_TEST_CONFIG_YAML);
-        $config = new Config(null, null, null);
+        $config = new Config();
         $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
 
         try {
@@ -102,7 +102,7 @@ class YamlConfigProcessorTest extends TestCase
     public function testSetLevelButWrongLevelName()
     {
         $yaml = Yaml::parse(LOGGING_WRONG_LEVEL_TEST_CONFIG_YAML);
-        $config = new Config(null, null, null);
+        $config = new Config();
         $yamlConfigProcessor = new YamlConfigProcessor($yaml, $config);
 
         try {

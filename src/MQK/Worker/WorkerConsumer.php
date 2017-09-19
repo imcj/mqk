@@ -15,7 +15,6 @@ use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
-use MQK\RedisFactory;
 use MQK\RedisProxy;
 use MQK\Registry;
 use MQK\SerializerFactory;
@@ -90,8 +89,11 @@ class WorkerConsumer extends AbstractWorker
      */
     protected $healthRepoter;
 
-    public function __construct($queueNameList, $masterId, $initScript, $burst, $fast)
+    protected $redisDsn;
+
+    public function __construct($redisDsn, $queueNameList, $masterId, $initScript, $burst, $fast)
     {
+        $this->redisDsn = $redisDsn;
         $this->masterId = $masterId;
         $this->workerId = uniqid();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
@@ -113,7 +115,9 @@ class WorkerConsumer extends AbstractWorker
         $health->setId($this->workerId);
         $health->setProcessId($this->id);
 
-        $connection = $this->createConnection();
+        $connection = new RedisProxy($this->redisDsn);
+        $connection->connect();
+
         $this->healthRepoter = new HealthReporterRedis(
             $health,
             $connection,
@@ -188,12 +192,6 @@ class WorkerConsumer extends AbstractWorker
         } else {
             $this->logger->warning("{$initFilePath} not found, all event will miss.");
         }
-    }
-
-    protected function createConnection()
-    {
-        $connection = RedisFactory::shared()->createConnection();
-        return $connection;
     }
 
     protected function createExecutor($connection)

@@ -32,16 +32,16 @@ abstract class AbstractCommand extends Command
         } else {
             LoggerFactory::shared()->setDefaultLevel(Logger::INFO);
         }
-        $dsn = $input->getOption("redis-dsn");
+        $dsn = $input->getOption("redis");
         if (!empty($dsn)) {
-            $config->setDsn($dsn);
+            $config->setRedis($dsn);
+        } else {
+            $config->setRedis('redis://127.0.0.1');
         }
     }
 
     protected function loadIniConfig($yamlPath)
     {
-
-
         $conf = Config::defaultConfig();
         if (!empty($config['init_script'])) {
             $conf->setInitScript($config['init_script']);
@@ -52,7 +52,7 @@ abstract class AbstractCommand extends Command
         }
 
         if (!empty($config['dsn'])) {
-            $conf->setDsn($config['dsn']);
+            $conf->setRedis($config['dsn']);
         }
     }
 

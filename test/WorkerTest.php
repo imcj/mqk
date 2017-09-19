@@ -3,11 +3,10 @@
 use MQK\Worker\WorkerConsumer;
 use MQK\Config;
 use PHPUnit\Framework\TestCase;
-use MQK\RedisFactory;
 use MQK\Queue\QueueFactory;
 use MQK\Worker\Worker;
 use MQK\Queue\Queue;
-use MQK\Job;
+use MQK\RedisProxy;
 
 class WorkerTest extends TestCase
 {
@@ -29,8 +28,7 @@ class WorkerTest extends TestCase
     public function setUp()
     {
         $this->queue = (new QueueFactory())->createQueue("default");
-        $factory = new RedisFactory();
-        $this->redis = $factory->createRedis();
+        $this->redis = new RedisProxy('redis://127.0.0.1')
         $this->redis->flushAll();
     }
 
