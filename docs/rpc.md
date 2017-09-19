@@ -51,9 +51,7 @@ assert($d == 8);
 
 ```php
 class Calculator
-{
-    use InvokeTrait;
-    
+{    
     public function sum($a, $b)
     {
         return $a + $b;
@@ -64,5 +62,5 @@ class Calculator
 异步调用RPC
 
 ```php
-Calculator::sum(1, 2);
+\K::invoke('Calculator::sum', 1, 2);
 ```
