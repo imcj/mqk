@@ -18,7 +18,7 @@ queues:
   - default
   - low
 redis: redis://:123@192.168.0.1:3270/1
-workers: 10
+concurrency: 10
 logging:
   handlers:
     - StreamHandler
@@ -54,14 +54,14 @@ Redis
 redis: redis://:123@192.168.0.1:3270/1
 ```
 
-Workers
+Concurrency
 -------
 
 配置子进程数量，以数字表示。关于进程的运行原理参考[进程文档](process.md)
 
 ```
 # config.yml
-workers = 10
+concurrency = 10
 ```
 
 Logging

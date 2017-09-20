@@ -66,12 +66,17 @@ class Config
      *
      * @var string
      */
-    private $initScript = "";
+    private $bootstrap = "";
 
     /**
      * @var string
      */
     private $sentry;
+
+    /**
+     * @var string[]
+     */
+    private $queues;
 
     public function concurrency()
     {
@@ -166,14 +171,14 @@ class Config
         $this->testJobMax = $testJobMax;
     }
 
-    public function initScript()
+    public function bootstrap()
     {
-        return $this->initScript;
+        return $this->bootstrap;
     }
 
-    public function setInitScript($initScript)
+    public function setBootstrap($bootstrap)
     {
-        $this->initScript = $initScript;
+        $this->bootstrap = $bootstrap;
     }
 
     public function redis()
@@ -195,4 +200,22 @@ class Config
     {
         $this->sentry = $sentry;
     }
+
+    /**
+     * @return \string[]
+     */
+    public function queues()
+    {
+        return $this->queues;
+    }
+
+    /**
+     * @param \string[] $queues
+     */
+    public function setQueues(array $queues)
+    {
+        $this->queues = $queues;
+    }
+
+
 }

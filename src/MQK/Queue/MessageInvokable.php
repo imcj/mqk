@@ -38,12 +38,18 @@ class MessageInvokable extends Message
             $this->setPayload($payload);
         }
         $this->serializer = SerializerFactory::shared()->serializer();
+
+        $className = explode("::", $this->func)[0];
+        if (property_exists($className, "queue")) {
+            $this->queue = $className::$queue;
+        }
     }
 
     public function __invoke()
     {
         $arguments = $this->arguments;
         $returns = @call_user_func_array($this->func, $arguments);
+
         $this->returns = $returns;
 
         $error = error_get_last();

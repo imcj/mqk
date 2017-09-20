@@ -42,9 +42,14 @@ class RedisQueue implements Queue
         $this->connection = $connection;
     }
 
-    public function key()
+    public function key($queue=null)
     {
-        return "queue_{$this->name}";
+        if ($queue) {
+            return "queue_{$queue}";
+
+        } else {
+            return "queue_{$this->name}";
+        }
     }
 
     public function enqueue(Message $message)
@@ -52,7 +57,6 @@ class RedisQueue implements Queue
         if (strpos($message->id(), "_")) {
             $this->logger->error("[enqueue] {$message->id()} contains _", debug_backtrace());
         }
-        $message->setQueue($this->name);
         $messageJsonObject = $message->jsonSerialize();
         if ($message->retries()) {
             $messageJsonObject['retries'] = $message->retries();
@@ -60,7 +64,9 @@ class RedisQueue implements Queue
         $messageJson = json_encode($messageJsonObject);
         $this->logger->debug("enqueue {$message->id()} to {$message->queue()}");
         $this->logger->debug($messageJson);
-        $success = $this->connection->lpush("{$this->key()}", $messageJson);
+
+        $queueKey = $this->key($message->queue());
+        $success = $this->connection->lpush($queueKey, $messageJson);
 
         if (!$success) {
             $error = $this->connection->getLastError();

@@ -21,10 +21,14 @@ class InvokeCommand extends AbstractCommand
         $this->setName("invoke")
             ->addArgument("funcAndArguments", InputArgument::IS_ARRAY)
             ->addOption("ttl", "t", InputOption::VALUE_OPTIONAL)
-            ->addOption("workers", "w", InputOption::VALUE_OPTIONAL)
+            ->addOption("quite", '', InputOption::VALUE_NONE)
+            ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "")
+            ->addOption("sentry", '', InputOption::VALUE_OPTIONAL)
+            ->addOption('concurrency', 'c', InputOption::VALUE_OPTIONAL)
             ->addOption("invokes", "i", InputOption::VALUE_OPTIONAL)
             ->addOption("redis", "s", InputOption::VALUE_OPTIONAL)
-            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
+            ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
+//            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -36,14 +40,11 @@ class InvokeCommand extends AbstractCommand
 
         $config = Config::defaultConfig();
 
-        $cluster = $input->getOption("cluster");
-        if (!empty($cluster))
-            $config->setCluster($cluster);
-
         $ttl = $input->getOption("ttl");
-        $workers = $input->getOption("workers");
-        if (!$workers) {
-            $workers = 1;
+
+        $concurrency = $input->getOption("concurrency");
+        if (!$concurrency) {
+            $concurrency = 1;
         }
 
         $invokes = $input->getOption("invokes");
@@ -52,9 +53,14 @@ class InvokeCommand extends AbstractCommand
         }
 
         $processes = [];
-        $block = $invokes / $workers;
-        for ($i = 0; $i < $workers; $i++) {
-            $worker = new ProduceWorker($config->redis(), $functionName, $funcAndArguments, $block, $ttl);
+        $block = $invokes / $concurrency;
+        $queues = $input->getOption("queue");
+
+        if (empty($queues)) {
+            $queues = ['default'];
+        }
+        for ($i = 0; $i < $concurrency; $i++) {
+            $worker = new ProduceWorker($config->redis(), $functionName, $funcAndArguments, $block, $queues, $ttl);
             $worker->start();
             $processes[] = $worker;
         }
@@ -94,12 +100,15 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
      */
     private $logger;
 
-    public function __construct($redisDsn, $funcName, $arguments, $numbers, $ttl = null)
+    private $queues;
+
+    public function __construct($redisDsn, $funcName, $arguments, $numbers, $queues, $ttl = null)
     {
         $this->redisDsn = $redisDsn;
         $this->funcName = $funcName;
         $this->arguments = $arguments;
         $this->numbers = $numbers;
+        $this->queues = $queues;
         $this->ttl = $ttl;
     }
 
@@ -119,7 +128,7 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
         }
         $messageAbstractFactory = new MessageAbstractFactory();
         $queueFactory = new QueueFactory($redis, $messageAbstractFactory);
-        $queue = $queueFactory->createQueue("default");
+
         $this->logger = LoggerFactory::shared()->cliLogger();
 
         for ($i = 0; $i < $this->numbers; $i++) {
@@ -127,8 +136,11 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
             $payload->func = $this->funcName;
             $payload->arguments = $this->arguments;
 
-            $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", "default", $this->ttl ? $this->ttl : 600, $payload);
-            $queue->enqueue($message);
+            foreach ($this->queues as $queueName) {
+                $queue = $queueFactory->createQueue($queueName);
+                $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", $queueName, $this->ttl ? $this->ttl : 600, $payload);
+                $queue->enqueue($message);
+            }
         }
     }
 }

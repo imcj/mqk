@@ -18,7 +18,7 @@ class RunCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName("run")
-            ->addOption("workers", "w", InputOption::VALUE_OPTIONAL, "", 1)
+            ->addOption("concurrency", 'c', InputOption::VALUE_OPTIONAL, "", 1)
             ->addOption("redis", "s", InputOption::VALUE_OPTIONAL)
             ->addOption("burst", 'b', InputOption::VALUE_NONE)
             ->addOption("quite", '', InputOption::VALUE_NONE)
@@ -26,24 +26,16 @@ class RunCommand extends AbstractCommand
             ->addOption("test", 't', InputOption::VALUE_OPTIONAL)
             ->addOption("empty-worker", '', InputOption::VALUE_NONE)
             ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "")
-            ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '');
+            ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '')
+            ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        parent::execute($input, $output);
-        $workers = (int)$input->getOption("workers");
         $burst = $input->getOption("burst");
 
         $config = Config::defaultConfig();
         $config->setBurst($burst);
-        if (0 == $workers)
-            $workers = 1;
-
-        $config->setConcurrency($workers);
-        $quite = $input->getOption("quite");
-        if ($quite)
-            $config->beQuite();
 
         $fast = $input->getOption("fast");
         if ($fast)
@@ -53,27 +45,9 @@ class RunCommand extends AbstractCommand
         if ($max > 0)
             $config->setTestJobMax($max);
 
-        $configFilePath = $input->getOption("config");
-        if (!empty($configFilePath)) {
-            if (!file_exists($configFilePath)) {
-                $this->logger->warning("You specify config file, but not found");
-            } else {
-                $this->loadIniConfig($configFilePath);
-            }
-        }
+        parent::execute($input, $output);
 
-        $sentry = $input->getOption("sentry");
-        if (!empty($sentry)) {
-            $config->setSentry($sentry);
-
-            $client = new \Raven_Client($sentry);
-            $error_handler = new \Raven_ErrorHandler($client);
-            $error_handler->registerExceptionHandler();
-            $error_handler->registerErrorHandler();
-            $error_handler->registerShutdownFunction();
-        }
-
-        $runner = new Runner();
+        $runner = new Runner($config->queues());
 
         if ((boolean)$input->getOption("empty-worker")) {
             $workerFactory = new EmptyWorkerFactory();

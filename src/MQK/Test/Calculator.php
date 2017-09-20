@@ -6,6 +6,8 @@ use MQK\Time;
 
 class Calculator
 {
+    public static $queue = "high";
+
     public static function sum($a, $b)
     {
 //        echo $a + $b . "\n";

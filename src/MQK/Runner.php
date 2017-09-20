@@ -49,7 +49,7 @@ class Runner extends Master
      */
     protected $masterId;
 
-    public function __construct()
+    public function __construct($queues)
     {
         $config = Config::defaultConfig();
         $dsn = $config->redis();
@@ -72,14 +72,13 @@ class Runner extends Master
 
         $this->queues = new RedisQueueCollection(
             $this->connection,
-            $queueFactory->createQueues($this->nameList, $this->connection)
+            $queueFactory->createQueues($queues, $this->connection)
         );
-        $queues = ["default"];
         $this->workerClassOrFactory = new WorkerConsumerFactory(
             $config->redis(),
             $queues,
             $this->masterId,
-            $config->initScript(),
+            $config->bootstrap(),
             $config->burst(),
             $config->fast()
         );

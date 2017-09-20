@@ -17,7 +17,7 @@ class WorkerConsumerFactory implements WorkerFactory
 
     private $masterId;
 
-    private $initScript;
+    private $bootstrap;
 
     private $burst;
 
@@ -34,14 +34,14 @@ class WorkerConsumerFactory implements WorkerFactory
         $redisDsn,
         $queueNameList,
         $masterId,
-        $initScript,
+        $bootstrap,
         $burst,
         $fast) {
 
         $this->redisDsn = $redisDsn;
         $this->queueNameList = $queueNameList;
         $this->masterId = $masterId;
-        $this->initScript = $initScript;
+        $this->bootstrap = $bootstrap;
         $this->burst = $burst;
         $this->fast = $fast;
     }
@@ -55,7 +55,7 @@ class WorkerConsumerFactory implements WorkerFactory
             $this->redisDsn,
             $this->queueNameList,
             $this->masterId,
-            $this->initScript,
+            $this->bootstrap,
             $this->burst,
             $this->fast
         );

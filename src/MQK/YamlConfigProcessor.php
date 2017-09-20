@@ -110,6 +110,24 @@ class YamlConfigProcessor
                 throw new \Exception("Concurrency must be integer");
             }
         }
+
+        if (isset($yaml['queues'])) {
+            $queues = $yaml['queues'];
+
+            $queuesFilter = [];
+            if (!empty($queues)) {
+                foreach ($queues as $queue) {
+                    if (is_string($queue)) {
+                        $queuesFilter[] = $queue;
+                    } else {
+                        throw new \Exception("Queue name is not a string", 5);
+                    }
+                }
+            }
+
+            if (!empty($queuesFilter))
+                $this->config->setQueues($queuesFilter);
+        }
     }
 
     /**

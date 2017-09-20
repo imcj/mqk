@@ -78,7 +78,7 @@ class WorkerConsumer extends AbstractWorker
 
     protected $queueNameList;
 
-    protected $initScript = false;
+    protected $bootstrap = false;
 
     protected $burst = false;
 
@@ -91,14 +91,14 @@ class WorkerConsumer extends AbstractWorker
 
     protected $redisDsn;
 
-    public function __construct($redisDsn, $queueNameList, $masterId, $initScript, $burst, $fast)
+    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast)
     {
         $this->redisDsn = $redisDsn;
         $this->masterId = $masterId;
         $this->workerId = uniqid();
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->queueNameList = $queueNameList;
-        $this->initScript = $initScript;
+        $this->bootstrap = $bootstrap;
         $this->burst = $burst;
         $this->fast = $fast;
 
@@ -131,7 +131,6 @@ class WorkerConsumer extends AbstractWorker
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
         $this->workerStartTime = Time::micro();
-
         while ($this->alive) {
             try {
                 $this->healthRepoter->report(WorkerHealth::EXECUTING);
@@ -176,12 +175,12 @@ class WorkerConsumer extends AbstractWorker
 
     protected function loadUserInitializeScript()
     {
-        if (!empty($this->initScript)) {
-            if (file_exists($this->initScript)) {
-                include_once $this->initScript;
+        if (!empty($this->bootstrap)) {
+            if (file_exists($this->bootstrap)) {
+                include_once $this->bootstrap;
                 return;
             } else {
-                $this->logger->warning("You specify init script [{$this->initScript()}], but file not exists.");
+                $this->logger->warning("You specify bootstrap script [{$this->bootstrap}], but file not exists.");
             }
         }
         $cwd = getcwd();

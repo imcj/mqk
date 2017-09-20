@@ -83,7 +83,6 @@ class WorkerConsumerExecutor
         $now  = time();
 
         $message = $this->queues->dequeue(!$this->burst);
-
         // 可能出列的数据是空
         if (null == $message) {
             return false;
