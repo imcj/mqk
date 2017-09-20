@@ -3,11 +3,14 @@ namespace MQK\Worker;
 
 
 use MQK\Config;
-use MQK\Queue\Queue;
+use MQK\Error\ErrorHandler;
 use MQK\Process\WorkerFactory;
 
 class WorkerConsumerFactory implements WorkerFactory
 {
+    /**
+     * @var string
+     */
     private $redisDsn;
 
     /**
@@ -15,20 +18,41 @@ class WorkerConsumerFactory implements WorkerFactory
      */
     private $queueNameList;
 
+    /**
+     * @var integer
+     */
     private $masterId;
 
+    /**
+     * @var string
+     */
     private $bootstrap;
 
+    /**
+     * @var bool
+     */
     private $burst;
 
+    /**
+     * @var bool
+     */
     private $fast;
 
     /**
-     * TODO: 把 config 改成需要用到的属性
-     *
+     * @var ErrorHandler[]
+     */
+    private $errorHandlers;
+
+    /**
      * WorkerConsumerFactory constructor.
-     * @param $config Config
-     * @param $queues string
+     *
+     * @param string $redisDsn
+     * @param string[] $queueNameList
+     * @param integer $masterId
+     * @param string $bootstrap
+     * @param boolean $burst
+     * @param boolean $fast
+     * @param ErrorHandler[] $errorHandlers
      */
     public function __construct(
         $redisDsn,
@@ -36,7 +60,8 @@ class WorkerConsumerFactory implements WorkerFactory
         $masterId,
         $bootstrap,
         $burst,
-        $fast) {
+        $fast,
+        $errorHandlers) {
 
         $this->redisDsn = $redisDsn;
         $this->queueNameList = $queueNameList;
@@ -44,9 +69,11 @@ class WorkerConsumerFactory implements WorkerFactory
         $this->bootstrap = $bootstrap;
         $this->burst = $burst;
         $this->fast = $fast;
+        $this->errorHandlers = $errorHandlers;
     }
 
     /**
+     * Factory method of class
      * @return Worker
      */
     function create()
@@ -57,7 +84,8 @@ class WorkerConsumerFactory implements WorkerFactory
             $this->masterId,
             $this->bootstrap,
             $this->burst,
-            $this->fast
+            $this->fast,
+            $this->errorHandlers
         );
 
         return $worker;

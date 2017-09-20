@@ -22,8 +22,18 @@ class RedisQueue implements Queue
      */
     private $name;
 
+    /**
+     * @var MessageAbstractFactory
+     */
     private $messageFactory;
 
+    /**
+     * RedisQueue constructor.
+     *
+     * @param string $name
+     * @param RedisProxy $connection
+     * @param MessageAbstractFactory $messageFactory
+     */
     public function __construct($name, RedisProxy $connection, $messageFactory)
     {
         $this->connection = $connection;
@@ -52,6 +62,11 @@ class RedisQueue implements Queue
         }
     }
 
+    /**
+     * @param Message $message
+     * @throws \Exception
+     * @return void
+     */
     public function enqueue(Message $message)
     {
         if (strpos($message->id(), "_")) {

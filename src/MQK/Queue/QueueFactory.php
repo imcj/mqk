@@ -15,13 +15,20 @@ class QueueFactory
      */
     private $factory;
 
-    public function __construct($connection, MessageAbstractFactory $factory)
+    /**
+     * QueueFactory constructor.
+     *
+     * @param RedisProxy $connection
+     * @param MessageAbstractFactory $factory
+     */
+    public function __construct(RedisProxy $connection, MessageAbstractFactory $factory)
     {
         $this->connection = $connection;
         $this->factory = $factory;
     }
 
     /**
+     * @param string $name
      * @return Queue
      */
     public function createQueue($name)

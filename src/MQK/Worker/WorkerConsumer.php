@@ -4,6 +4,7 @@ namespace MQK\Worker;
 
 
 use Monolog\Logger;
+use MQK\Error\ErrorHandler;
 use MQK\Exception\EmptyQueueException;
 use MQK\Health\HealthReporter;
 use MQK\Health\HealthReporterRedis;
@@ -91,7 +92,12 @@ class WorkerConsumer extends AbstractWorker
 
     protected $redisDsn;
 
-    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast)
+    /**
+     * @var ErrorHandler[]
+     */
+    protected $errorHandlers;
+
+    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast, $errorHandlers)
     {
         $this->redisDsn = $redisDsn;
         $this->masterId = $masterId;
@@ -101,6 +107,7 @@ class WorkerConsumer extends AbstractWorker
         $this->bootstrap = $bootstrap;
         $this->burst = $burst;
         $this->fast = $fast;
+        $this->errorHandlers = $errorHandlers;
 
         $this->loadUserInitializeScript();
 
@@ -224,7 +231,8 @@ class WorkerConsumer extends AbstractWorker
             $queues,
             $registry,
             $controller,
-            $this->healthRepoter
+            $this->healthRepoter,
+            $this->errorHandlers
         );
 
         return $exector;

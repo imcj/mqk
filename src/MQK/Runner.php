@@ -49,6 +49,11 @@ class Runner extends Master
      */
     protected $masterId;
 
+    /**
+     * Runner constructor.
+     *
+     * @param string[] $queues
+     */
     public function __construct($queues)
     {
         $config = Config::defaultConfig();
@@ -80,7 +85,8 @@ class Runner extends Master
             $this->masterId,
             $config->bootstrap(),
             $config->burst(),
-            $config->fast()
+            $config->fast(),
+            $config->errorHandlers()
         );
         $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
 

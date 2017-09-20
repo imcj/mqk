@@ -1,7 +1,6 @@
 <?php
 namespace MQK;
 
-
 use Monolog\Logger;
 
 class YamlConfigProcessor
@@ -127,6 +126,18 @@ class YamlConfigProcessor
 
             if (!empty($queuesFilter))
                 $this->config->setQueues($queuesFilter);
+        }
+
+        if (isset($yaml['error_handlers'])) {
+            $errorHandlers = $yaml['error_handlers'];
+            foreach ($errorHandlers as $errorHandler) {
+                try {
+                    $handler = new $errorHandler();
+                    $this->config->addErrorHandler($handler);
+                } catch (\Exception $e) {
+
+                }
+            }
         }
     }
 

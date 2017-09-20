@@ -30,6 +30,15 @@ class MessageInvokable extends Message
      */
     private $serializer;
 
+    /**
+     * MessageInvokable constructor.
+     *
+     * @param string $id
+     * @param string $discriminator
+     * @param string|mull $queue
+     * @param int $ttl
+     * @param array|null $payload
+     */
     public function __construct($id, $discriminator = "invokable", $queue = null, $ttl = 600, $payload = null)
     {
         parent::__construct($id, $discriminator, $queue, $ttl, $payload);
@@ -45,25 +54,28 @@ class MessageInvokable extends Message
         }
     }
 
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
     public function __invoke()
     {
         $arguments = $this->arguments;
-        $returns = @call_user_func_array($this->func, $arguments);
+        try {
+            $returns = @call_user_func_array($this->func, $arguments);
+
+            $error = error_get_last();
+            error_clear_last();
+            if ($error) {
+                $e = new \Exception($error['message'], $error['type']);
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
 
         $this->returns = $returns;
-
-        $error = error_get_last();
-        if ($error)
-            throw new $error;
-        error_clear_last();
-//        if (!empty($error)) {
-//            $this->logger->error($error['message']);
-//            $this->logger->error($this->func());
-//            $this->logger->error(json_encode($this->arguments()));
-//
-//            throw new \Exception($error['message']);
-//        }
-
         return $returns;
     }
 

@@ -1,16 +1,15 @@
 <?php
 namespace MQK\Command;
 
-use AD7six\Dsn\Dsn;
-use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use MQK\Config;
+use MQK\Error\DefaultErrorHandler;
 use MQK\IniConfig;
+use MQK\LoggerFactory;
 use MQK\YamlConfigProcessor;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use MQK\LoggerFactory;
 use Symfony\Component\Yaml\Yaml;
 
 abstract class AbstractCommand extends Command
@@ -30,6 +29,9 @@ abstract class AbstractCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $config = Config::defaultConfig();
+
+        $defaultErrorHandler = new DefaultErrorHandler();
+        $config->addErrorHandler($defaultErrorHandler);
 
         $workers = (int)$input->getOption("concurrency");
         if (0 == $workers)
@@ -90,7 +92,6 @@ abstract class AbstractCommand extends Command
             Yaml::parse(file_get_contents($yamlPath)),
             $conf
         );
-        var_dump('here');
         try {
             $parseProcessor->process();
         } catch (\Exception $e) {

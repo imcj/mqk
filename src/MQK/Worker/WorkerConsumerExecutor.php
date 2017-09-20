@@ -3,6 +3,7 @@ namespace MQK\Worker;
 
 
 use Monolog\Logger;
+use MQK\Error\ErrorHandler;
 use MQK\Exception\TestTimeoutException;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
@@ -55,7 +56,20 @@ class WorkerConsumerExecutor
     protected $consumed = 0;
 
     /**
-     * WorkerConsumerExector constructor.
+     * @var ErrorHandler[]
+     */
+    protected $errorHandlers = [];
+
+    /**
+     * WorkerConsumerExecutor constructor.
+     *
+     * @param boolean $burst
+     * @param boolean $fast
+     * @param RedisQueueCollection $queues
+     * @param Registry $registry
+     * @param MessageInvokableSyncController $messageInvokableSyncController
+     * @param HealthReporter $healthReporter
+     * @param ErrorHandler[] $errorHandlers
      */
     public function __construct(
         $burst,
@@ -63,7 +77,8 @@ class WorkerConsumerExecutor
         RedisQueueCollection $queues,
         Registry $registry,
         MessageInvokableSyncController $messageInvokableSyncController,
-        HealthReporter $healthReporter) {
+        HealthReporter $healthReporter,
+        $errorHandlers) {
 
         $this->burst = $burst;
         $this->fast = $fast;
@@ -72,6 +87,7 @@ class WorkerConsumerExecutor
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->messageInvokableSyncController = $messageInvokableSyncController;
         $this->healthRepoter = $healthReporter;
+        $this->errorHandlers = $errorHandlers;
     }
 
 
@@ -119,13 +135,12 @@ class WorkerConsumerExecutor
             if (!$this->fast)
                 $this->registry->finish($message);
         } catch (\Exception $exception) {
-            $this->logger->error("Got an exception");
-            $this->logger->error($exception->getMessage());
             $success = false;
             if ($exception instanceof TestTimeoutException) {
                 $this->logger->debug("Catch timeout exception.");
             } else {
-                $this->logger->error($exception->getMessage());
+                foreach ($this->errorHandlers as $errorHandler)
+                    $errorHandler->got($exception);
                 $this->registry->fail($message);
             }
         }

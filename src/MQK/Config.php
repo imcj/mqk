@@ -2,7 +2,7 @@
 
 namespace MQK;
 
-use AD7six\Dsn\Dsn;
+use MQK\Error\ErrorHandler;
 
 class Config
 {
@@ -77,6 +77,15 @@ class Config
      * @var string[]
      */
     private $queues;
+
+    /**
+     * @var ErrorHandler[]
+     */
+    private $errorHandlers = [];
+
+    public function __construct()
+    {
+    }
 
     public function concurrency()
     {
@@ -217,5 +226,24 @@ class Config
         $this->queues = $queues;
     }
 
+    /**
+     * @return ErrorHandler[]
+     */
+    public function errorHandlers()
+    {
+        return $this->errorHandlers;
+    }
 
+    /**
+     * @param ErrorHandler[] $errorHandlers
+     */
+    public function setErrorHandlers($errorHandlers)
+    {
+        $this->errorHandlers = $errorHandlers;
+    }
+
+    public function addErrorHandler($handler)
+    {
+        $this->errorHandlers[] = $handler;
+    }
 }
