@@ -40,7 +40,7 @@ class RunCommand extends AbstractCommand
         if (0 == $workers)
             $workers = 1;
 
-        $config->setWorkers($workers);
+        $config->setConcurrency($workers);
         $quite = $input->getOption("quite");
         if ($quite)
             $config->beQuite();

@@ -6,6 +6,7 @@ use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\IniConfig;
+use MQK\YamlConfigProcessor;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -43,17 +44,11 @@ abstract class AbstractCommand extends Command
     protected function loadIniConfig($yamlPath)
     {
         $conf = Config::defaultConfig();
-        if (!empty($config['init_script'])) {
-            $conf->setInitScript($config['init_script']);
-        }
-
-        if (!empty($config['workers'])) {
-            $conf->setWorkers((int)$config['workers']);
-        }
-
-        if (!empty($config['dsn'])) {
-            $conf->setRedis($config['dsn']);
-        }
+        $parseProcessor = new YamlConfigProcessor(
+            Yaml::parse(file_get_contents($yamlPath)),
+            $conf
+        );
+        $parseProcessor->process();
     }
 
 }

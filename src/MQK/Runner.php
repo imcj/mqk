@@ -37,8 +37,6 @@ class Runner extends Master
      */
     private $queues;
 
-    private $nameList = ['default'];
-
     protected $findExpiredJob = true;
 
     /**
@@ -87,7 +85,7 @@ class Runner extends Master
         );
         $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
 
-        parent::__construct($this->workerClassOrFactory, $this->config->workers(), $this->config->burst(), $this->logger );
+        parent::__construct($this->workerClassOrFactory, $this->config->concurrency(), $this->config->burst(), $this->logger );
     }
 
     public function run()

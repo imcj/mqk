@@ -18,7 +18,7 @@ class Config
      *
      * @var int
      */
-    private $workers;
+    private $concurrency;
 
     /**
      * 队列最大重试
@@ -73,17 +73,17 @@ class Config
      */
     private $sentry;
 
-    public function workers()
+    public function concurrency()
     {
-        if (!$this->workers) {
-            $this->workers = 50;
+        if (!$this->concurrency) {
+            $this->concurrency = 50;
         }
-        return $this->workers;
+        return $this->concurrency;
     }
 
-    public function setWorkers($workers)
+    public function setConcurrency($concurrency)
     {
-        $this->workers = $workers;
+        $this->concurrency = $concurrency;
     }
 
     public function jobMaxRetries()

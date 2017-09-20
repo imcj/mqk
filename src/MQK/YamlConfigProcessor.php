@@ -101,6 +101,15 @@ class YamlConfigProcessor
         }
 
         LoggerFactory::shared()->setHandlers($handlers);
+
+        if (isset($yaml['concurrency'])) {
+            $concurrency = $yaml['concurrency'];
+            if (is_integer($concurrency)) {
+                $this->config->setConcurrency($concurrency);
+            } else {
+                throw new \Exception("Concurrency must be integer");
+            }
+        }
     }
 
     /**

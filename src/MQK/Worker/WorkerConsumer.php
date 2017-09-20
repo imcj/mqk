@@ -176,7 +176,7 @@ class WorkerConsumer extends AbstractWorker
 
     protected function loadUserInitializeScript()
     {
-        if ($this->initScript) {
+        if (!empty($this->initScript)) {
             if (file_exists($this->initScript)) {
                 include_once $this->initScript;
                 return;
