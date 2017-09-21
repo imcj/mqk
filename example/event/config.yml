@@ -1,4 +1,4 @@
 queues:
   - default
-bootstrap: bootstrap.php
+bootstrap: example/event/bootstrap.php
 concurrency: 1

@@ -191,6 +191,7 @@ class WorkerConsumer extends AbstractWorker
     {
         if (!empty($this->bootstrap)) {
             if (file_exists($this->bootstrap)) {
+                $this->logger->debug("Loaded bootstrap {$this->bootstrap}");
                 include_once $this->bootstrap;
                 return;
             } else {

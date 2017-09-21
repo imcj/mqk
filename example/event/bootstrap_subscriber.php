@@ -6,6 +6,4 @@ use MQK\Example\ExampleSubscriber;
 
 $subscriber = new ExampleSubscriber();
 
-K::addListener("example", function(\MQK\Example\ExampleEvent $event) {
-    echo "{$event->hello}\n";
-});
+K::addSubscriber($subscriber);

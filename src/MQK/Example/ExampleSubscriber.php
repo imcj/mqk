@@ -33,6 +33,6 @@ class ExampleSubscriber implements EventSubscriberInterface
 
     public function onExample($event)
     {
-
+        echo "listen on subscriber\n";
     }
 }
