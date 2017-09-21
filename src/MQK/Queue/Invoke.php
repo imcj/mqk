@@ -19,6 +19,8 @@ class Invoke
 
     private $invokes;
 
+    private $queue;
+
     /**
      * @var MessageInvokableSync
      */
@@ -89,6 +91,25 @@ class Invoke
         $payload->func = $this->func;
         $payload->arguments = $this->arguments;
         $message->setPayload($payload);
+        $message->setQueue($this->queue);
         return $message;
     }
+
+    /**
+     * @return mixed
+     */
+    public function queue()
+    {
+        return $this->queue;
+    }
+
+    /**
+     * @param mixed $queue
+     */
+    public function setQueue($queue)
+    {
+        $this->queue = $queue;
+    }
+
+
 }

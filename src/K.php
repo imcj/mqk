@@ -104,7 +104,9 @@ class K
         foreach ($invokes->invokes() as $invoke) {
             $invokes->setConnection($connection);
             $invokes->setMessageDAO($messageDAO);
-            self::defaultQueue()->enqueue($invoke->createMessage());
+            $message = $invoke->createMessage();
+            self::configDefaultMessage($message);
+            self::defaultQueue()->enqueue($message->queue(), $message);
         }
 
         return $invokes;

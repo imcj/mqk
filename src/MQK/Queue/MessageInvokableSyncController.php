@@ -2,6 +2,8 @@
 namespace MQK\Queue;
 
 
+use Monolog\Logger;
+use MQK\LoggerFactory;
 use MQK\Queue\Message\MessageDAO;
 use MQK\RedisProxy;
 
@@ -22,11 +24,17 @@ class MessageInvokableSyncController
      */
     private $messageDAO;
 
+    /**
+     * @var Logger
+     */
+    private $logger;
+
     public function __construct(RedisProxy $connection, Queue $queue, MessageDAO $messageDAO)
     {
         $this->connection = $connection;
         $this->queue = $queue;
         $this->messageDAO = $messageDAO;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     public function invoke(MessageInvokableSync $message)
@@ -46,6 +54,7 @@ class MessageInvokableSyncController
             }
         }
 
+        $this->logger->debug("Paralles message completed");
         $this->queue->enqueue($message->groupId(), $message);
 
     }

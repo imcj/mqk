@@ -53,7 +53,7 @@ class RedisQueue implements Queue
         $this->logger->debug("enqueue {$message->id()} to {$message->queue()}");
         $this->logger->debug($messageJson);
 
-        $queueKey = $this->prefix . $message->queue();
+        $queueKey = $this->prefix . $name;
         $success = $this->connection->lpush($queueKey, $messageJson);
 
         if (!$success) {

@@ -22,6 +22,8 @@ class Invokes
 
     private $waited = false;
 
+    private $queue;
+
     public function __construct(...$args)
     {
         $this->id = uniqid();
@@ -97,5 +99,25 @@ class Invokes
         }
 
         return $returns;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function queue()
+    {
+        return $this->queue;
+    }
+
+    /**
+     * @param mixed $queue
+     */
+    public function setQueue($queue)
+    {
+        $this->queue = $queue;
+
+        foreach ($this->invokes as $invoke) {
+            $invoke->setQueue($queue);
+        }
     }
 }
