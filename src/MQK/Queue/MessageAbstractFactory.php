@@ -53,7 +53,7 @@ class MessageAbstractFactory
      * @param $event
      * @return MessageEvent
      */
-    public function messageWithEvent($event)
+    public function messageWithEvent($eventName, $event)
     {
         /**
          * @var $serializer \Symfony\Component\Serializer\Serializer
@@ -64,7 +64,7 @@ class MessageAbstractFactory
         $payload = new \stdClass();
 
         $eventClass = get_class($event);
-        $payload->eventName = $eventClass::NAME;
+        $payload->eventName = $eventName;
         $payload->className = $eventClass;
         $payload->serialized = $serializer->normalize($event, 'json');
 

@@ -11,37 +11,9 @@ interface Queue
     /**
      * 进入队列
      *
+     * @param string $name
      * @param Message $message
      * @return void
      */
-    function enqueue(Message $message);
-
-
-    /**
-     * @param Message[] $messages
-     * @return void
-     */
-    function enqueueBatch($messages);
-
-    /**
-     * 队列名
-     *
-     * @return string
-     */
-    function name();
-
-    /**
-     * 设置队列名
-     *
-     * @param $name
-     * @return void
-     */
-    function setName($name);
-
-    /**
-     * 队列的键名
-     *
-     * @return string
-     */
-    function key();
+    function enqueue($name, Message $message);
 }

@@ -11,7 +11,7 @@ class Config
     /**
      * @var string
      */
-    private $redis;
+    private $redis = "redis://127.0.0.1";
 
     /**
      * Worker的数量

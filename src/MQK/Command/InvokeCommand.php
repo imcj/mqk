@@ -6,6 +6,7 @@ use MQK\Config;
 use MQK\LoggerFactory;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\QueueFactory;
+use MQK\Queue\RedisQueue;
 use MQK\RedisFactory;
 use MQK\RedisProxy;
 use MQK\Worker\AbstractWorker;
@@ -126,8 +127,7 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
                 exit(1);
             }
         }
-        $messageAbstractFactory = new MessageAbstractFactory();
-        $queueFactory = new QueueFactory($redis, $messageAbstractFactory);
+        $queue = new RedisQueue($redis);
 
         $this->logger = LoggerFactory::shared()->cliLogger();
 
@@ -137,9 +137,8 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
             $payload->arguments = $this->arguments;
 
             foreach ($this->queues as $queueName) {
-                $queue = $queueFactory->createQueue($queueName);
                 $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", $queueName, $this->ttl ? $this->ttl : 600, $payload);
-                $queue->enqueue($message);
+                $queue->enqueue($queueName, $message);
             }
         }
     }

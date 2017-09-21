@@ -202,22 +202,16 @@ class WorkerConsumer extends AbstractWorker
 
     protected function createExecutor($connection)
     {
-        $messageFactory = new MessageAbstractFactory();
         assert($connection instanceof  RedisProxy);
 
-        $queueFactory = new QueueFactory($connection, $messageFactory);
+        $notifyQueue = new RedisQueue($connection);
 
         $queues = new RedisQueueCollection(
             $connection,
-            RedisQueue::create(
-                $connection,
-                $this->queueNameList,
-                $messageFactory
-            )
+            $this->queueNameList
         );
         $registry = new Registry($connection);
 
-        $notifyQueue = $queueFactory->createQueue("");
         $messageDAO = new MessageDAO($connection);
         $controller = new MessageInvokableSyncController(
             $connection,

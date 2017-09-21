@@ -6,6 +6,7 @@ use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\QueueCollection;
 use MQK\Queue\QueueFactory;
+use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Worker\Worker;
 use MQK\Worker\WorkerConsumerFactory;
@@ -33,7 +34,7 @@ class Runner extends Master
     private $messageDAO;
 
     /**
-     * @var QueueCollection
+     * @var string[]
      */
     private $queues;
 
@@ -68,17 +69,15 @@ class Runner extends Master
             }
         }
 
-        $queueFactory = new QueueFactory($this->connection, new MessageAbstractFactory());
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->config = $config;
         $this->registry = new Registry($this->connection);
         $this->messageDAO = new MessageDAO($this->connection);
 
-        $this->queues = new RedisQueueCollection(
-            $this->connection,
-            $queueFactory->createQueues($queues, $this->connection)
-        );
+        $this->queues = $queues;
+
+        $queue = new RedisQueue($this->connection);
         $this->workerClassOrFactory = new WorkerConsumerFactory(
             $config->redis(),
             $queues,
@@ -88,7 +87,7 @@ class Runner extends Master
             $config->fast(),
             $config->errorHandlers()
         );
-        $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $this->queues);
+        $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $queue);
 
         parent::__construct($this->workerClassOrFactory, $this->config->concurrency(), $this->config->burst(), $this->logger );
     }

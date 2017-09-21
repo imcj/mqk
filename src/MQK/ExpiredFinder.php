@@ -28,9 +28,9 @@ class ExpiredFinder
     private $registry;
 
     /**
-     * @var QueueCollection
+     * @var Queue
      */
-    private $queues;
+    private $queue;
 
     /**
      * @var bool
@@ -54,13 +54,13 @@ class ExpiredFinder
         $connection,
         MessageDAO $messageDAO,
         Registry $registry,
-        QueueCollection $queues,
+        Queue $queue,
         $cluster = false) {
 
         $this->connection = $connection;
         $this->messageDAO = $messageDAO;
         $this->registry = $registry;
-        $this->queues = $queues;
+        $this->queue = $queue;
         $this->cluster = $cluster;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
@@ -87,13 +87,6 @@ class ExpiredFinder
         }
         $this->logger->debug("Find expired message {$message->id()}");
         $this->logger->debug(json_encode($message->jsonSerialize()));
-        try {
-            $queue = $this->queues->get($message->queue());
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(json_encode($message->jsonSerialize()));
-            return;
-        }
 
 //        $this->logger->debug("The message {$message->id()} retries {$message->retries()}");
         if ($message->retries() > 2) {
@@ -110,7 +103,7 @@ class ExpiredFinder
         $message->increaseRetries();
 //        $this->logger->debug(json_encode($message->jsonSerialize()));
         $this->messageDAO->store($message);
-        $queue->enqueue($message);
+        $this->queue->enqueue($message->queue(), $message);
 
         if (!$this->cluster)
             $this->connection->exec();

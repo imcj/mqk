@@ -14,16 +14,9 @@ class RedisQueueCollection implements QueueCollection
     private $connection;
 
     /**
-     * @var Queue[]
-     */
-    private $queues;
-
-    /**
-     * Redis队列的名字列表
-     *
      * @var string[]
      */
-    private $queueKeys = [];
+    private $queues;
 
     /**
      * @var Logger
@@ -36,47 +29,26 @@ class RedisQueueCollection implements QueueCollection
      */
     private $messageFactory;
 
+    const QUEUE_KEY_PREFIX = "queue";
+
     /**
      * RedisQueueCollection constructor.
      * @param $connection \Redis
-     * @param $queues Queue[]
      */
     public function __construct($connection, $queues)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->register($queues);
         $this->messageFactory = new MessageAbstractFactory();
-    }
 
-    /**
-     * @param Queue[] $queues
-     */
-    public function register(array $queues)
-    {
-        foreach ($queues as $queue)
-        {
-            $this->queues[$queue->name()] = $queue;
-            $this->queueKeys[] = $queue->key();
-        }
-    }
-
-    /**
-     * @param $name
-     * @return Queue
-     * @throws \Exception
-     */
-    public function get($name)
-    {
-        if (!isset($this->queues[$name])) {
-            throw new \Exception("Queue {$name} not found.");
-        }
-        return $this->queues[$name];
+        $this->queues = array_map(function($queue) {
+            return self::QUEUE_KEY_PREFIX . "_" . $queue;
+        }, $queues);
     }
 
     public function dequeue($block=true)
     {
-        $messageJsonObject = $this->connection->listPop($this->queueKeys, $block, 1);
+        $messageJsonObject = $this->connection->listPop($this->queues, $block, 1);
 
         if (null == $messageJsonObject)
             return null;

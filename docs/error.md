@@ -25,7 +25,9 @@ error_handlers:
 ```
 
 ```
-class ExceptionHandler
+use MQK\Error\ErrorHandler;
+
+class ExceptionHandler implements ErrorHandler
 {
     public function got(\Exception $exception)
     {

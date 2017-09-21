@@ -35,71 +35,74 @@ class YamlConfigProcessor
                 }
             }
         }
+        if (isset($yaml['logging'])) {
+            $handlers = [];
 
-        $handlers = [];
+            /**
+             * @var AbstractProcessingHandler $handler
+             */
+            $handler = null;
+            if (isset($yaml['logging']['handlers'])) {
+                foreach ($yaml['logging']['handlers'] as $handlerListItem) {
+                    $namespace = "\\MQK\\Logging\\Handlers\\";
 
-        /**
-         * @var AbstractProcessingHandler $handler
-         */
-        $handler = null;
-        foreach ($yaml['logging']['handlers'] as $handlerListItem) {
-            $namespace = "\\MQK\\Logging\\Handlers\\";
+                    if (is_array($handlerListItem)) {
+                        $key = current(array_keys($handlerListItem));
+                        $value = current(array_values($handlerListItem));
 
-            if (is_array($handlerListItem)) {
-                $key = current(array_keys($handlerListItem));
-                $value = current(array_values($handlerListItem));
+                        if (!isset($handlerListItem['class'])) {
+                            throw new \Exception("Does not exists handler class name");
+                            continue;
+                        }
+                        $className = $namespace . $handlerListItem['class'];
 
-                if (!isset($handlerListItem['class'])) {
-                    throw new \Exception("Does not exists handler class name");
-                    continue;
-                }
-                $className = $namespace . $handlerListItem['class'];
+                        if (class_exists($className)) {
+                            // 12345 54321 5211314 from kiki
+                            //
+                            // This code from my wife, not me.
 
-                if (class_exists($className)) {
-                    // 12345 54321 5211314 from kiki
-                    //
-                    // This code from my wife, not me.
+                            if (isset($handlerListItem['arguments'])) {
+                                $arguments = $handlerListItem['arguments'];
+                                if (is_string($arguments))
+                                    $arguments = [$arguments];
+                            } else {
+                                $arguments = [];
+                            }
 
-                    if (isset($handlerListItem['arguments'])) {
-                        $arguments = $handlerListItem['arguments'];
-                        if (is_string($arguments))
-                            $arguments = [$arguments];
+                            $handlerClass = new \ReflectionClass($className);
+                            if (1 <= count($arguments))
+                                $handler = $handlerClass->newInstanceArgs($arguments);
+                            else
+                                $handler = $handlerClass->newInstance();
+
+
+                            if (isset($handlerListItem['level'])) {
+                                $level = $handlerListItem['level'];
+                                $this->validateLoggingLevel($level);
+                                $handler->setLevel($levels[$level]);
+                            }
+
+                        } else {
+                            throw new \Exception("Does not exists handler class");
+                        }
                     } else {
-                        $arguments = [];
+
+                        $className = $namespace . $handlerListItem;
+
+                        if (class_exists($className))
+                            $handler = new $className;
+                        else
+                            throw new \Exception("Does not exists handler class");
                     }
 
-                    $handlerClass = new \ReflectionClass($className);
-                    if (1 <= count($arguments))
-                        $handler = $handlerClass->newInstanceArgs($arguments);
-                    else
-                        $handler = $handlerClass->newInstance();
-
-
-                    if (isset($handlerListItem['level'])) {
-                        $level = $handlerListItem['level'];
-                        $this->validateLoggingLevel($level);
-                        $handler->setLevel($levels[$level]);
+                    if (null !== $handler) {
+                        $handlers[] = $handler;
                     }
-
-                } else {
-                    throw new \Exception("Does not exists handler class");
                 }
-            } else {
-
-                $className = $namespace . $handlerListItem;
-
-                if (class_exists($className))
-                    $handler = new $className;
-                else
-                    throw new \Exception("Does not exists handler class");
             }
 
-            if (null !== $handler) {
-                $handlers[] = $handler;
-            }
+            LoggerFactory::shared()->setHandlers($handlers);
         }
-
-        LoggerFactory::shared()->setHandlers($handlers);
 
         if (isset($yaml['concurrency'])) {
             $concurrency = $yaml['concurrency'];
@@ -137,6 +140,14 @@ class YamlConfigProcessor
                 } catch (\Exception $e) {
 
                 }
+            }
+        }
+
+        if (isset($yaml['bootstrap'])) {
+            $bootstrap = $yaml['bootstrap'];
+
+            if (!empty($bootstrap) && file_exists($bootstrap)) {
+                $this->config->setBootstrap($bootstrap);
             }
         }
     }

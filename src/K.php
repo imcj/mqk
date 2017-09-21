@@ -1,11 +1,14 @@
 <?php
-use MQK\Queue\Message\MessageDAO;
+use MQK\Config;
 use MQK\Queue\Invokes;
+use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueFactory;
-use MQK\RedisFactory;
 use Symfony\Component\EventDispatcher\Event;
+use MQK\Queue\MessageEventBus;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Yaml\Yaml;
 
 class K
 {
@@ -28,8 +31,26 @@ class K
      */
     private static $messageDAO;
 
-    public static function setup($config)
+    /**
+     * @var Config
+     */
+    private static $config;
+
+    private static $initializedConfig = false;
+
+    public static function setupConfig($yamlPath)
     {
+        $conf = Config::defaultConfig();
+
+        if (!file_exists($yamlPath)) {
+            throw new Exception("Yaml not found");
+        }
+
+        $parseProcessor = new \MQK\YamlConfigProcessor(
+            Yaml::parse(file_get_contents($yamlPath)),
+            $conf
+        );
+        $parseProcessor->process();
     }
 
     public static function invoke($func, ...$args)
@@ -39,6 +60,8 @@ class K
         $payload->func = $func;
         $payload->arguments = $args;
         $message->setPayload($payload);
+
+
 
         self::defaultQueue()->enqueue($message);
 
@@ -82,12 +105,14 @@ class K
     }
 
 
-    public static function dispatch(Event $event, $ttl = -1)
+    public static function dispatch($eventName, Event $event, $ttl = -1)
     {
-        $message = self::createMessageFactory()->messageWithEvent($event);
+        $message = self::createMessageFactory()->messageWithEvent($eventName, $event);
+        self::configMessage($message);
         if ($ttl > -1)
             $message->setTtl($ttl);
-        self::defaultQueue()->enqueue($message);
+        self::configMessage($message);
+        self::defaultQueue()->enqueue($message->queue(), $message);
 
         return $message;
     }
@@ -103,11 +128,29 @@ class K
         \MQK\Queue\MessageEventBus::shared()->addListener($name, $callback);
     }
 
+    /**
+     * Add event subscriber
+     *
+     * @param EventSubscriberInterface $subscriber
+     */
+    public static function addSubscriber(EventSubscriberInterface $subscriber)
+    {
+        MessageEventBus::shared()->addSubscriber($subscriber);
+    }
+
+    static function configMessage($message)
+    {
+        if (!in_array("default", self::config()->queues())) {
+            $message->setQueue(self::config()->queues()[0]);
+        }
+    }
+
     static function createConnection()
     {
         if (null == self::$connection) {
-            $factory = RedisFactory::shared();
-            self::$connection = $factory->createConnection();
+            $config = Config::defaultConfig();
+            self::$connection = new \MQK\RedisProxy($config->redis());
+            self::$connection->connect();
         }
         return self::$connection;
     }
@@ -137,9 +180,16 @@ class K
     static function defaultQueue()
     {
         if (null == self::$queue) {
-            self::$queue = self::createQueueFactory(self::createConnection())->createQueue("default");
+            self::$queue = new \MQK\Queue\RedisQueue(self::createConnection());
         }
 
         return self::$queue;
+    }
+
+    static function config()
+    {
+        if (null == self::$config)
+            self::$config = Config::defaultConfig();
+        return self::$config;
     }
 }

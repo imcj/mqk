@@ -69,6 +69,10 @@ abstract class AbstractCommand extends Command
 
         $queues = $input->getOption('queue');
 
+        $bootstrap = $input->getOption('bootstrap');
+        if (!empty($bootstrap))
+            $config->setBootstrap($bootstrap);
+
         $this->loadIniConfig($input->getOption('config'));
 
         if (empty($config->queues())) {

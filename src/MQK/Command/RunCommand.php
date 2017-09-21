@@ -27,6 +27,7 @@ class RunCommand extends AbstractCommand
             ->addOption("empty-worker", '', InputOption::VALUE_NONE)
             ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "")
             ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '')
+            ->addOption('bootstrap', '', InputOption::VALUE_OPTIONAL)
             ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
     }
 
@@ -53,6 +54,8 @@ class RunCommand extends AbstractCommand
             $workerFactory = new EmptyWorkerFactory();
             $runner->setWorkerFactory($workerFactory);
         }
+
+        $this->logger->debug("Queues " . join(", ", $config->queues()));
 
         $runner->run();
     }
