@@ -44,6 +44,11 @@ class WorkerConsumerFactory implements WorkerFactory
     private $errorHandlers;
 
     /**
+     * @var string
+     */
+    private $queuePrefix;
+
+    /**
      * WorkerConsumerFactory constructor.
      *
      * @param string $redisDsn
@@ -53,6 +58,7 @@ class WorkerConsumerFactory implements WorkerFactory
      * @param boolean $burst
      * @param boolean $fast
      * @param ErrorHandler[] $errorHandlers
+     * @param string $queuePrefix
      */
     public function __construct(
         $redisDsn,
@@ -61,7 +67,8 @@ class WorkerConsumerFactory implements WorkerFactory
         $bootstrap,
         $burst,
         $fast,
-        $errorHandlers) {
+        $errorHandlers,
+        $queuePrefix) {
 
         $this->redisDsn = $redisDsn;
         $this->queueNameList = $queueNameList;
@@ -70,6 +77,7 @@ class WorkerConsumerFactory implements WorkerFactory
         $this->burst = $burst;
         $this->fast = $fast;
         $this->errorHandlers = $errorHandlers;
+        $this->queuePrefix = $queuePrefix;
     }
 
     /**
@@ -85,7 +93,8 @@ class WorkerConsumerFactory implements WorkerFactory
             $this->bootstrap,
             $this->burst,
             $this->fast,
-            $this->errorHandlers
+            $this->errorHandlers,
+            $this->queuePrefix
         );
 
         return $worker;

@@ -9,6 +9,7 @@ use Symfony\Component\EventDispatcher\Event;
 use MQK\Queue\MessageEventBus;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Yaml\Yaml;
+use MQK\Queue\Message;
 
 class K
 {
@@ -108,10 +109,10 @@ class K
     public static function dispatch($eventName, Event $event, $ttl = -1)
     {
         $message = self::createMessageFactory()->messageWithEvent($eventName, $event);
-        self::configMessage($message);
+        self::configDefaultMessage($message);
         if ($ttl > -1)
             $message->setTtl($ttl);
-        self::configMessage($message);
+        self::configDefaultMessage($message);
         self::defaultQueue()->enqueue($message->queue(), $message);
 
         return $message;
@@ -138,9 +139,17 @@ class K
         MessageEventBus::shared()->addSubscriber($subscriber);
     }
 
-    static function configMessage($message)
+    static function configDefaultMessage(Message $message)
     {
-        if (!in_array("default", self::config()->queues())) {
+        $config = self::config();
+        $defaultQueue = $config->defaultQueue();
+        if ($message->queue() == null)
+            $message->setQueue($defaultQueue);
+
+        if (!in_array($defaultQueue, self::config()->queues())) {
+            if (empty($config->queues())) {
+                throw new \Exception("Queue list empty");
+            }
             $message->setQueue(self::config()->queues()[0]);
         }
     }
@@ -180,7 +189,10 @@ class K
     static function defaultQueue()
     {
         if (null == self::$queue) {
-            self::$queue = new \MQK\Queue\RedisQueue(self::createConnection());
+            self::$queue = new \MQK\Queue\RedisQueue(
+                self::createConnection(),
+                self::config()->queuePrefix()
+            );
         }
 
         return self::$queue;

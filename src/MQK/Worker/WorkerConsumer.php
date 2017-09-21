@@ -97,7 +97,12 @@ class WorkerConsumer extends AbstractWorker
      */
     protected $errorHandlers;
 
-    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast, $errorHandlers)
+    /**
+     * @var string
+     */
+    protected $queuePrefix;
+
+    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast, $errorHandlers, $queuePrefix)
     {
         $this->redisDsn = $redisDsn;
         $this->masterId = $masterId;
@@ -108,6 +113,7 @@ class WorkerConsumer extends AbstractWorker
         $this->burst = $burst;
         $this->fast = $fast;
         $this->errorHandlers = $errorHandlers;
+        $this->queuePrefix = $queuePrefix;
 
         $this->loadUserInitializeScript();
 
@@ -204,7 +210,7 @@ class WorkerConsumer extends AbstractWorker
     {
         assert($connection instanceof  RedisProxy);
 
-        $notifyQueue = new RedisQueue($connection);
+        $notifyQueue = new RedisQueue($connection, $this->queuePrefix);
 
         $queues = new RedisQueueCollection(
             $connection,

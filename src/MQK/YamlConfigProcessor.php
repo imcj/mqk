@@ -113,6 +113,22 @@ class YamlConfigProcessor
             }
         }
 
+        if (isset($yaml['queue'])) {
+            if (isset($yaml['queue']['default'])) {
+                $defaultQueue = $yaml['queue']['default'];
+                if (!empty($defaultQueue)) {
+                    $this->config->setDefaultQueue($defaultQueue);
+                }
+            }
+
+            if (isset($yaml['queue']['prefix'])) {
+                $queuePrefix = $yaml['queue']['prefix'];
+                if (!empty($queuePrefix)) {
+                    $this->config->setQueuePrefix($queuePrefix);
+                }
+            }
+        }
+
         if (isset($yaml['queues'])) {
             $queues = $yaml['queues'];
 

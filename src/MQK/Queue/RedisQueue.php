@@ -20,17 +20,18 @@ class RedisQueue implements Queue
     /**
      * @var string
      */
-    private $prefix = "queue_";
+    private $prefix;
 
     /**
      * RedisQueue constructor.
      *
      * @param RedisProxy $connection
      */
-    public function __construct(RedisProxy $connection)
+    public function __construct(RedisProxy $connection, $queuePrefix)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->prefix = $queuePrefix;
     }
 
     /**

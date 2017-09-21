@@ -103,6 +103,11 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
 
     private $queues;
 
+    /**
+     * @var Config
+     */
+    private $config;
+
     public function __construct($redisDsn, $funcName, $arguments, $numbers, $queues, $ttl = null)
     {
         $this->redisDsn = $redisDsn;
@@ -111,6 +116,7 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
         $this->numbers = $numbers;
         $this->queues = $queues;
         $this->ttl = $ttl;
+        $this->config = Config::defaultConfig();
     }
 
     public function run()
@@ -127,7 +133,8 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
                 exit(1);
             }
         }
-        $queue = new RedisQueue($redis);
+
+        $queue = new RedisQueue($redis, $this->config->queuePrefix());
 
         $this->logger = LoggerFactory::shared()->cliLogger();
 

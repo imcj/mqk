@@ -76,12 +76,16 @@ class Config
     /**
      * @var string[]
      */
-    private $queues;
+    private $queues = [];
 
     /**
      * @var ErrorHandler[]
      */
     private $errorHandlers = [];
+
+    private $queuePrefix = 'queue_';
+
+    private $defaultQueue = 'default';
 
     public function __construct()
     {
@@ -114,6 +118,7 @@ class Config
     {
         if (null == self::$default) {
             self::$default = new Config();
+            self::$default->setQueues(['default']);
         }
 
         return self::$default;
@@ -246,4 +251,38 @@ class Config
     {
         $this->errorHandlers[] = $handler;
     }
+
+    /**
+     * @return string
+     */
+    public function queuePrefix(): string
+    {
+        return $this->queuePrefix;
+    }
+
+    /**
+     * @param string $queuePrefix
+     */
+    public function setQueuePrefix(string $queuePrefix)
+    {
+        $this->queuePrefix = $queuePrefix;
+    }
+
+    /**
+     * @return string
+     */
+    public function defaultQueue(): string
+    {
+        return $this->defaultQueue;
+    }
+
+    /**
+     * @param string $defaultQueue
+     */
+    public function setDefaultQueue(string $defaultQueue)
+    {
+        $this->defaultQueue = $defaultQueue;
+    }
+
+
 }

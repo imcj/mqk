@@ -77,7 +77,7 @@ class Runner extends Master
 
         $this->queues = $queues;
 
-        $queue = new RedisQueue($this->connection);
+        $queue = new RedisQueue($this->connection, $config->queuePrefix());
         $this->workerClassOrFactory = new WorkerConsumerFactory(
             $config->redis(),
             $queues,
@@ -85,7 +85,8 @@ class Runner extends Master
             $config->bootstrap(),
             $config->burst(),
             $config->fast(),
-            $config->errorHandlers()
+            $config->errorHandlers(),
+            $config->queuePrefix()
         );
         $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $queue);
 
