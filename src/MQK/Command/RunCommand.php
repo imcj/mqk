@@ -55,8 +55,6 @@ class RunCommand extends AbstractCommand
             $runner->setWorkerFactory($workerFactory);
         }
 
-        $this->logger->debug("Queues " . join(", ", $config->queues()));
-
         $runner->run();
     }
 }

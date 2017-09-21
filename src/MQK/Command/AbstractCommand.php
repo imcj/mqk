@@ -75,8 +75,8 @@ abstract class AbstractCommand extends Command
 
         $this->loadIniConfig($input->getOption('config'));
 
-        if (empty($config->queues())) {
-            $config->setQueues(['default']);
+        if (!empty($queues)) {
+            $config->setQueues($queues);
         }
     }
 

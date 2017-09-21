@@ -143,6 +143,7 @@ class WorkerConsumer extends AbstractWorker
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
+        $this->logger->debug("Watch queue list " . join(", ", $this->queueNameList));
         $this->workerStartTime = Time::micro();
         while ($this->alive) {
             try {
