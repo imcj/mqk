@@ -1,0 +1,3 @@
+queues:
+  - hight
+concurrency: 1

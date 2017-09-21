@@ -1,0 +1,4 @@
+queues:
+  - default
+bootstrap: bootstrap.php
+concurrency: 1
