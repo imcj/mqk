@@ -60,15 +60,27 @@ class K
         return self::invokeTo($defaultQueue, $func, ...$args);
     }
 
-    public static function invokeTo($queueName, $func, ...$args)
+    public static function invokeLate($func, ...$args)
     {
         $message = new \MQK\Queue\MessageInvokable(uniqid());
         $payload = new stdClass();
         $payload->func = $func;
         $payload->arguments = $args;
         $message->setPayload($payload);
-        $message->setQueue($queueName);
 
+        return $message;
+    }
+
+    public static function invokeMessage($message)
+    {
+        self::defaultQueue()->enqueue($message->queue(), $message);
+        return $message;
+    }
+
+    public static function invokeTo($queueName, $func, ...$args)
+    {
+        $message = self::invokeLate($func, ...$args);
+        $message->setQueue($queueName);
         self::defaultQueue()->enqueue($message->queue(), $message);
 
         return $message;

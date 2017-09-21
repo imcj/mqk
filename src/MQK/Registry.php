@@ -61,8 +61,6 @@ class Registry
 
     public function finish(Message $message)
     {
-        $ttl = time() + $message->ttl();
-        // TODO: 后续在Slow模式加入成功的任务保存
 //        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
         $this->connection->zDelete("mqk:started", $message->id());
     }

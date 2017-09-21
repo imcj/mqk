@@ -14,10 +14,16 @@ Sentry
 sentry: sentry_dsn
 ```
 
+或者通过命令行参数指定
+```shell
+$ vendor/bin/mqk --sentry sentry://host
+```
+
+
 错误处理
 -------
 
-在配置文件中设置 `error_handlers` 可以接收程序的一场信息。
+在配置文件中设置 `error_handlers`列表，每一条一个类的名字，实现 `MQK\Error\ErrorHandler` 接口。
 
 ```yaml
 error_handlers:
