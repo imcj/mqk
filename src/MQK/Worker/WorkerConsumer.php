@@ -97,8 +97,16 @@ class WorkerConsumer extends AbstractWorker
      */
     protected $queuePrefix;
 
-    public function __construct($redisDsn, $queueNameList, $masterId, $bootstrap, $burst, $fast, $errorHandlers, $queuePrefix)
-    {
+    public function __construct(
+        $redisDsn,
+        $queueNameList,
+        $masterId,
+        $bootstrap,
+        $burst,
+        $fast,
+        $errorHandlers,
+        $queuePrefix
+    ) {
         $this->redisDsn = $redisDsn;
         $this->masterId = $masterId;
         $this->workerId = uniqid();
