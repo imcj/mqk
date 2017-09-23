@@ -42,8 +42,11 @@ class MessageAbstractFactory
          */
         $message = $messageFactoryInstance->withJsonObject($messageJson);
 
-        if (property_exists($messageJson, 'maxRetry'))
-            $message->setMaxRetry($messageJson->retry);
+        if (property_exists($messageJson, 'maxRetry')
+            && $messageJson->maxRetry != null
+            && is_integer($messageJson->maxRetry))
+            $message->setMaxRetry($messageJson->maxRetry);
+
         if (property_exists($messageJson, "retries")) {
             $message->setRetries($messageJson->retries);
         }

@@ -121,7 +121,7 @@ class Message implements \JsonSerializable
     /**
      * @param int $maxRetry
      */
-    public function setMaxRetry(int $maxRetry)
+    public function setMaxRetry($maxRetry)
     {
         $this->maxRetry = $maxRetry;
     }
