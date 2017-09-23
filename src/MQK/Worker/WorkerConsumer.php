@@ -36,11 +36,6 @@ class WorkerConsumer extends AbstractWorker
     protected $logger;
 
     /**
-     * @var Logger
-     */
-    protected $cliLogger;
-
-    /**
      * @var float
      */
     protected $workerStartTime;
