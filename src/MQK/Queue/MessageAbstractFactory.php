@@ -37,15 +37,18 @@ class MessageAbstractFactory
             $messageFactoryInstance = $this->messageFactories[$messageFactoryClass];
         }
 
+
+        // TODO: 移到MessageFactory里面
         /**
          * @var Message $message
          */
         $message = $messageFactoryInstance->withJsonObject($messageJson);
 
         if (property_exists($messageJson, 'maxRetry')
-            && $messageJson->maxRetry != null
-            && is_integer($messageJson->maxRetry))
+            && is_integer($messageJson->maxRetry)) {
+
             $message->setMaxRetry($messageJson->maxRetry);
+        }
 
         if (property_exists($messageJson, "retries")) {
             $message->setRetries($messageJson->retries);

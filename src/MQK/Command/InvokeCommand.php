@@ -145,7 +145,7 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
 
             foreach ($this->queues as $queueName) {
                 $message = new \MQK\Queue\MessageInvokable(uniqid(), "invokable", $queueName, $this->ttl ? $this->ttl : 600, $payload);
-                $message->setMaxRetry(2);
+                $message->setMaxRetry(0);
                 $queue->enqueue($queueName, $message);
             }
         }

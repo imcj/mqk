@@ -15,10 +15,16 @@ class YamlConfigProcessor
      */
     private $config;
 
+    /**
+     * @var Logger
+     */
+    private $logger;
+
     public function __construct($yaml, Config $config)
     {
         $this->yaml = $yaml;
         $this->config = $config;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     public function process()
@@ -170,6 +176,7 @@ class YamlConfigProcessor
         if (isset($yaml['retry'])) {
             $retry = $yaml['retry'];
             if (!empty($retry) && is_integer($retry)) {
+                $this->logger->debug("Set default max retry times {$retry}");
                 $this->config->setRetry($retry);
             }
         }

@@ -37,17 +37,19 @@ class Registry
     public function start(Message $message)
     {
         if (strpos($message->id(), "_") > -1) {
-            $this->logger->debug("Name of job is invalid.");
+            $this->logger->debug("Name of message is invalid.");
             return;
         }
         $ttl = time() + $message->ttl();
-        $this->logger->debug("Message {$message->id()} set expire date to $ttl)");
+        $messageJsonObject = $message->jsonSerialize();
+
+        $this->logger->debug("Message {$message->id()} set expire date to $ttl)", $messageJsonObject);
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
 
         $this->connection->zAdd("mqk:started", $ttl, $message->id());
-        $this->connection->set("mqk:message:{$message->id()}", json_encode($message->jsonSerialize()), 108000);
+        $this->connection->set("mqk:message:{$message->id()}", json_encode($messageJsonObject), 108000);
 
         if (empty($this->config->cluster()))
             $this->connection->exec();

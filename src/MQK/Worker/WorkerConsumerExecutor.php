@@ -114,6 +114,7 @@ class WorkerConsumerExecutor
         $success = true;
         try {
             $beforeExecute = time();
+            $this->logger->debug('Message will execute');
             $this->healthRepoter->report(WorkerHealth::EXECUTING);
             $message();
             $this->healthRepoter->report(WorkerHealth::EXECUTED);

@@ -56,9 +56,10 @@ class MessageDAO
     public function store(Message $message)
     {
         $messageId = $message->id();
-        $this->logger->debug("Store message {$messageId}");
-        $raw = json_encode($message->jsonSerialize());
-        $this->connection->set("mqk:message:$messageId", $raw);
+        $messageJsonObject = $message->jsonSerialize();
+        $messageJson = json_encode($messageJsonObject);
+        $this->logger->debug("Store message {$messageId}", $messageJsonObject);
+        $this->connection->set("mqk:message:$messageId", $messageJson);
     }
 
     public function clear($job)

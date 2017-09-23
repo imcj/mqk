@@ -83,8 +83,9 @@ class ExpiredFinder
          * @var $queue Queue
          */
         $id = $this->registry->queryExpiredMessage("mqk:started");
-        if (null == $id)
+        if (null == $id) {
             return;
+        }
 
         $this->registry->clear("mqk:started", $id);
         try {
@@ -97,9 +98,9 @@ class ExpiredFinder
         $this->logger->debug(json_encode($message->jsonSerialize()));
 
 //        $this->logger->debug("The message {$message->id()} retries {$message->retries()}");
-        if (null != $message && $message->maxRetry() > 0) {
+        if (null !== $message && is_integer($message->maxRetry())) {
             $retry = $message->maxRetry();
-            $this->logger->debug("Message setting retry {$message->maxRetry()}");
+            $this->logger->debug("Message retry times {$message->maxRetry()}");
         } else
             $retry = $this->retry;
 
