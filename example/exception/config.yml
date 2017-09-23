@@ -1,0 +1,5 @@
+queues:
+  - default
+  - high
+retry: 2
+concurrency: 1

@@ -35,6 +35,11 @@ class Message implements \JsonSerializable
     protected $payload;
 
     /**
+     * @var integer
+     */
+    protected $maxRetry = 3;
+
+    /**
      * 多态类型
      * @var string
      */
@@ -106,6 +111,22 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * @return int
+     */
+    public function maxRetry()
+    {
+        return $this->maxRetry;
+    }
+
+    /**
+     * @param int $maxRetry
+     */
+    public function setMaxRetry(int $maxRetry)
+    {
+        $this->maxRetry = $maxRetry;
+    }
+
+    /**
      * Specify data which should be serialized to JSON
      * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
      * @return mixed data which can be serialized by <b>json_encode</b>,
@@ -115,7 +136,7 @@ class Message implements \JsonSerializable
     public function jsonSerialize()
     {
         $json = [];
-        $keys = ['id', 'ttl', 'queue', 'retries', 'discriminator'];
+        $keys = ['id', 'ttl', 'queue', 'retries', 'discriminator', 'maxRetry'];
         foreach ($keys as $key) {
             $json[$key] = $this->$key;
         }

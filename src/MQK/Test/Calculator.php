@@ -6,8 +6,6 @@ use MQK\Time;
 
 class Calculator
 {
-    public static $queue = "high";
-
     public static function sum($a, $b)
     {
 //        echo $a + $b . "\n";
@@ -18,6 +16,12 @@ class Calculator
     {
         usleep($second * 1000000);
         return self::sum($a, $b);
+    }
+
+    public static function sumSleepThenQuit($a, $b, $second)
+    {
+        self::sumSleep($a, $b, $second);
+        exit(0);
     }
 
     public static function sumCrash($a, $b)

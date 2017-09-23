@@ -21,12 +21,6 @@ class Config
     private $concurrency;
 
     /**
-     * 队列最大重试
-     * @var int
-     */
-    private $jobMaxRetries = 3;
-
-    /**
      * Burst模式
      *
      * Burst模式下队列处理完后程序退出
@@ -87,6 +81,11 @@ class Config
 
     private $defaultQueue = 'default';
 
+    /**
+     * @var integer
+     */
+    private $retry = 3;
+
     public function __construct()
     {
     }
@@ -102,16 +101,6 @@ class Config
     public function setConcurrency($concurrency)
     {
         $this->concurrency = $concurrency;
-    }
-
-    public function jobMaxRetries()
-    {
-        return $this->jobMaxRetries;
-    }
-
-    public function setJobMaxRetries($jobMaxRetries)
-    {
-        $this->jobMaxRetries = $jobMaxRetries;
     }
 
     public static function defaultConfig()
@@ -282,6 +271,22 @@ class Config
     public function setDefaultQueue(string $defaultQueue)
     {
         $this->defaultQueue = $defaultQueue;
+    }
+
+    /**
+     * @return int
+     */
+    public function retry(): int
+    {
+        return $this->retry;
+    }
+
+    /**
+     * @param int $retry
+     */
+    public function setRetry(int $retry)
+    {
+        $this->retry = $retry;
     }
 
 

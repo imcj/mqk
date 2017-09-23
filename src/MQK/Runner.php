@@ -53,9 +53,10 @@ class Runner extends Master
     /**
      * Runner constructor.
      *
+     * @param integer $retry
      * @param string[] $queues
      */
-    public function __construct($queues)
+    public function __construct($queues, $retry)
     {
         $config = Config::defaultConfig();
         $dsn = $config->redis();
@@ -88,7 +89,14 @@ class Runner extends Master
             $config->errorHandlers(),
             $config->queuePrefix()
         );
-        $this->expiredFinder = new ExpiredFinder($this->connection, $this->messageDAO, $this->registry, $queue);
+        $this->expiredFinder = new ExpiredFinder(
+            $this->connection,
+            $this->messageDAO,
+            $this->registry,
+            $queue,
+            null,
+            $retry
+        );
 
         parent::__construct($this->workerClassOrFactory, $this->config->concurrency(), $this->config->burst(), $this->logger );
     }

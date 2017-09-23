@@ -67,17 +67,6 @@ fast: false
 或者
 
 ```php
-class Caculator
-{
-    public $retry = false;
-}
-```
-
-也可以设置最大的重试次数。
-
-```php
-class Caculator
-{
-    public $retry = 5;
-}
+$message = \K::invokeLate('Calculator::sum', 1, 1);
+$message->setRetry(5)
 ```

@@ -166,6 +166,13 @@ class YamlConfigProcessor
                 $this->config->setBootstrap($bootstrap);
             }
         }
+
+        if (isset($yaml['retry'])) {
+            $retry = $yaml['retry'];
+            if (!empty($retry) && is_integer($retry)) {
+                $this->config->setRetry($retry);
+            }
+        }
     }
 
     /**

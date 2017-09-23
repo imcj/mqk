@@ -28,7 +28,8 @@ class RunCommand extends AbstractCommand
             ->addOption("config", '', InputOption::VALUE_OPTIONAL, "", "")
             ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '')
             ->addOption('bootstrap', '', InputOption::VALUE_OPTIONAL)
-            ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
+            ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
+            ->addOption('retry', 'r', InputOption::VALUE_OPTIONAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -46,9 +47,19 @@ class RunCommand extends AbstractCommand
         if ($max > 0)
             $config->setTestJobMax($max);
 
+        $retry = $input->getOption('retry');
+        if (!empty($retry) && is_integer($retry)) {
+            $retry = (int)$retry;
+            $config->setRetry($retry);
+        }
+
+        $bootstrap = $input->getOption('bootstrap');
+        if (!empty($bootstrap))
+            $config->setBootstrap($bootstrap);
+
         parent::execute($input, $output);
 
-        $runner = new Runner($config->queues());
+        $runner = new Runner($config->queues(), $retry);
 
         if ((boolean)$input->getOption("empty-worker")) {
             $workerFactory = new EmptyWorkerFactory();

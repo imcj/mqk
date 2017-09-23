@@ -43,19 +43,26 @@ class ExpiredFinder
     private $logger;
 
     /**
+     * @var integer
+     */
+    private $retry;
+
+    /**
      * ExpiredFinder constructor.
      * @param \Redis $connection
      * @param MessageDAO $messageDAO
      * @param Registry $registry
      * @param QueueCollection $queues
      * @param bool $cluster
+     * @param integer $retry
      */
     public function __construct(
         $connection,
         MessageDAO $messageDAO,
         Registry $registry,
         Queue $queue,
-        $cluster = false) {
+        $cluster = false,
+        $retry) {
 
         $this->connection = $connection;
         $this->messageDAO = $messageDAO;
@@ -63,6 +70,7 @@ class ExpiredFinder
         $this->queue = $queue;
         $this->cluster = $cluster;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->retry = $retry;
     }
 
     /**
@@ -89,7 +97,15 @@ class ExpiredFinder
         $this->logger->debug(json_encode($message->jsonSerialize()));
 
 //        $this->logger->debug("The message {$message->id()} retries {$message->retries()}");
-        if ($message->retries() > 2) {
+        if (null != $message && $message->maxRetry() > 0) {
+            $retry = $message->maxRetry();
+            $this->logger->debug("Message setting retry {$message->maxRetry()}");
+        } else
+            $retry = $this->retry;
+
+        var_dump($retry);
+
+        if ($message->retries() > $retry) {
             $this->clearRetryFailed($message);
             return;
         }
