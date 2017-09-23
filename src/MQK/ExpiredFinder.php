@@ -103,14 +103,12 @@ class ExpiredFinder
         } else
             $retry = $this->retry;
 
-        var_dump($retry);
-
-        if ($message->retries() > $retry) {
+        if ($message->retries() >= $retry - 1) {
             $this->clearRetryFailed($message);
             return;
         }
         if (null == $message) {
-            $this->logger->error("[reassignExpredJob] Job is null");
+            $this->logger->error("Message is null");
         }
 
         if (!$this->cluster)
