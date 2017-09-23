@@ -1,7 +1,9 @@
 <?php
 namespace MQK\Command;
 
+use Monolog\Logger;
 use MQK\Config;
+use MQK\LoggerFactory;
 use MQK\Runner;
 use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
@@ -35,6 +37,8 @@ class RunCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $burst = $input->getOption("burst");
+
+        LoggerFactory::shared()->setDefaultLevel(Logger::NOTICE);
 
         $config = Config::defaultConfig();
         $config->setBurst($burst);

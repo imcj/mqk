@@ -2,6 +2,7 @@
 namespace MQK;
 
 use Monolog\Logger;
+use MQK\Logging\Handlers\StreamHandler;
 
 class YamlConfigProcessor
 {
@@ -86,6 +87,8 @@ class YamlConfigProcessor
                                 $level = $handlerListItem['level'];
                                 $this->validateLoggingLevel($level);
                                 $handler->setLevel($levels[$level]);
+                            } else {
+                                $handler->setLevel(LoggerFactory::shared()->defaultLevel());
                             }
 
                         } else {
@@ -105,6 +108,10 @@ class YamlConfigProcessor
                         $handlers[] = $handler;
                     }
                 }
+            } else {
+                $handler = new StreamHandler();
+                $handler->setLevel(LoggerFactory::shared()->defaultLevel());
+                $handlers[] = $handler;
             }
 
             LoggerFactory::shared()->setHandlers($handlers);

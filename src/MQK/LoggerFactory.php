@@ -53,35 +53,16 @@ class LoggerFactory
     public function getLogger($name, $level=null)
     {
         $logger = new Logger($name);
-//        if (function_exists("posix_getpid"))
-//            $pid = posix_getpid();
-//        else
-//            $pid = getmypid();
-//        $output = "[%datetime%] {$pid} %channel%.%level_name%: %message% %context% %extra%\n";
-//
-//        $formatter = new LineFormatter($output);
-//        $handler->setFormatter($formatter);
-//
-//        if ($level)
-//            $handler->setLevel($level);
-//        else
-//            $handler->setLevel($this->defaultLevel);
 
-        foreach ($this->handlers as $handler)
+        foreach ($this->handlers as $handler) {
             $logger->pushHandler($handler);
-
-        return $logger;
-    }
-
-    public function cliLogger()
-    {
-        $config = Config::defaultConfig();
-        if ($config->quite()) {
-            $level = Logger::NOTICE;
-        } else {
-            $level = Logger::INFO;
         }
 
-        return $this->getLogger("", $level);
+        if (empty($this->handlers)) {
+            $handler = new StreamHandler("php://stdout", $this->defaultLevel);
+            $logger->pushHandler($handler);
+        }
+
+        return $logger;
     }
 }

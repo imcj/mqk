@@ -136,7 +136,7 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
 
         $queue = new RedisQueue($redis, $this->config->queuePrefix());
 
-        $this->logger = LoggerFactory::shared()->cliLogger();
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         for ($i = 0; $i < $this->numbers; $i++) {
             $payload = new \stdClass();
