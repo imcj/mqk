@@ -244,7 +244,7 @@ class Config
     /**
      * @return string
      */
-    public function queuePrefix(): string
+    public function queuePrefix()
     {
         return $this->queuePrefix;
     }
@@ -260,7 +260,7 @@ class Config
     /**
      * @return string
      */
-    public function defaultQueue(): string
+    public function defaultQueue()
     {
         return $this->defaultQueue;
     }
@@ -276,7 +276,7 @@ class Config
     /**
      * @return int
      */
-    public function retry(): int
+    public function retry()
     {
         return $this->retry;
     }

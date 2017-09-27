@@ -5,6 +5,7 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\TestTimeoutException;
+use MQK\ExpiredFinder;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
 use MQK\LoggerFactory;
@@ -41,9 +42,19 @@ class WorkerConsumerExecutor
     protected $fast = false;
 
     /**
+     * @var ExpiredFinder
+     */
+    protected $expiredFindder;
+
+    /**
      * @var MessageInvokableSyncController
      */
     protected $messageInvokableSyncController;
+
+    /**
+     * @var WorkerHealth
+     */
+    protected $health;
 
     /**
      * @var HealthReporter
@@ -76,7 +87,9 @@ class WorkerConsumerExecutor
         $fast,
         RedisQueueCollection $queues,
         Registry $registry,
+        $expiredFinder,
         MessageInvokableSyncController $messageInvokableSyncController,
+        WorkerHealth $workerHealth,
         HealthReporter $healthReporter,
         $errorHandlers) {
 
@@ -85,16 +98,52 @@ class WorkerConsumerExecutor
         $this->queues = $queues;
         $this->registry = $registry;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->expiredFindder = $expiredFinder;
         $this->messageInvokableSyncController = $messageInvokableSyncController;
         $this->healthRepoter = $healthReporter;
         $this->errorHandlers = $errorHandlers;
     }
 
+    public function execute()
+    {
+        $this->healthRepoter->report(WorkerHealth::STARTED);
+
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+        $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
+        $this->logger->debug("Watch queue list " . join(", ", $this->queueNameList));
+        $this->workerStartTime = Time::micro();
+        while ($this->alive) {
+            try {
+                $this->healthRepoter->report(WorkerHealth::EXECUTING);
+                $success = $this->consumeOneMessage();
+                $this->healthRepoter->report(WorkerHealth::EXECUTED);
+
+                if ($success)
+                    $this->success += 1;
+
+            } catch (EmptyQueueException $e) {
+                $this->alive = false;
+                $this->logger->info("When the burst, queue is empty worker {$this->id} will quitting.");
+            }
+
+            $memoryUsage = $this->memoryGetUsage();
+            if ($memoryUsage > self::M * 1024) {
+                break;
+            }
+
+            $health->setDuration(Time::micro() - $this->workerStartTime);
+        }
+
+
+        $this->workerEndTime = Time::micro();
+        $this->didQuit();
+        exit(0);
+    }
 
     /**
      * @return boolean 执行成功
      */
-    public function execute()
+    public function consumeOneMessage()
     {
         $now  = time();
 
@@ -135,6 +184,10 @@ class WorkerConsumerExecutor
 
             if (!$this->fast)
                 $this->registry->finish($message);
+
+            if ($this->expiredFindder != null)
+                $this->expiredFindder->process();
+
         } catch (\Exception $exception) {
             $success = false;
             if ($exception instanceof TestTimeoutException) {
@@ -147,5 +200,19 @@ class WorkerConsumerExecutor
         }
 
         return $success;
+    }
+
+    protected function didQuit()
+    {
+        if (0 == $this->workerEndTime)
+            $this->workerEndTime = time();
+        $duration = $this->workerEndTime - $this->workerStartTime;
+        $this->logger->notice("[run] duration {$duration} second");
+        $this->logger->notice("Success {$this->success} failure {$this->failure}");
+    }
+
+    protected function memoryGetUsage()
+    {
+        return memory_get_usage(false);
     }
 }

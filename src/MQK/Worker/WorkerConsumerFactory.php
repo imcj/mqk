@@ -2,99 +2,37 @@
 namespace MQK\Worker;
 
 
-use MQK\Config;
 use MQK\Error\ErrorHandler;
 use MQK\Process\WorkerFactory;
 
 class WorkerConsumerFactory implements WorkerFactory
 {
     /**
-     * @var string
+     * @var WorkerConsumerExecutor
      */
-    private $redisDsn;
-
-    /**
-     * @var string[]
-     */
-    private $queueNameList;
-
-    /**
-     * @var integer
-     */
-    private $masterId;
+    private $executor;
 
     /**
      * @var string
      */
     private $bootstrap;
 
-    /**
-     * @var bool
-     */
-    private $burst;
 
-    /**
-     * @var bool
-     */
-    private $fast;
-
-    /**
-     * @var ErrorHandler[]
-     */
-    private $errorHandlers;
-
-    /**
-     * @var string
-     */
-    private $queuePrefix;
-
-    /**
-     * WorkerConsumerFactory constructor.
-     *
-     * @param string $redisDsn
-     * @param string[] $queueNameList
-     * @param integer $masterId
-     * @param string $bootstrap
-     * @param boolean $burst
-     * @param boolean $fast
-     * @param ErrorHandler[] $errorHandlers
-     * @param string $queuePrefix
-     */
-    public function __construct(
-        $redisDsn,
-        $queueNameList,
-        $masterId,
-        $bootstrap,
-        $burst,
-        $fast,
-        $errorHandlers,
-        $queuePrefix) {
-
-        $this->redisDsn = $redisDsn;
-        $this->queueNameList = $queueNameList;
-        $this->masterId = $masterId;
+    public function __construct($bootstrap, WorkerConsumerExecutor $executor) {
         $this->bootstrap = $bootstrap;
-        $this->burst = $burst;
-        $this->fast = $fast;
-        $this->errorHandlers = $errorHandlers;
-        $this->queuePrefix = $queuePrefix;
+        $this->executor = $executor;
     }
 
     /**
      * Factory method of class
+     *
      * @return Worker
      */
     function create()
     {
         $worker = new WorkerConsumer(
-            $this->redisDsn,
-            $this->queueNameList,
-            $this->masterId,
             $this->bootstrap,
-            $this->burst,
-            $this->fast,
-            $this->errorHandlers,
-            $this->queuePrefix
+            $this->executor
         );
 
         return $worker;

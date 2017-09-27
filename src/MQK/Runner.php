@@ -2,6 +2,7 @@
 namespace MQK;
 
 declare(ticks=1);
+use MQK\Process\AbstractWorker;
 use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageAbstractFactory;
 use MQK\Queue\QueueCollection;
@@ -87,7 +88,8 @@ class Runner extends Master
             $config->burst(),
             $config->fast(),
             $config->errorHandlers(),
-            $config->queuePrefix()
+            $config->queuePrefix(),
+            $retry
         );
         $this->expiredFinder = new ExpiredFinder(
             $this->connection,
@@ -98,24 +100,42 @@ class Runner extends Master
             $retry
         );
 
+        $this->masterId = uniqid();
+
         parent::__construct($this->workerClassOrFactory, $this->config->concurrency(), $this->config->burst(), $this->logger );
     }
 
     public function run()
     {
-        parent::run();
+        if (!$this->isWin())
+            parent::run();
+        else
+            $this->spawn();
         $this->logger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
+    }
+
+    protected function didSpawnWorker(AbstractWorker $worker, $index)
+    {
+        // Windows 维护负责过期任务的进程是一个，如果进程出现意外退出将全部退出
+        if ($index == 0 && $this->isWin()) {
+            $this->logger->debug("Windows系统下，由Worker负责查找过期消息。");
+            $worker->enableSearchExpiredMessage();
+        }
+    }
+
+    protected function isWin()
+    {
+        return true;
+        return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
 
     protected function didSelect()
     {
-        $this->masterId = uniqid();
-
         $fast = $this->config->fast();
         $findExpiredJob = $this->findExpiredJob;
 
         $this->updateHealth();
-        if (!$fast && $findExpiredJob) {
+        if (!$fast && $findExpiredJob && !$this->isWin()) {
             $this->expiredFinder->process();
         }
     }

@@ -33,11 +33,6 @@ class ExpiredFinder
     private $queue;
 
     /**
-     * @var bool
-     */
-    private $cluster;
-
-    /**
      * @var \Monolog\Logger
      */
     private $logger;
@@ -53,7 +48,6 @@ class ExpiredFinder
      * @param MessageDAO $messageDAO
      * @param Registry $registry
      * @param QueueCollection $queues
-     * @param bool $cluster
      * @param integer $retry
      */
     public function __construct(
@@ -61,14 +55,12 @@ class ExpiredFinder
         MessageDAO $messageDAO,
         Registry $registry,
         Queue $queue,
-        $cluster = false,
         $retry) {
 
         $this->connection = $connection;
         $this->messageDAO = $messageDAO;
         $this->registry = $registry;
         $this->queue = $queue;
-        $this->cluster = $cluster;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->retry = $retry;
     }
@@ -82,6 +74,8 @@ class ExpiredFinder
         /**
          * @var $queue Queue
          */
+        $pid = getmypid();
+        var_dump("search {$pid}");
         $id = $this->registry->queryExpiredMessage("mqk:started");
         if (null == $id) {
             return;
@@ -97,7 +91,6 @@ class ExpiredFinder
         $this->logger->debug("Find expired message {$message->id()}");
         $this->logger->debug(json_encode($message->jsonSerialize()));
 
-//        $this->logger->debug("The message {$message->id()} retries {$message->retries()}");
         if (null !== $message && is_integer($message->maxRetry())) {
             $retry = $message->maxRetry();
             $this->logger->debug("Message retry times {$message->maxRetry()}");
@@ -112,16 +105,13 @@ class ExpiredFinder
             $this->logger->error("Message is null");
         }
 
-        if (!$this->cluster)
-            $this->connection->multi();
+        $this->connection->multi();
 
         $message->increaseRetries();
-//        $this->logger->debug(json_encode($message->jsonSerialize()));
         $this->messageDAO->store($message);
         $this->queue->enqueue($message->queue(), $message);
 
-        if (!$this->cluster)
-            $this->connection->exec();
+        $this->connection->exec();
     }
 
     /**
