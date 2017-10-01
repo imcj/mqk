@@ -220,4 +220,9 @@ class ConsumerExecutorWorker
     {
         return memory_get_usage(false);
     }
+
+    public function setIsSearchExpiredMessage($isSearchExpiredMessage)
+    {
+        $this->isSearchExpiredMessage = $isSearchExpiredMessage;
+    }
 }
