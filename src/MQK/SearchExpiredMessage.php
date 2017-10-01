@@ -10,7 +10,7 @@ use MQK\Queue\QueueCollection;
  * 处理执行过期的任务
  * @package MQK
  */
-class ExpiredFinder
+class SearchExpiredMessage
 {
     /**
      * @var \Redis
@@ -40,29 +40,29 @@ class ExpiredFinder
     /**
      * @var integer
      */
-    private $retry;
+    private $maxRetries;
 
     /**
-     * ExpiredFinder constructor.
+     * SearchExpiredMessage constructor.
      * @param \Redis $connection
      * @param MessageDAO $messageDAO
      * @param Registry $registry
      * @param QueueCollection $queues
-     * @param integer $retry
+     * @param integer $maxRetries
      */
     public function __construct(
         $connection,
         MessageDAO $messageDAO,
         Registry $registry,
         Queue $queue,
-        $retry) {
+        $maxRetries) {
 
         $this->connection = $connection;
         $this->messageDAO = $messageDAO;
         $this->registry = $registry;
         $this->queue = $queue;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-        $this->retry = $retry;
+        $this->maxRetries = $maxRetries;
     }
 
     /**
@@ -92,9 +92,11 @@ class ExpiredFinder
 
         if (null !== $message && is_integer($message->maxRetry())) {
             $retry = $message->maxRetry();
-            $this->logger->debug("Message retry times {$message->maxRetry()}");
+            $this->logger->debug(
+                "Message retry times {$message->maxRetry()}"
+            );
         } else
-            $retry = $this->retry;
+            $retry = $this->maxRetries;
 
         if ($message->retries() >= $retry - 1) {
             $this->clearRetryFailed($message);

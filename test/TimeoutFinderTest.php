@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use MQK\ExpiredFinder;
+use MQK\SearchExpiredMessage;
 use MQK\RedisFactory;
 use MQK\Queue\Message\MessageDAO;
 use MQK\Registry;
@@ -47,7 +47,7 @@ class TimeoutFinderTest extends TestCase
         $this->assertEquals(1, count($found));
 
         // TODO: 超时任务列表的查询，一次只查询有限的数据量。
-        $finder = new ExpiredFinder($connection, $messageDAO, $registry, $queueCollection);
+        $finder = new SearchExpiredMessage($connection, $messageDAO, $registry, $queueCollection);
         $finder->process();
 
         $job = $queueCollection->dequeue(false);

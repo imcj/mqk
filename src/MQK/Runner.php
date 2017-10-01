@@ -42,7 +42,7 @@ class Runner extends Master
     protected $findExpiredJob = true;
 
     /**
-     * @var ExpiredFinder
+     * @var SearchExpiredMessage
      */
     protected $expiredFinder;
 
@@ -91,7 +91,7 @@ class Runner extends Master
             $config->queuePrefix(),
             $retry
         );
-        $this->expiredFinder = new ExpiredFinder(
+        $this->expiredFinder = new SearchExpiredMessage(
             $this->connection,
             $this->messageDAO,
             $this->registry,

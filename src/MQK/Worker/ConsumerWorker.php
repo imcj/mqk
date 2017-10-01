@@ -6,7 +6,7 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\EmptyQueueException;
-use MQK\ExpiredFinder;
+use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporter;
 use MQK\Health\HealthReporterRedis;
 use MQK\Health\WorkerHealth;

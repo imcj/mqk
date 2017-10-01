@@ -5,7 +5,7 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\TestTimeoutException;
-use MQK\ExpiredFinder;
+use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
 use MQK\LoggerFactory;
@@ -42,7 +42,7 @@ class ConsumerExecutorWorker
     protected $fast = false;
 
     /**
-     * @var ExpiredFinder
+     * @var SearchExpiredMessage
      */
     protected $expiredFindder;
 

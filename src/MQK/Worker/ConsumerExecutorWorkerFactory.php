@@ -4,7 +4,7 @@ namespace MQK\Worker;
 
 use MQK\Config;
 use MQK\Error\ErrorHandler;
-use MQK\ExpiredFinder;
+use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporterRedis;
 use MQK\Health\WorkerHealth;
 use MQK\Queue\Message\MessageDAO;
@@ -99,7 +99,7 @@ class ConsumerExecutorWorkerFactory
         $queues = new RedisQueueCollection($connection, $this->queues);
         $messageController = new MessageInvokableSyncController($connection, $queue, $messageDAO);
 
-        $expiredFinder = new ExpiredFinder($connection, $messageDAO, $registry, $queue, $this->maxRetries);
+        $expiredFinder = new SearchExpiredMessage($connection, $messageDAO, $registry, $queue, $this->maxRetries);
 
         $health = new WorkerHealth();
         $healthRepoter = new HealthReporterRedis($health, $connection, SerializerFactory::shared()->serializer(), 1);
