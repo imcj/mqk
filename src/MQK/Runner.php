@@ -10,7 +10,7 @@ use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Worker\Worker;
-use MQK\Worker\WorkerConsumerFactory;
+use MQK\Worker\ConsumerWorkerFactory;
 use MQK\Worker\WorkerFactory;
 use MQK\Process\MasterProcess as Master;
 
@@ -80,7 +80,7 @@ class Runner extends Master
         $this->queues = $queues;
 
         $queue = new RedisQueue($this->connection, $config->queuePrefix());
-        $this->workerClassOrFactory = new WorkerConsumerFactory(
+        $this->workerClassOrFactory = new ConsumerWorkerFactory(
             $config->redis(),
             $queues,
             $this->masterId,

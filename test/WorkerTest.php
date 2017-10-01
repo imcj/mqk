@@ -1,6 +1,6 @@
 <?php
 
-use MQK\Worker\WorkerConsumer;
+use MQK\Worker\ConsumerWorker;
 use MQK\Config;
 use PHPUnit\Framework\TestCase;
 use MQK\Queue\QueueFactory;
@@ -36,7 +36,7 @@ class WorkerTest extends TestCase
     {
         $job = K::invoke("\\MQK\\Test\\Calculator::sum", 1, 1);
         $queue = (new QueueFactory())->createQueue();
-        $worker = new WorkerConsumer(Config::defaultConfig(), $queue);
+        $worker = new ConsumerWorker(Config::defaultConfig(), $queue);
         $worker->execute();
         $startedQueueCount =  $this->redis->zCard("mqk:started");
         $finishedQueueCount =  $this->redis->zCard("mqk:finished");
@@ -55,7 +55,7 @@ class WorkerTest extends TestCase
         $job = new Job(null, "\\MQK\\Test\\Calculator::sumCrash", [1, 1]);
         $job->setTtl(0);
         $this->queue->enqueue($job);
-        $worker = new WorkerConsumer(Config::defaultConfig(), [$this->queue]);
+        $worker = new ConsumerWorker(Config::defaultConfig(), [$this->queue]);
         $worker->execute();
 
         $startedQueueCount =  $this->redis->zCard("mqk:started");
