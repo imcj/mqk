@@ -4,7 +4,9 @@ namespace MQK\Command;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
+use MQK\OSDetect;
 use MQK\Runner;
+use MQK\Worker\ConsumerExecutorWorkerFactory;
 use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -68,8 +70,24 @@ class RunCommand extends AbstractCommand
     public function start(Config $config)
     {
         // Objects
+        $osDetect = new OSDetect();
+        $isSearchExpiredMessage = true;
+        if ($osDetect->isPosix())
+            $isSearchExpiredMessage = false;
+
+        $consumerExecutorFactory = new ConsumerExecutorWorkerFactory(
+            $config->burst(),
+            $config->fast(),
+            $config->redis(),
+            $config->queuePrefix(),
+            $config->queues(),
+            $config->retry(),
+            $isSearchExpiredMessage,
+            $config->errorHandlers()
+        );
 
         $runner = new Runner($config->queues(), $config);
+        $runner->setWorkerFactory($consumerExecutorFactory);
         $runner->run();
     }
 }
