@@ -63,6 +63,8 @@ class RunCommand extends AbstractCommand
 
         parent::execute($input, $output);
 
+        // Objects
+
         $runner = new Runner($config->queues(), $retry);
 
         if ((boolean)$input->getOption("empty-worker")) {
