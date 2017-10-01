@@ -56,7 +56,7 @@ class RunCommand extends AbstractCommand
         $retry = $input->getOption('retry');
         if (!empty($retry) && is_integer($retry)) {
             $retry = (int)$retry;
-            $config->setRetry($retry);
+            $config->setMaxRetries($retry);
         }
 
         $bootstrap = $input->getOption('bootstrap');
@@ -81,7 +81,7 @@ class RunCommand extends AbstractCommand
             $config->redis(),
             $config->queuePrefix(),
             $config->queues(),
-            $config->retry(),
+            $config->maxRetries(),
             $isSearchExpiredMessage,
             $config->errorHandlers()
         );

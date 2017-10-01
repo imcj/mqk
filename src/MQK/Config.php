@@ -84,7 +84,7 @@ class Config
     /**
      * @var integer
      */
-    private $retry = 3;
+    private $maxRetries = 3;
 
     public function __construct()
     {
@@ -276,17 +276,17 @@ class Config
     /**
      * @return int
      */
-    public function retry()
+    public function maxRetries()
     {
-        return $this->retry;
+        return $this->maxRetries;
     }
 
     /**
-     * @param int $retry
+     * @param int $maxRetries
      */
-    public function setRetry(int $retry)
+    public function setMaxRetries(int $maxRetries)
     {
-        $this->retry = $retry;
+        $this->maxRetries = $maxRetries;
     }
 
 

@@ -184,7 +184,7 @@ class YamlConfigProcessor
             $retry = $yaml['retry'];
             if (!empty($retry) && is_integer($retry)) {
                 $this->logger->debug("Set default max retry times {$retry}");
-                $this->config->setRetry($retry);
+                $this->config->setMaxRetries($retry);
             }
         }
     }
