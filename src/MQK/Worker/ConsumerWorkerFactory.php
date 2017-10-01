@@ -2,25 +2,34 @@
 namespace MQK\Worker;
 
 
-use MQK\Error\ErrorHandler;
 use MQK\Process\WorkerFactory;
+use MQK\RedisProxy;
 
 class ConsumerWorkerFactory implements WorkerFactory
 {
     /**
-     * @var ConsumerExecutorWorker
+     * @var ConsumerExecutorWorkerFactory
      */
-    private $executor;
+    private $consumerExecutorWorkerFactory;
 
     /**
      * @var string
      */
     private $bootstrap;
 
+    /**
+     * @var RedisProxy
+     */
+    protected $connection;
 
-    public function __construct($bootstrap, ConsumerExecutorWorker $executor) {
+    public function __construct(
+        $bootstrap,
+        $connection,
+        ConsumerExecutorWorkerFactory $consumerExecutorWorkerFactory) {
+
         $this->bootstrap = $bootstrap;
-        $this->executor = $executor;
+        $this->connection = $connection;
+        $this->consumerExecutorWorkerFactory = $consumerExecutorWorkerFactory;
     }
 
     /**
@@ -32,7 +41,8 @@ class ConsumerWorkerFactory implements WorkerFactory
     {
         $worker = new ConsumerWorker(
             $this->bootstrap,
-            $this->executor
+            $this->connection,
+            $this->consumerExecutorWorkerFactory
         );
 
         return $worker;

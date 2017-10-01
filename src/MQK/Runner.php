@@ -17,7 +17,15 @@ use MQK\Process\MasterProcess as Master;
 
 class Runner extends Master
 {
-    private $config;
+    /**
+     * @var string
+     */
+    private $redisDsn;
+
+    /**
+     * @var integer
+     */
+    private $maxRetries;
 
     /**
      * @var RedisProxy
@@ -25,31 +33,29 @@ class Runner extends Master
     private $connection;
 
     /**
-     * @var Registry
+     * @var string
      */
-    private $registry;
+    protected $masterId;
 
     /**
-     * @var MessageDAO
+     * @var integer
      */
-    private $messageDAO;
+    protected $concurrency;
 
     /**
-     * @var string[]
+     * @var OSDetect
      */
-    private $queues;
-
-    protected $findExpiredJob = true;
+    protected $osDetect;
 
     /**
      * @var SearchExpiredMessage
      */
-    protected $expiredFinder;
+    protected $searchExpiredMessage = true;
 
     /**
-     * @var string
+     * @var bool
      */
-    protected $masterId;
+    protected $fast = false;
 
     /**
      * Runner constructor.
@@ -57,100 +63,67 @@ class Runner extends Master
      * @param integer $retry
      * @param string[] $queues
      */
-    public function __construct($queues, $retry)
-    {
-        $config = Config::defaultConfig();
-        $dsn = $config->redis();
-        try {
-            $this->connection = new RedisProxy($dsn);
-            $this->connection->connect();
-        } catch (\RedisException $e) {
-            if ("Failed to AUTH connection" == $e->getMessage()) {
-                $this->logger->error($e->getMessage());
-                exit(1);
-            }
-        }
-
+    public function __construct(
+        $burst,
+        $fast,
+        $concurrency,
+        $workerFactory,
+        $connection,
+        $maxRetries,
+        OSDetect $osDetect,
+        $searchExpiredMessage
+    ) {
+        $this->workerClassOrFactory = $workerFactory;
+        $this->connection = $connection;
+        $this->maxRetries = $maxRetries;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
-
-        $this->config = $config;
-        $this->registry = new Registry($this->connection);
-        $this->messageDAO = new MessageDAO($this->connection);
-
-        $this->queues = $queues;
-
-        $queue = new RedisQueue($this->connection, $config->queuePrefix());
-        $this->workerClassOrFactory = new ConsumerWorkerFactory(
-            $config->redis(),
-            $queues,
-            $this->masterId,
-            $config->bootstrap(),
-            $config->burst(),
-            $config->fast(),
-            $config->errorHandlers(),
-            $config->queuePrefix(),
-            $retry
-        );
-        $this->expiredFinder = new SearchExpiredMessage(
-            $this->connection,
-            $this->messageDAO,
-            $this->registry,
-            $queue,
-            null,
-            $retry
-        );
-
         $this->masterId = uniqid();
+        $this->osDetect = $osDetect;
+        $this->searchExpiredMessage = $searchExpiredMessage;
+        $this->fast = $fast;
 
-        parent::__construct($this->workerClassOrFactory, $this->config->concurrency(), $this->config->burst(), $this->logger );
+        parent::__construct(
+            $this->workerClassOrFactory,
+            $concurrency,
+            $burst,
+            $this->logger
+        );
     }
 
     public function run()
     {
-        if (!$this->isWin())
+        $this->logger->notice("MasterProcess ({$this->masterId}) work on process" . posix_getpid());
+
+        if ($this->osDetect->isPosix()) {
             parent::run();
-        else
-            $this->spawn();
-        $this->logger->notice("MasterProcess ({$this->masterId}) work on " . posix_getpid());
+        }
+
+        $this->spawn();
     }
 
     protected function didSpawnWorker(AbstractWorker $worker, $index)
     {
         // Windows 维护负责过期任务的进程是一个，如果进程出现意外退出将全部退出
-        if ($index == 0 && $this->isWin()) {
+        if ($index == 0 && $this->osDetect->isPosix()) {
             $this->logger->debug("Windows系统下，由Worker负责查找过期消息。");
-            $worker->enableSearchExpiredMessage();
+            $worker->setIsSearchExpiredMessage(true);
         }
-    }
-
-    protected function isWin()
-    {
-        return true;
-        return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
 
     protected function didSelect()
     {
-        $fast = $this->config->fast();
-        $findExpiredJob = $this->findExpiredJob;
+        $this->heartbeat();
+    }
 
+    public function heartbeat()
+    {
         $this->updateHealth();
-        if (!$fast && $findExpiredJob && !$this->isWin()) {
-            $this->expiredFinder->process();
+        if (!$this->fast && $this->isSearchExpiredMessage) {
+            $this->searchExpiredMessage->process();
         }
     }
 
-    public function workerFactory()
-    {
-        return $this->workerFactory;
-    }
-
-    public function setWorkerFactory($workerFactory)
-    {
-        $this->workerFactory = $workerFactory;
-    }
-
-    protected function updateHealth()
+    public function updateHealth()
     {
         $key = "mqk:{$this->masterId}";
         $this->connection->multi();

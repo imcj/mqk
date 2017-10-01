@@ -54,13 +54,21 @@ class ConsumerWorker extends AbstractWorker
     protected $workerId;
 
     /**
+     * @var RedisProxy
+     */
+    protected $connection;
+
+    /**
      * @var ConsumerExecutorWorker
      */
     protected $executor;
 
     public function __construct(
         $bootstrap,
+        $connection,
         ConsumerExecutorWorker $executor) {
+
+        $this->connection = $connection;
         $this->executor = $executor;
         $this->bootstrap = $bootstrap;
     }
@@ -68,6 +76,8 @@ class ConsumerWorker extends AbstractWorker
     public function run()
     {
         parent::run();
+        $this->connection->connect(true);
+
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
 
         $this->loadUserInitializeScript($this->bootstrap);

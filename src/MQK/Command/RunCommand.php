@@ -5,8 +5,10 @@ use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
 use MQK\OSDetect;
+use MQK\RedisProxy;
 use MQK\Runner;
 use MQK\Worker\ConsumerExecutorWorkerFactory;
+use MQK\Worker\ConsumerWorkerFactory;
 use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -70,24 +72,60 @@ class RunCommand extends AbstractCommand
     public function start(Config $config)
     {
         // Objects
+        $burst = $config->burst();
+        $fast = $config->fast();
+
         $osDetect = new OSDetect();
-        $isSearchExpiredMessage = true;
-        if ($osDetect->isPosix())
-            $isSearchExpiredMessage = false;
+
+
+        $connection = new RedisProxy($config->redis());
+        $messageDAO = new MessageDAO($connection);
+        $queue = new RedisQueue($connection, $this->queuePrefix);
+        $registry = new Registry($connection);
+        $queues = new RedisQueueCollection($connection, $this->queues);
+
+        $searchExpiredMessage = new SearchExpiredMessage(
+            $connection,
+            $messageDAO,
+            $registry,
+            $queue,
+            $config->maxRetries()
+        );
+
+        $messageController = new MessageInvokableSyncController(
+            $connection,
+            $queue,
+            $messageDAO
+        );
 
         $consumerExecutorFactory = new ConsumerExecutorWorkerFactory(
-            $config->burst(),
-            $config->fast(),
-            $config->redis(),
-            $config->queuePrefix(),
-            $config->queues(),
-            $config->maxRetries(),
-            $isSearchExpiredMessage,
+            $burst,
+            $fast,
+            $connection,
+            $registry,
+            $queues,
+            $searchExpiredMessage,
+            $messageController,
             $config->errorHandlers()
         );
 
-        $runner = new Runner($config->queues(), $config);
-        $runner->setWorkerFactory($consumerExecutorFactory);
+        $workerFactory = new ConsumerWorkerFactory(
+            $config->bootstrap(),
+            $connection,
+            $consumerExecutorFactory
+        );
+
+        $runner = new Runner(
+            $burst,
+            $fast,
+            $config->concurrency(),
+            $workerFactory,
+            $connection,
+            $config->maxRetries(),
+            $osDetect,
+            $searchExpiredMessage
+        );
+
         $runner->run();
     }
 }

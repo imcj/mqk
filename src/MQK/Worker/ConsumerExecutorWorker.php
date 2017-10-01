@@ -90,14 +90,13 @@ class ConsumerExecutorWorker
     public function __construct(
         $burst,
         $fast,
-        RedisQueueCollection $queues,
+        $queues,
         Registry $registry,
         $expiredFinder,
         MessageInvokableSyncController $messageInvokableSyncController,
         WorkerHealth $workerHealth,
         HealthReporter $healthReporter,
-        $errorHandlers,
-        $isSearchExpiredMessage) {
+        $errorHandlers) {
 
         $this->burst = $burst;
         $this->fast = $fast;
@@ -108,13 +107,11 @@ class ConsumerExecutorWorker
         $this->messageInvokableSyncController = $messageInvokableSyncController;
         $this->healthRepoter = $healthReporter;
         $this->errorHandlers = $errorHandlers;
-        $this->isSearchExpiredMessage = $isSearchExpiredMessage;
     }
 
     public function execute()
     {
         $this->healthRepoter->report(WorkerHealth::STARTED);
-
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $this->logger->debug("Watch queue list " . join(", ", $this->queueNameList));
