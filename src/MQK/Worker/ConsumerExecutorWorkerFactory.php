@@ -15,7 +15,7 @@ use MQK\RedisProxy;
 use MQK\Registry;
 use MQK\SerializerFactory;
 
-class WorkerConsumerExecutorFactory
+class ConsumerExecutorWorkerFactory
 {
     /**
      * @var string
@@ -58,7 +58,7 @@ class WorkerConsumerExecutorFactory
     protected $isSearchExpiredMessage;
 
     /**
-     * WorkerConsumerExecutorFactory constructor.
+     * ConsumerExecutorWorkerFactory constructor.
      * @param $burst
      * @param $fast
      * @param $redisDsn
@@ -104,7 +104,7 @@ class WorkerConsumerExecutorFactory
         $health = new WorkerHealth();
         $healthRepoter = new HealthReporterRedis($health, $connection, SerializerFactory::shared()->serializer(), 1);
 
-        $executor = new WorkerConsumerExecutor(
+        $executor = new ConsumerExecutorWorker(
             $this->burst,
             $this->fast,
             $queues,

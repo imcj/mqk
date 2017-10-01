@@ -8,7 +8,7 @@ class WorkerConsumerExectorFactoryTest extends TestCase
 {
     public function testCreate()
     {
-        $workerConsumerExecutorFactory = new WorkerConsumerExecutorFactory(
+        $workerConsumerExecutorFactory = new ConsumerExecutorWorkerFactory(
             false,
             false,
             'redis://127.0.0.1',

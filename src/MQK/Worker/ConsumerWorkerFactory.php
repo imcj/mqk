@@ -5,10 +5,10 @@ namespace MQK\Worker;
 use MQK\Error\ErrorHandler;
 use MQK\Process\WorkerFactory;
 
-class WorkerConsumerFactory implements WorkerFactory
+class ConsumerWorkerFactory implements WorkerFactory
 {
     /**
-     * @var WorkerConsumerExecutor
+     * @var ConsumerExecutorWorker
      */
     private $executor;
 
@@ -18,7 +18,7 @@ class WorkerConsumerFactory implements WorkerFactory
     private $bootstrap;
 
 
-    public function __construct($bootstrap, WorkerConsumerExecutor $executor) {
+    public function __construct($bootstrap, ConsumerExecutorWorker $executor) {
         $this->bootstrap = $bootstrap;
         $this->executor = $executor;
     }
@@ -30,7 +30,7 @@ class WorkerConsumerFactory implements WorkerFactory
      */
     function create()
     {
-        $worker = new WorkerConsumer(
+        $worker = new ConsumerWorker(
             $this->bootstrap,
             $this->executor
         );

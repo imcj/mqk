@@ -28,10 +28,10 @@ use MQK\Process\AbstractWorker;
 /**
  * Woker的具体实现，在进程内调度Queue和Job完成具体任务
  *
- * Class WorkerConsumer
+ * Class ConsumerWorker
  * @package MQK\Worker
  */
-class WorkerConsumer extends AbstractWorker
+class ConsumerWorker extends AbstractWorker
 {
     /**
      * @var Logger
@@ -54,13 +54,13 @@ class WorkerConsumer extends AbstractWorker
     protected $workerId;
 
     /**
-     * @var WorkerConsumerExecutor
+     * @var ConsumerExecutorWorker
      */
     protected $executor;
 
     public function __construct(
         $bootstrap,
-        WorkerConsumerExecutor $executor) {
+        ConsumerExecutorWorker $executor) {
         $this->executor = $executor;
         $this->bootstrap = $bootstrap;
     }

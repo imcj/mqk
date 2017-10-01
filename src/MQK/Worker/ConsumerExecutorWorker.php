@@ -14,7 +14,7 @@ use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Registry;
 
-class WorkerConsumerExecutor
+class ConsumerExecutorWorker
 {
     /**
      * @var QueueCollection
@@ -77,7 +77,7 @@ class WorkerConsumerExecutor
     protected $isSearchExpiredMessage = false;
 
     /**
-     * WorkerConsumerExecutor constructor.
+     * ConsumerExecutorWorker constructor.
      *
      * @param boolean $burst
      * @param boolean $fast
