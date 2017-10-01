@@ -62,16 +62,14 @@ class RunCommand extends AbstractCommand
             $config->setBootstrap($bootstrap);
 
         parent::execute($input, $output);
+        $this->start($config);
+    }
 
+    public function start(Config $config)
+    {
         // Objects
 
-        $runner = new Runner($config->queues(), $retry);
-
-        if ((boolean)$input->getOption("empty-worker")) {
-            $workerFactory = new EmptyWorkerFactory();
-            $runner->setWorkerFactory($workerFactory);
-        }
-
+        $runner = new Runner($config->queues(), $config);
         $runner->run();
     }
 }

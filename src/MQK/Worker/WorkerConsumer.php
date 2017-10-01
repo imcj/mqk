@@ -57,7 +57,7 @@ class WorkerConsumer extends AbstractWorker
      * @var WorkerConsumerExecutor
      */
     protected $executor;
-    
+
     public function __construct(
         $bootstrap,
         WorkerConsumerExecutor $executor) {

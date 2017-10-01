@@ -72,6 +72,11 @@ class WorkerConsumerExecutor
     protected $errorHandlers = [];
 
     /**
+     * @var boolean
+     */
+    protected $isSearchExpiredMessage = false;
+
+    /**
      * WorkerConsumerExecutor constructor.
      *
      * @param boolean $burst
@@ -91,7 +96,8 @@ class WorkerConsumerExecutor
         MessageInvokableSyncController $messageInvokableSyncController,
         WorkerHealth $workerHealth,
         HealthReporter $healthReporter,
-        $errorHandlers) {
+        $errorHandlers,
+        $isSearchExpiredMessage) {
 
         $this->burst = $burst;
         $this->fast = $fast;
@@ -102,6 +108,7 @@ class WorkerConsumerExecutor
         $this->messageInvokableSyncController = $messageInvokableSyncController;
         $this->healthRepoter = $healthReporter;
         $this->errorHandlers = $errorHandlers;
+        $this->isSearchExpiredMessage = $isSearchExpiredMessage;
     }
 
     public function execute()
@@ -131,7 +138,7 @@ class WorkerConsumerExecutor
                 break;
             }
 
-            $health->setDuration(Time::micro() - $this->workerStartTime);
+//            $health->setDuration(Time::micro() - $this->workerStartTime);
         }
 
 
@@ -185,8 +192,9 @@ class WorkerConsumerExecutor
             if (!$this->fast)
                 $this->registry->finish($message);
 
-            if ($this->expiredFindder != null)
+            if ($this->isSearchExpiredMessage) {
                 $this->expiredFindder->process();
+            }
 
         } catch (\Exception $exception) {
             $success = false;
