@@ -57,29 +57,24 @@ class WorkerConsumer extends AbstractWorker
      * @var WorkerConsumerExecutor
      */
     protected $executor;
-
-
-    /**
-     * @var boolean
-     */
-    protected $searchExpiredMessage = false;
-
-    public function __construct($bootstrap, WorkerConsumerExecutor $executor) {
+    
+    public function __construct(
+        $bootstrap,
+        WorkerConsumerExecutor $executor) {
         $this->executor = $executor;
-        $this->loadUserInitializeScript($bootstrap);
+        $this->bootstrap = $bootstrap;
     }
 
     public function run()
     {
         parent::run();
+        $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
+
+        $this->loadUserInitializeScript($this->bootstrap);
+        $this->executor->execute();
     }
 
-    public function enableSearchExpiredMessage()
-    {
-        $this->searchExpiredMessage = true;
-    }
-
-    protected function loadUserInitializeScript($bootstrap)
+    public function loadUserInitializeScript($bootstrap)
     {
         if (!empty($bootstrap)) {
             if (file_exists($bootstrap)) {

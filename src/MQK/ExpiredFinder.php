@@ -75,7 +75,6 @@ class ExpiredFinder
          * @var $queue Queue
          */
         $pid = getmypid();
-        var_dump("search {$pid}");
         $id = $this->registry->queryExpiredMessage("mqk:started");
         if (null == $id) {
             return;

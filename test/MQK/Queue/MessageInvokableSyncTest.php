@@ -1,26 +1,14 @@
 <?php
 namespace MQK\Queue;
 
+use MQK\RedisTestCase;
 
-use PHPUnit\Framework\TestCase;
-
-class MessageInvokableSyncTest extends TestCase
+class MessageInvokableSyncTest extends RedisTestCase
 {
-    /**
-     * @var \Redis
-     */
-    private $connection;
-
-    public function setUp()
-    {
-        $this->connection = new RedisProxy('127.0.0.1');
-        $this->connection->connect();
-        $this->connection->flushAll();
-    }
 
     public function testMessage()
     {
-        $queue = new RedisQueue("default", $this->connection);
+        $queue = new RedisQueue($this->connection, "queue_");
         $payload = new \stdClass();
         $payload->func = '\MQK\Test\sum';
         $payload->arguments = [1, 2];
@@ -29,7 +17,7 @@ class MessageInvokableSyncTest extends TestCase
         $messageId = uniqid();
 
         $message = new MessageInvokableSync($groupId, 1, $messageId, 'default', 'default', 600, $payload);
-        $queue->enqueue($message);
+        $queue->enqueue("default", $message);
 
 
     }

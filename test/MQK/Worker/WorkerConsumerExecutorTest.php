@@ -12,7 +12,7 @@ use MQK\RedisProxy;
 use MQK\Registry;
 use PHPUnit\Framework\TestCase;
 
-class WorkerConsumeExecutorTest extends TestCase
+class WorkerConsumerExecutorTest extends TestCase
 {
     /**
      * @var RedisQueue

@@ -18,6 +18,10 @@ class WorkerConsumerExecutorFactory
 {
     public function __construct()
     {
+    }
+
+    public function create()
+    {
         $config = Config::defaultConfig();
 
         $connection = new RedisProxy($config->redis());;
