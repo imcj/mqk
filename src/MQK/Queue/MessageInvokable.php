@@ -62,7 +62,7 @@ class MessageInvokable extends Message
     {
         $arguments = $this->arguments;
         try {
-            $returns = @call_user_func_array($this->func, $arguments);
+            $returns = call_user_func_array($this->func, $arguments);
 
             $error = error_get_last();
             error_clear_last();

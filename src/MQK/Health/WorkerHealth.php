@@ -95,7 +95,7 @@ class WorkerHealth
     /**
      * @param string $status
      */
-    public function setStatus(string $status)
+    public function setStatus($status)
     {
         $this->lastUpdatedAt = time();
         $datetime = new \DateTime();
@@ -115,7 +115,7 @@ class WorkerHealth
     /**
      * @param int $consumed
      */
-    public function setConsumed(int $consumed)
+    public function setConsumed($consumed)
     {
         $this->consumed = $consumed;
     }
@@ -128,7 +128,7 @@ class WorkerHealth
     /**
      * @param int $duration
      */
-    public function setDuration(int $duration)
+    public function setDuration($duration)
     {
         $this->duration = $duration;
     }
@@ -141,7 +141,7 @@ class WorkerHealth
     /**
      * @param int $processId
      */
-    public function setProcessId(int $processId)
+    public function setProcessId($processId)
     {
         $this->processId = $processId;
     }

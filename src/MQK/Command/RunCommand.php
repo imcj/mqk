@@ -119,8 +119,8 @@ class RunCommand extends AbstractCommand
         );
 
         $osDetect = new OSDetect();
-//        if ($osDetect->isPosix()) {
-        if (false) {
+        if ($osDetect->isPosix()) {
+//        if (false) {
             $runnerClass = PosixRunner::class;
         } else {
             $runnerClass = WindowsRunner::class;
