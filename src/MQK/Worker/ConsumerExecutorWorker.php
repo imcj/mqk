@@ -76,6 +76,11 @@ class ConsumerExecutorWorker
      */
     protected $isSearchExpiredMessage = false;
 
+    /**
+     * @var SearchExpiredMessage
+     */
+    protected $searchExpiredMessage;
+
     protected $failure = 0;
 
     protected $success = 0;
@@ -126,6 +131,10 @@ class ConsumerExecutorWorker
         $this->logger->debug("Watch queue list {$formatNameList}");
         $this->workerStartTime = Time::micro();
         while ($this->alive) {
+            if ($this->searchExpiredMessage) {
+                $this->searchExpiredMessage->process();
+            }
+
             try {
                 $this->healthRepoter->report(WorkerHealth::EXECUTING);
                 $success = $this->consumeOneMessage();
@@ -232,6 +241,16 @@ class ConsumerExecutorWorker
     protected function memoryGetUsage()
     {
         return memory_get_usage(false);
+    }
+
+    public function searchExpiredMessage()
+    {
+        return $this->searchExpiredMessage;
+    }
+
+    public function setSearchExpiredMessage($searchExpiredMessage)
+    {
+        $this->searchExpiredMessage = $searchExpiredMessage;
     }
 
     public function setIsSearchExpiredMessage($isSearchExpiredMessage)

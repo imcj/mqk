@@ -9,7 +9,7 @@ class DequeueWorkerFactory implements \MQK\Worker\WorkerFactory
     }
 }
 
-class MasterProcess extends \MQK\Runner
+class MasterProcess extends \MQK\PosixRunner
 {
     protected $findExpiredJob = false;
 

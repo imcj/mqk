@@ -5,13 +5,14 @@ use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
 use MQK\OSDetect;
-use MQK\Runner\PosixRunner;
 use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\RedisProxy;
 use MQK\Registry;
+use MQK\Runner\PosixRunner;
+use MQK\Runner\WindowsRunner;
 use MQK\SearchExpiredMessage;
 use MQK\Worker\ConsumerExecutorWorkerFactory;
 use MQK\Worker\ConsumerWorkerFactory;
@@ -80,9 +81,6 @@ class RunCommand extends AbstractCommand
         $burst = $config->burst();
         $fast = $config->fast();
 
-        $osDetect = new OSDetect();
-
-
         $connection = new RedisProxy($config->redis());
         $messageDAO = new MessageDAO($connection);
         $queue = new RedisQueue($connection, $config->queuePrefix());
@@ -120,7 +118,15 @@ class RunCommand extends AbstractCommand
             $consumerExecutorFactory
         );
 
-        $runner = new PosixRunner(
+        $osDetect = new OSDetect();
+//        if ($osDetect->isPosix()) {
+        if (false) {
+            $runnerClass = PosixRunner::class;
+        } else {
+            $runnerClass = WindowsRunner::class;
+        }
+
+        $runner = new $runnerClass(
             $burst,
             $fast,
             $config->concurrency(),

@@ -41,6 +41,8 @@ class SearchExpiredMessage
      */
     private $maxRetries;
 
+    private $lastPrintTime;
+
     /**
      * SearchExpiredMessage constructor.
      * @param \Redis $connection
@@ -70,6 +72,11 @@ class SearchExpiredMessage
      */
     public function process()
     {
+        if ($this->lastPrintTime < time() - 10) {
+            $this->logger->debug("开始搜索超时消息");
+            $this->lastPrintTime = time();
+        }
+
         /**
          * @var $queue Queue
          */

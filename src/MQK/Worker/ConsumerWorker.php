@@ -72,6 +72,10 @@ class ConsumerWorker extends AbstractWorker
         $this->executor->quit();
     }
 
+    public function consumerWorkerExecutor()
+    {
+        return $this->executor;
+    }
 
     public function loadUserInitializeScript($bootstrap)
     {
