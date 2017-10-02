@@ -3,7 +3,6 @@ namespace MQK;
 
 use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Queue;
-use MQK\Queue\QueueCollection;
 
 /**
  * 处理执行过期的任务
@@ -12,7 +11,7 @@ use MQK\Queue\QueueCollection;
 class SearchExpiredMessage
 {
     /**
-     * @var \RedisProxy
+     * @var RedisProxy
      */
     private $connection;
 
@@ -41,14 +40,19 @@ class SearchExpiredMessage
      */
     private $maxRetries;
 
+    /**
+     * 上次打印信息的时间
+     *
+     * @var integer
+     */
     private $lastPrintTime;
 
     /**
      * SearchExpiredMessage constructor.
-     * @param \Redis $connection
+     * @param RedisProxy $connection
      * @param MessageDAO $messageDAO
      * @param Registry $registry
-     * @param QueueCollection $queues
+     * @param Queue $queue
      * @param integer $maxRetries
      */
     public function __construct(
@@ -73,7 +77,7 @@ class SearchExpiredMessage
     public function process()
     {
         if ($this->lastPrintTime < time() - 10) {
-            $this->logger->debug("开始搜索超时消息");
+            $this->logger->debug("Search timeout message");
             $this->lastPrintTime = time();
         }
 
@@ -93,18 +97,22 @@ class SearchExpiredMessage
             $this->logger->error($e->getMessage());
             return;
         }
-        $this->logger->debug("Find expired message {$message->id()}");
-        $this->logger->debug(json_encode($message->jsonSerialize()));
+        $this->logger->debug(
+            "Find expired message {$message->id()}",
+            $message->jsonSerialize()
+        );
 
         if (null !== $message && is_integer($message->maxRetry())) {
-            $retry = $message->maxRetry();
-            $this->logger->debug(
-                "Message retry times {$message->maxRetry()}"
-            );
+            $maxRetries = $message->maxRetry();
         } else
-            $retry = $this->maxRetries;
+            $maxRetries = $this->maxRetries;
 
-        if ($message->retries() >= $retry - 1) {
+        $retries = $message->retries() + 1;
+        $this->logger->debug(
+            "Max retries {$maxRetries} current {$retries}"
+        );
+
+        if ($message->retries() >= $maxRetries - 1) {
             $this->clearRetryFailed($message);
             return;
         }
@@ -124,13 +132,15 @@ class SearchExpiredMessage
     /**
      * 清理重试失败的任务
      *
-     * @param $job
+     * @param $message
      * @return void
      */
-    function clearRetryFailed($job)
+    function clearRetryFailed($message)
     {
-        $this->logger->warning("超过最大重试次数 {$job->id()}");
-        $this->registry->clear("mqk:started", $job->id());
-        $this->messageDAO->clear($job);
+        $this->logger->warning(
+            "Exceeds the maximum number of retries {$message->id()}"
+        );
+        $this->registry->clear("mqk:started", $message->id());
+        $this->messageDAO->clear($message);
     }
 }

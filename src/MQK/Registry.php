@@ -43,7 +43,10 @@ class Registry
         $ttl = time() + $message->ttl();
         $messageJsonObject = $message->jsonSerialize();
 
-        $this->logger->debug("Message {$message->id()} set expire date to $ttl)", $messageJsonObject);
+        $ttlDateTime = new \DateTime();
+        $ttlDateTime->setTimestamp($ttl);
+        $ttlFormatted = $ttlDateTime->format("Y-m-d H:i:s");
+        $this->logger->debug("Message {$message->id()} set expire date to $ttlFormatted)", $messageJsonObject);
 
         if (empty($this->config->cluster()))
             $this->connection->multi();
@@ -58,7 +61,9 @@ class Registry
     public function fail(Message $message)
     {
         $ttl = time() + $message->ttl();
-        $this->connection->zAdd("mqk:fail", $ttl, $message->id());
+//        $this->connection->zAdd("mqk:fail", $ttl, $message->id());
+
+        $this->connection->zDelete("mqk:started", $message->id());
     }
 
     public function finish(Message $message)

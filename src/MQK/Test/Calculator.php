@@ -1,7 +1,7 @@
 <?php
 namespace MQK\Test;
 
-use MQK\Exception\TestTimeoutException;
+use MQK\Exception\SkipFailureRegistryException;
 use MQK\Time;
 
 class Calculator
@@ -26,7 +26,7 @@ class Calculator
 
     public static function sumCrash($a, $b)
     {
-        throw new TestTimeoutException("Test");
+        throw new SkipFailureRegistryException("Test");
     }
 
     public static function sumFailure($a, $b)

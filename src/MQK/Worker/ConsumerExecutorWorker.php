@@ -3,7 +3,7 @@ namespace MQK\Worker;
 
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
-use MQK\Exception\TestTimeoutException;
+use MQK\Exception\SkipFailureRegistryException;
 use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
@@ -212,13 +212,15 @@ class ConsumerExecutorWorker
 
         } catch (\Exception $exception) {
             $success = false;
-            if ($exception instanceof TestTimeoutException) {
-                $this->logger->debug("Catch timeout exception.");
-            } else {
-                foreach ($this->errorHandlers as $errorHandler)
-                    $errorHandler->got($exception);
-                $this->registry->fail($message);
+            if ($exception instanceof SkipFailureRegistryException) {
+                $this->logger->debug("Catch skip failure of registry exception.");
+                return;
             }
+            foreach ($this->errorHandlers as $errorHandler)
+                $errorHandler->got($exception);
+
+            if (!$this->fast)
+                $this->registry->fail($message);
         }
 
         return $success;
