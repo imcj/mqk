@@ -50,6 +50,7 @@ class ConsumerWorker extends AbstractWorker
         $connection,
         ConsumerExecutorWorkerFactory $consumerExecutorWorkerFactory) {
 
+        $this->workerId = uniqid();
         $this->connection = $connection;
         $this->executor = $consumerExecutorWorkerFactory->create();
         $this->bootstrap = $bootstrap;
