@@ -1,21 +1,19 @@
 <?php
 namespace MQK\Command;
 
-
 use MQK\Config;
 use MQK\LoggerFactory;
-use MQK\RedisFactory;
+use MQK\RedisProxy;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use \AD7six\Dsn\Dsn;
 
-class MonitorCommand extends AbstractCommand
+class MonitorCommand extends Command
 {
 
     public function configure()
     {
-        parent::configure();
         $this->setName("monitor")
             ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
             ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
@@ -23,8 +21,9 @@ class MonitorCommand extends AbstractCommand
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        parent::execute($input, $output);
         $dsn = $input->getOption("redis-dsn");
+        if (empty($dsn))
+            $dsn = 'redis://127.0.0.1';
         $previous = 0;
 
         $config = Config::defaultConfig();
@@ -32,16 +31,8 @@ class MonitorCommand extends AbstractCommand
         if (!empty($cluster))
             $config->setCluster($cluster);
 
-        $cliLogger = LoggerFactory::shared()->cliLogger();
-
-        try {
-            $redis = RedisFactory::shared()->createRedis($dsn);
-        } catch (\RedisException $e) {
-            if ("Failed to AUTH connection" == $e->getMessage()) {
-                $cliLogger->error($e->getMessage());
-                exit(1);
-            }
-        }
+        $redis = new RedisProxy($dsn);
+        $redis->connect();
 
         while (true) {
             $now = new \DateTime();

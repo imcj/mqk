@@ -4,7 +4,6 @@ namespace MQK\Command;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\Error\DefaultErrorHandler;
-use MQK\IniConfig;
 use MQK\LoggerFactory;
 use MQK\YamlConfigProcessor;
 use Symfony\Component\Console\Command\Command;
