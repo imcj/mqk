@@ -67,9 +67,11 @@ class MessageInvokable extends Message
             $error = error_get_last();
             error_clear_last();
             if ($error) {
-                if (!strpos("Php70.php", $error->file) > -1) {
-                    $e = new \Exception($error['message'], $error['type']);
-                    throw $e;
+                if (property_exists($error, 'file')) {
+                    if (!strpos("Php70.php", $error->file) > -1) {
+                        $e = new \Exception($error['message'], $error['type']);
+                        throw $e;
+                    }
                 }
             }
 
