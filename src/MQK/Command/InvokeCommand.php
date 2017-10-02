@@ -4,12 +4,8 @@ namespace MQK\Command;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
-use MQK\Queue\MessageAbstractFactory;
-use MQK\Queue\QueueFactory;
 use MQK\Queue\RedisQueue;
-use MQK\RedisFactory;
 use MQK\RedisProxy;
-use MQK\Worker\AbstractWorker;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -149,5 +145,9 @@ class ProduceWorker extends \MQK\Process\AbstractWorker
                 $queue->enqueue($queueName, $message);
             }
         }
+    }
+
+    protected  function quit()
+    {
     }
 }

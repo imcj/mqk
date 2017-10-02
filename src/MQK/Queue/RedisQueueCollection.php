@@ -3,7 +3,6 @@ namespace MQK\Queue;
 
 use Monolog\Logger;
 use MQK\LoggerFactory;
-use MQK\RedisFactory;
 use MQK\RedisProxy;
 
 class RedisQueueCollection implements QueueCollection
@@ -17,6 +16,11 @@ class RedisQueueCollection implements QueueCollection
      * @var string[]
      */
     private $queues;
+
+    /**
+     * @var string[]
+     */
+    private $nameList;
 
     /**
      * @var Logger
@@ -33,14 +37,15 @@ class RedisQueueCollection implements QueueCollection
 
     /**
      * RedisQueueCollection constructor.
-     * @param $connection \Redis
+     * @param RedisProxy $connection
+     * @param string[] $queues
      */
     public function __construct($connection, $queues)
     {
         $this->connection = $connection;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->messageFactory = new MessageAbstractFactory();
-
+        $this->nameList = $queues;
         $this->queues = array_map(function($queue) {
             return self::QUEUE_KEY_PREFIX . "_" . $queue;
         }, $queues);
@@ -70,5 +75,10 @@ class RedisQueueCollection implements QueueCollection
 //            throw \Exception("Make job object error");
 //        }
         return $message;
+    }
+
+    public function nameList()
+    {
+        return $this->nameList;
     }
 }

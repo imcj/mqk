@@ -5,11 +5,16 @@ use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
 use MQK\OSDetect;
+use MQK\Runner\PosixRunner;
+use MQK\Queue\Message\MessageDAO;
+use MQK\Queue\MessageInvokableSyncController;
+use MQK\Queue\RedisQueue;
+use MQK\Queue\RedisQueueCollection;
 use MQK\RedisProxy;
-use MQK\Runner;
+use MQK\Registry;
+use MQK\SearchExpiredMessage;
 use MQK\Worker\ConsumerExecutorWorkerFactory;
 use MQK\Worker\ConsumerWorkerFactory;
-use MQK\Worker\EmptyWorkerFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -80,9 +85,9 @@ class RunCommand extends AbstractCommand
 
         $connection = new RedisProxy($config->redis());
         $messageDAO = new MessageDAO($connection);
-        $queue = new RedisQueue($connection, $this->queuePrefix);
+        $queue = new RedisQueue($connection, $config->queuePrefix());
         $registry = new Registry($connection);
-        $queues = new RedisQueueCollection($connection, $this->queues);
+        $queues = new RedisQueueCollection($connection, $config->queues());
 
         $searchExpiredMessage = new SearchExpiredMessage(
             $connection,
@@ -115,14 +120,12 @@ class RunCommand extends AbstractCommand
             $consumerExecutorFactory
         );
 
-        $runner = new Runner(
+        $runner = new PosixRunner(
             $burst,
             $fast,
             $config->concurrency(),
             $workerFactory,
             $connection,
-            $config->maxRetries(),
-            $osDetect,
             $searchExpiredMessage
         );
 

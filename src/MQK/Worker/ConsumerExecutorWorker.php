@@ -1,7 +1,6 @@
 <?php
 namespace MQK\Worker;
 
-
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\TestTimeoutException;
@@ -13,6 +12,7 @@ use MQK\Queue\MessageInvokableSync;
 use MQK\Queue\MessageInvokableSyncController;
 use MQK\Queue\RedisQueueCollection;
 use MQK\Registry;
+use MQK\Time;
 
 class ConsumerExecutorWorker
 {
@@ -76,6 +76,14 @@ class ConsumerExecutorWorker
      */
     protected $isSearchExpiredMessage = false;
 
+    protected $failure = 0;
+
+    protected $success = 0;
+
+    protected $alive = true;
+
+    const M = 1024 * 1024;
+
     /**
      * ConsumerExecutorWorker constructor.
      *
@@ -114,7 +122,8 @@ class ConsumerExecutorWorker
         $this->healthRepoter->report(WorkerHealth::STARTED);
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
-        $this->logger->debug("Watch queue list " . join(", ", $this->queueNameList));
+        $formatNameList = join(", ", $this->queues->nameList());
+        $this->logger->debug("Watch queue list {$formatNameList}");
         $this->workerStartTime = Time::micro();
         while ($this->alive) {
             try {
@@ -134,7 +143,6 @@ class ConsumerExecutorWorker
             if ($memoryUsage > self::M * 1024) {
                 break;
             }
-
 //            $health->setDuration(Time::micro() - $this->workerStartTime);
         }
 
@@ -205,6 +213,11 @@ class ConsumerExecutorWorker
         }
 
         return $success;
+    }
+
+    public function quit()
+    {
+        $this->alive = false;
     }
 
     protected function didQuit()

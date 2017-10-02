@@ -2,28 +2,10 @@
 declare(ticks=1);
 namespace MQK\Worker;
 
-
 use Monolog\Logger;
-use MQK\Error\ErrorHandler;
-use MQK\Exception\EmptyQueueException;
-use MQK\SearchExpiredMessage;
-use MQK\Health\HealthReporter;
-use MQK\Health\HealthReporterRedis;
-use MQK\Health\WorkerHealth;
-use MQK\Queue\Message;
-use MQK\Queue\Message\MessageDAO;
 use MQK\LoggerFactory;
-use MQK\Queue\MessageAbstractFactory;
-use MQK\Queue\MessageInvokableSyncController;
-use MQK\Queue\Queue;
-use MQK\Queue\QueueFactory;
-use MQK\Queue\RedisQueue;
-use MQK\Queue\RedisQueueCollection;
-use MQK\RedisProxy;
-use MQK\Registry;
-use MQK\SerializerFactory;
-use MQK\Time;
 use MQK\Process\AbstractWorker;
+use MQK\RedisProxy;
 
 /**
  * Woker的具体实现，在进程内调度Queue和Job完成具体任务
@@ -66,11 +48,12 @@ class ConsumerWorker extends AbstractWorker
     public function __construct(
         $bootstrap,
         $connection,
-        ConsumerExecutorWorker $executor) {
+        ConsumerExecutorWorkerFactory $consumerExecutorWorkerFactory) {
 
         $this->connection = $connection;
-        $this->executor = $executor;
+        $this->executor = $consumerExecutorWorkerFactory->create();
         $this->bootstrap = $bootstrap;
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     public function run()
@@ -83,6 +66,12 @@ class ConsumerWorker extends AbstractWorker
         $this->loadUserInitializeScript($this->bootstrap);
         $this->executor->execute();
     }
+
+    protected function quit()
+    {
+        $this->executor->quit();
+    }
+
 
     public function loadUserInitializeScript($bootstrap)
     {

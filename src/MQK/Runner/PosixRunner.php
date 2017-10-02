@@ -1,32 +1,15 @@
 <?php
-namespace MQK;
+namespace MQK\Runner;
 
 declare(ticks=1);
-use MQK\Process\AbstractWorker;
-use MQK\Queue\Message\MessageDAO;
-use MQK\Queue\MessageAbstractFactory;
-use MQK\Queue\QueueCollection;
-use MQK\Queue\QueueFactory;
-use MQK\Queue\RedisQueue;
-use MQK\Queue\RedisQueueCollection;
-use MQK\Worker\Worker;
-use MQK\Worker\ConsumerWorkerFactory;
-use MQK\Worker\WorkerFactory;
 use MQK\Process\MasterProcess as Master;
+use MQK\Queue\QueueFactory;
+use MQK\Worker\Worker;
+use MQK\Worker\WorkerFactory;
+use MQK\LoggerFactory;
 
-
-class Runner extends Master
+class PosixRunner extends Master implements Runner
 {
-    /**
-     * @var string
-     */
-    private $redisDsn;
-
-    /**
-     * @var integer
-     */
-    private $maxRetries;
-
     /**
      * @var RedisProxy
      */
@@ -57,28 +40,18 @@ class Runner extends Master
      */
     protected $fast = false;
 
-    /**
-     * Runner constructor.
-     *
-     * @param integer $retry
-     * @param string[] $queues
-     */
     public function __construct(
         $burst,
         $fast,
         $concurrency,
         $workerFactory,
         $connection,
-        $maxRetries,
-        OSDetect $osDetect,
         $searchExpiredMessage
     ) {
         $this->workerClassOrFactory = $workerFactory;
         $this->connection = $connection;
-        $this->maxRetries = $maxRetries;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->masterId = uniqid();
-        $this->osDetect = $osDetect;
         $this->searchExpiredMessage = $searchExpiredMessage;
         $this->fast = $fast;
 
@@ -93,21 +66,8 @@ class Runner extends Master
     public function run()
     {
         $this->logger->notice("MasterProcess ({$this->masterId}) work on process" . posix_getpid());
-
-        if ($this->osDetect->isPosix()) {
-            parent::run();
-        }
-
+        parent::run();
         $this->spawn();
-    }
-
-    protected function didSpawnWorker(AbstractWorker $worker, $index)
-    {
-        // Windows 维护负责过期任务的进程是一个，如果进程出现意外退出将全部退出
-        if ($index == 0 && $this->osDetect->isPosix()) {
-            $this->logger->debug("Windows系统下，由Worker负责查找过期消息。");
-            $worker->setIsSearchExpiredMessage(true);
-        }
     }
 
     protected function didSelect()
@@ -118,7 +78,7 @@ class Runner extends Master
     public function heartbeat()
     {
         $this->updateHealth();
-        if (!$this->fast && $this->isSearchExpiredMessage) {
+        if (!$this->fast && $this->searchExpiredMessage) {
             $this->searchExpiredMessage->process();
         }
     }

@@ -1,7 +1,6 @@
 <?php
 namespace MQK;
 
-
 use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Queue;
 use MQK\Queue\QueueCollection;
@@ -13,7 +12,7 @@ use MQK\Queue\QueueCollection;
 class SearchExpiredMessage
 {
     /**
-     * @var \Redis
+     * @var \RedisProxy
      */
     private $connection;
 
