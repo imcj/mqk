@@ -15,8 +15,7 @@ class MonitorCommand extends Command
     public function configure()
     {
         $this->setName("monitor")
-            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL)
-            ->addOption("cluster", 'c', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED);
+            ->addOption("redis-dsn", "s", InputOption::VALUE_OPTIONAL);
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -27,9 +26,6 @@ class MonitorCommand extends Command
         $previous = 0;
 
         $config = Config::defaultConfig();
-        $cluster = $input->getOption("cluster");
-        if (!empty($cluster))
-            $config->setCluster($cluster);
 
         $redis = new RedisProxy($dsn);
         $redis->connect();
