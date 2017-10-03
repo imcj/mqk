@@ -4,6 +4,7 @@ namespace MQK\Queue;
 
 use MQK\Queue\Message\MessageDAO;
 use MQK\LoggerFactory;
+use MQK\RedisProxy;
 
 class Invokes
 {
@@ -12,6 +13,10 @@ class Invokes
      */
     private $invokes;
     private $id;
+
+    /**
+     * @var RedisProxy
+     */
     private $connection;
     private $logger;
 
@@ -75,7 +80,7 @@ class Invokes
 
     public function wait()
     {
-        $raw = $this->connection->blPop("queue_" . $this->id, 10);
+        $raw = $this->connection->blpop("queue_" . $this->id, 10);
 
         foreach ($this->invokes() as $invoke) {
             /**

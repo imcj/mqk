@@ -2,7 +2,6 @@
 namespace MQK;
 
 use Monolog\Logger;
-use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\Message;
 
 class Registry
@@ -51,7 +50,7 @@ class Registry
         if (empty($this->config->cluster()))
             $this->connection->multi();
 
-        $this->connection->zAdd("mqk:started", $ttl, $message->id());
+        $this->connection->zadd("mqk:started", $ttl, $message->id());
         $this->connection->set("mqk:message:{$message->id()}", json_encode($messageJsonObject), 108000);
 
         if (empty($this->config->cluster()))
@@ -63,24 +62,24 @@ class Registry
         $ttl = time() + $message->ttl();
 //        $this->connection->zAdd("mqk:fail", $ttl, $message->id());
 
-        $this->connection->zDelete("mqk:started", $message->id());
+        $this->connection->zrem("mqk:started", $message->id());
     }
 
     public function finish(Message $message)
     {
 //        $this->connection->zAdd("mqk:finished", $ttl, $job->id());
-        $this->connection->zDelete("mqk:started", $message->id());
+        $this->connection->zrem("mqk:started", $message->id());
     }
 
     public function clear($queueName, $id)
     {
-        $return = $this->connection->zDelete($queueName, $id);
+        $return = $this->connection->zrem($queueName, $id);
     }
 
     public function queryExpiredMessage($queueName)
     {
         $now = time();
-        $id = $this->connection->zRangeByScore(
+        $id = $this->connection->zrangebyscore(
             $queueName,
             0,
             $now,

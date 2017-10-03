@@ -14,7 +14,7 @@ class MessageDAO
     private $logger;
 
     /**
-     * @var \Redis
+     * @var RedisProxy
      */
     private $connection;
 
@@ -64,6 +64,6 @@ class MessageDAO
 
     public function clear($job)
     {
-        $this->connection->hDel("mqk:message:", $job->id());
+        $this->connection->hdel("mqk:message:", $job->id());
     }
 }

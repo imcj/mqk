@@ -54,12 +54,6 @@ class RedisQueue implements Queue
         $this->logger->debug($messageJson);
 
         $queueKey = $this->prefix . $name;
-        $success = $this->connection->lpush($queueKey, $messageJson);
-
-        if (!$success) {
-            $error = $this->connection->getLastError();
-            $this->connection->clearLastError();
-            throw new \Exception($error);
-        }
+        $this->connection->lpush($queueKey, $messageJson);
     }
 }

@@ -16,7 +16,8 @@
         "symfony/property-access": "^3.3",
         "sentry/sentry": "^1.7",
         "fatrellis/process": "0.0.4",
-        "symfony/yaml": "^3.3"
+        "symfony/yaml": "^3.3",
+        "predis/predis": "^1.1"
     },
     "autoload":{
         "psr-4": {

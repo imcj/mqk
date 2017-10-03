@@ -87,7 +87,7 @@ class PosixRunner extends Master implements Runner
     {
         $key = "mqk:{$this->masterId}";
         $this->connection->multi();
-        $this->connection->hSet($key, "updated_at", time());
+        $this->connection->hset($key, "updated_at", time());
         $this->connection->expire($key, 5);
         $this->connection->exec();
     }
