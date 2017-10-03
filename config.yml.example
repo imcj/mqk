@@ -1,11 +1,22 @@
+queues:
+  - default
+  - high
+  - low
+concurrency: 2
+
+queue:
+  default: default
+  prefix: queue_
+
+#error_handlers:
+#  - CustomerError
+
 logging:
-  level: INFO
+  level: DEBUG
 #  handlers:
 #    - StreamHandler
 
 #  handlers:
-#    -
-#      handler:
-#        class: StreamHandler
-#        stream: app.log
-#        level: INFO
+#    - class: StreamHandler
+#      stream: app.log
+#      level: DEBUG
