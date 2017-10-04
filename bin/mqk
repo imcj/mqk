@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-$autoloadPath = [__DIR__ . "/../../../autoload.php", __DIR__ . "/../vendor/autoload.php"];
+$autoloadPath = [__DIR__ . "/../../../autoload.php", __DIR__ . "/../vendor/autoload.php", __DIR__ . "/../../autoload.php"];
 
 foreach ($autoloadPath as $path) {
     if (file_exists($path)) {
