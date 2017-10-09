@@ -1,8 +1,12 @@
 MQK
 ====
 
-MQK是一个简单、高性能的PHP后台任务框架。MQK把复杂的消息队列简化成RPC和事件处理，不需要关心复杂的队列、任务和进程等。
-MQK在单核心的VPS上每秒可以处理`20,000+`数据量，在容错模式下每秒可处理`6,000+`。
+[简体中文](RADME_CN.md)
+
+By google translate
+
+MQK is a simple, high-performance PHP background task framework. MQK simplifies complex message queues to RPC and event handling, eliminating the need for complex queues, tasks, and processes.
+MQK can handle `20,000 +` data per second on a single core VPS, and `6,000 +` per second in fault tolerant mode.
 
 Install
 --------
@@ -19,13 +23,14 @@ Dependencies
 Usage
 ------
 
-1. 第一步，使用`K::invoke`方法调用方法并传入参数`\K::invoke('\\MQK\\Test\\Calculator::sum', 1, 2)`。
+1. The first step is to use the `K :: invoke` method to call the method and pass in the parameter` \ K :: invoke ('\\ MQK \\ Test \\ Calculator :: sum', 1, 2) `.
+
 
 ```php
 \K::invoke('Calculator::sum', 1, 2);
 ```
 
-2. 创建任意的类文件和静态方法
+2. Create class and static methods
 
 ```php
 class Calculator
@@ -37,7 +42,7 @@ class Calculator
 }
 ```
 
-3. 启动消费程序。debug模式下控制台会输出异步任务的返回结果。
+3. Start the consumer program. In debug mode, the console outputs the return result of the asynchronous task.
 
 ```
 $ vendor/bin/mqk run
@@ -46,31 +51,46 @@ $ vendor/bin/mqk run
 ```
 
 
-开发状态
---------
+Development status
+-------------------
 
-开发中，不推荐用在生产环境中使用。
+Development, is not recommended for use in the production environment.
 
-- 未进行严格的测试，可能存在各种问题。
-- 函数参数以json格式进行序列化，不能使用php对象
+- No rigorous testing, there may be a variety of problems.
+- Function parameters in json format serialization, can not use php objects
 
 
-文档
-====
+Documents
+----------
 
-推荐使用MQK的事件机制可以进行实时数据计算分析。
+It is recommended to use MQK's event mechanism to perform real-time data analysis.
 
-- [新手入门](docs/getting-started.md)
-- [基本使用说明](docs/basic.md)
+- [Getting started](docs/getting-started.md)
+- [Basic](docs/basic.md)
 - [RPC](docs/rpc.md)
-- [事件](docs/event.md)
-- [最佳实践](docs/practices.md)
-- [配置](docs/config.md)
-- [错误处理](docs/error.md)
-- [高级选项](docs/advanced_options.md)
-- [进程健康状态](docs/process_health.md)
-- [日志](docs/logging.md)
-- [信号](docs/signals.md)
-- [扩容](docs/sharding.md)
-- [命令行说明](docs/command_line.md)
-- [进程管理](docs/process.md)
+- [Event](docs/event.md)
+- [Best practices](docs/practices.md)
+- [Config](docs/config.md)
+- [Error handle](docs/error.md)
+- [Advance options](docs/advanced_options.md)
+- [Process health](docs/process_health.md)
+- [Logging](docs/logging.md)
+- [Signals](docs/signals.md)
+- [Sharding](docs/sharding.md)
+- [Command line](docs/command_line.md)
+- [Process management](docs/process.md)
+
+- [新手入门](docs/cn/getting-started.md)
+- [基本使用说明](docs/cn/basic.md)
+- [RPC](docs/cn/rpc.md)
+- [事件](docs/cn/event.md)
+- [最佳实践](docs/cn/practices.md)
+- [配置](docs/cn/config.md)
+- [错误处理](docs/cn/error.md)
+- [高级选项](docs/cn/advanced_options.md)
+- [进程健康状态](docs/cn/process_health.md)
+- [日志](docs/cn/logging.md)
+- [信号](docs/cn/signals.md)
+- [扩容](docs/cn/sharding.md)
+- [命令行说明](docs/cn/command_line.md)
+- [进程管理](docs/cn/process.md)
