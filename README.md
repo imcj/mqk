@@ -23,7 +23,7 @@ Dependencies
 Usage
 ------
 
-1. The first step is to use the `K :: invoke` method to call the method and pass in the parameter` \ K :: invoke ('\\ MQK \\ Test \\ Calculator :: sum', 1, 2) `.
+1. The first step is to use the `K::invoke` method to call the method and pass in the parameter`\K::invoke ('\\ MQK\\Test\\Calculator::sum', 1, 2)`.
 
 
 ```php
@@ -79,6 +79,9 @@ It is recommended to use MQK's event mechanism to perform real-time data analysi
 - [Sharding](docs/sharding.md)
 - [Command line](docs/command_line.md)
 - [Process management](docs/process.md)
+
+Chinese contents of table
+--------------------------
 
 - [新手入门](docs/cn/getting-started.md)
 - [基本使用说明](docs/cn/basic.md)
