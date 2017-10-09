@@ -11,7 +11,7 @@ MQK can handle `20,000 +` data per second on a single core VPS, and `6,000 +` pe
 Install
 --------
 ```
-composer require fatrellis/mqk
+composer require mqk/mqk
 ```
 
 Dependencies
@@ -65,20 +65,20 @@ Documents
 
 It is recommended to use MQK's event mechanism to perform real-time data analysis.
 
-- [Getting started](docs/getting-started.md)
-- [Basic](docs/basic.md)
-- [RPC](docs/rpc.md)
-- [Event](docs/event.md)
-- [Best practices](docs/practices.md)
-- [Config](docs/config.md)
-- [Error handle](docs/error.md)
-- [Advance options](docs/advanced_options.md)
-- [Process health](docs/process_health.md)
-- [Logging](docs/logging.md)
-- [Signals](docs/signals.md)
-- [Sharding](docs/sharding.md)
-- [Command line](docs/command_line.md)
-- [Process management](docs/process.md)
+- [Getting started](docs/en/getting-started.md)
+- [Basic](docs/en/basic.md)
+- [RPC](docs/en/rpc.md)
+- [Event](docs/en/event.md)
+- [Best practices](docs/en/practices.md)
+- [Config](docs/en/config.md)
+- [Error handle](docs/en/error.md)
+- [Advance options](docs/en/advanced_options.md)
+- [Process health](docs/en/process_health.md)
+- [Logging](docs/en/logging.md)
+- [Signals](docs/en/signals.md)
+- [Sharding](docs/en/sharding.md)
+- [Command line](docs/en/command_line.md)
+- [Process management](docs/en/process.md)
 
 Chinese contents of table
 --------------------------
