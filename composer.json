@@ -15,9 +15,9 @@
         "symfony/serializer": "^3.3",
         "symfony/property-access": "^3.3",
         "sentry/sentry": "^1.7",
-        "fatrellis/process": "0.0.4",
+        "fatrellis/process": "dev-master",
         "symfony/yaml": "^3.3",
-        "predis/predis": "^1.1"
+        "predis/predis": "dev-hotfix-read-blocking-signals"
     },
     "autoload":{
         "psr-4": {
@@ -35,5 +35,11 @@
     ],
     "require-dev": {
         "phpunit/phpunit": "^5.7"
-    }
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/imcj/predis"
+        }
+    ]
 }

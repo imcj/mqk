@@ -89,6 +89,8 @@ class ConsumerExecutorWorker
 
     const M = 1024 * 1024;
 
+    protected $memoryLimit;
+
     /**
      * ConsumerExecutorWorker constructor.
      *
@@ -104,6 +106,7 @@ class ConsumerExecutorWorker
         $burst,
         $fast,
         $queues,
+        $memoryLimit,
         Registry $registry,
         $expiredFinder,
         MessageInvokableSyncController $messageInvokableSyncController,
@@ -114,6 +117,7 @@ class ConsumerExecutorWorker
         $this->burst = $burst;
         $this->fast = $fast;
         $this->queues = $queues;
+        $this->memoryLimit = $memoryLimit;
         $this->registry = $registry;
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
         $this->expiredFindder = $expiredFinder;
@@ -129,6 +133,8 @@ class ConsumerExecutorWorker
 
         $formatNameList = join(", ", $this->queues->nameList());
         $this->logger->debug("Watch queue list {$formatNameList}");
+        $memoryLimit = $this->memoryLimit / 1024 / 1024;
+        $this->logger->debug("Memory limit {$memoryLimit}m");
         $this->workerStartTime = Time::micro();
         while ($this->alive) {
             if ($this->searchExpiredMessage) {
@@ -149,13 +155,15 @@ class ConsumerExecutorWorker
             }
 
             $memoryUsage = $this->memoryGetUsage();
-            if ($memoryUsage > self::M * 1024) {
+            // TODO: Fixed memory leak
+//            $this->logger->debug("memory usage: \n{$memoryUsage} / {$this->memoryLimit}");
+            if ($memoryUsage > $this->memoryLimit) {
+                $this->logger->info("Restart process, out of memory {$this->memoryLimit}");
                 break;
             }
+            pcntl_signal_dispatch();
 //            $health->setDuration(Time::micro() - $this->workerStartTime);
         }
-
-
         $this->workerEndTime = Time::micro();
         $this->didQuit();
         exit(0);
@@ -176,7 +184,7 @@ class ConsumerExecutorWorker
         $this->consumed += 1;
         $this->healthRepoter->health()->setConsumed($this->consumed);
         $this->healthRepoter->report(WorkerHealth::DID_DEQUEUE);
-        $this->logger->debug("Pop a message {$message->id()} at {$now}.");
+        $this->logger->debug("Did dequeue a message {$message->id()} at {$now}.");
         if (!$this->fast) {
             $this->registry->start($message);
         }
@@ -186,7 +194,7 @@ class ConsumerExecutorWorker
             $beforeExecute = time();
             $this->logger->debug('Message will execute');
             $this->healthRepoter->report(WorkerHealth::EXECUTING);
-            $message();
+            $messageReturns = $message();
             $this->healthRepoter->report(WorkerHealth::EXECUTED);
             if ($message instanceof MessageInvokableSync) {
                 $this->messageInvokableSyncController->invoke($message);
@@ -196,9 +204,10 @@ class ConsumerExecutorWorker
 
             $afterExecute = time();
             $duration = $afterExecute - $beforeExecute;
-            $this->logger->info("Message execute duration {$duration}");
+            $this->logger->info("Message execute duration time is {$duration}");
             $messageClass = (string)get_class($message);
-            $this->logger->debug("{$messageClass} {$message->id()} is finished");
+            $messageReturnsString = (string)$messageReturns;
+            $this->logger->debug("{$messageClass} {$message->id()} execute result is {$messageReturnsString}");
             if ($afterExecute - $beforeExecute >= $message->ttl()) {
                 $this->logger->warn(sprintf("The message %s timed out for %d seconds.", $message->id(), $message->ttl()));
             }
@@ -209,7 +218,6 @@ class ConsumerExecutorWorker
             if ($this->isSearchExpiredMessage) {
                 $this->expiredFindder->process();
             }
-
         } catch (\Exception $exception) {
             $success = false;
             if ($exception instanceof SkipFailureRegistryException) {
@@ -229,6 +237,13 @@ class ConsumerExecutorWorker
     public function quit()
     {
         $this->alive = false;
+        $this->logger->debug('set alive to false');
+    }
+
+    public function graceFullQuit()
+    {
+        $this->alive = false;
+        $this->logger->debug('will grace full quit');
     }
 
     protected function didQuit()
@@ -258,5 +273,10 @@ class ConsumerExecutorWorker
     public function setIsSearchExpiredMessage($isSearchExpiredMessage)
     {
         $this->isSearchExpiredMessage = $isSearchExpiredMessage;
+    }
+
+    public function goingToDie()
+    {
+        $this->alive = false;
     }
 }

@@ -86,6 +86,13 @@ class Config
      */
     private $maxRetries = 3;
 
+    /**
+     * This is a simple method to help limit the damage of memory leaks.
+     *
+     * @var integer
+     */
+    private $memoryLimit = 1024 * 1024 * 1024;
+
     public function __construct()
     {
     }
@@ -289,5 +296,13 @@ class Config
         $this->maxRetries = $maxRetries;
     }
 
+    public function memoryLimit()
+    {
+        return $this->memoryLimit;
+    }
 
+    public function setMemoryLimit($memoryLimit)
+    {
+        $this->memoryLimit = $memoryLimit;
+    }
 }

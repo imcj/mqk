@@ -42,6 +42,27 @@ class YamlConfigProcessor
                 }
             }
         }
+        if (isset($yaml['memory_limit'])) {
+            $memoryLimit = $yaml['memory_limit'];
+            $lastChar = strtolower(
+                substr($memoryLimit, strlen($memoryLimit) - 1)
+            );
+            $multiple = 1024 * 1024;
+            switch ($lastChar) {
+                case 'm':
+                    break;
+                case 'g':
+                    $multiple *= 1024;
+                    break;
+                default:
+                    $memoryLimit .= " ";
+            }
+
+            $memoryLimit = substr($memoryLimit, 0, -1);
+            $memoryLimitSize = (int)$memoryLimit * $multiple;
+            $this->logger->debug("Max memory limit set to {$memoryLimit}($memoryLimitSize)");
+            $this->config->setMemoryLimit($memoryLimitSize);
+        }
         if (isset($yaml['logging'])) {
             $handlers = [];
 

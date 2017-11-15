@@ -60,7 +60,7 @@ class RedisQueueCollection implements QueueCollection
 
         try {
             $messageJsonObject = json_decode($messageJson);
-            $this->logger->debug("Did dequeue a message", json_decode($messageJson, true));
+            $this->logger->debug("Did pop a list item", json_decode($messageJson, true));
 //            $this->logger->debug("[dequeue] {$jsonObject->id}");
 //            $this->logger->debug($messageJsonObject);
             // 100k 对象创建大概300ms，考虑是否可以利用对象池提高效率

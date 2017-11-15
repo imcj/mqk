@@ -15,6 +15,11 @@ use MQK\SerializerFactory;
 class ConsumerExecutorWorkerFactory
 {
     /**
+     * @var integer
+     */
+    protected $memoryLimit;
+
+    /**
      * @var RedisProxy
      */
     protected $connection;
@@ -57,6 +62,7 @@ class ConsumerExecutorWorkerFactory
     public function __construct(
         $burst,
         $fast,
+        $memoryLimit,
         $connection,
         $regsitry,
         $queues,
@@ -66,6 +72,7 @@ class ConsumerExecutorWorkerFactory
 
         $this->burst = $burst;
         $this->fast = $fast;
+        $this->memoryLimit = $memoryLimit;
         $this->connection = $connection;
         $this->registry = $regsitry;
         $this->queues = $queues;
@@ -89,6 +96,7 @@ class ConsumerExecutorWorkerFactory
             $this->burst,
             $this->fast,
             $this->queues,
+            $this->memoryLimit,
             $this->registry,
             $this->searchExpiredMessage,
             $this->messageController,

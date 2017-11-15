@@ -47,8 +47,13 @@ class RunCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $burst = $input->getOption("burst");
+        $verbose = $input->getOption("verbose");
 
-        LoggerFactory::shared()->setDefaultLevel(Logger::NOTICE);
+        $loggerFactory = LoggerFactory::shared();
+        if ($verbose)
+            $loggerFactory->setDefaultLevel(Logger::DEBUG);
+        else
+            $loggerFactory->setDefaultLevel(Logger::NOTICE);
 
         $config = Config::defaultConfig();
         $config->setBurst($burst);
@@ -104,6 +109,7 @@ class RunCommand extends AbstractCommand
         $consumerExecutorFactory = new ConsumerExecutorWorkerFactory(
             $burst,
             $fast,
+            $config->memoryLimit(),
             $connection,
             $registry,
             $queues,
