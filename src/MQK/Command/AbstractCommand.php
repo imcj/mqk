@@ -13,16 +13,9 @@ use Symfony\Component\Yaml\Yaml;
 
 abstract class AbstractCommand extends Command
 {
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
     public function __construct($name = null)
     {
         parent::__construct($name);
-
-        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -79,7 +72,7 @@ abstract class AbstractCommand extends Command
     {
         if (!empty($yamlPath)) {
             if (!file_exists($yamlPath)) {
-                $this->logger->warning("You specify config file, but not found");
+                echo("You specify config file, but not found\n");
                 return;
             }
         } else {
@@ -95,7 +88,7 @@ abstract class AbstractCommand extends Command
             $parseProcessor->process();
         } catch (\Exception $e) {
             if ($e->getMessage() == 5) {
-                $this->logger->warning($e->getMessage());
+                echo($e->getMessage());
             } else {
                 throw $e;
             }

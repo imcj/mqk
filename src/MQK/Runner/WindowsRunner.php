@@ -11,45 +11,13 @@ use MQK\LoggerFactory;
 
 class WindowsRunner implements Runner, Master
 {
-
-    /**
-     * @var RedisProxy
-     */
-    private $connection;
-
-    /**
-     * @var string
-     */
-    protected $masterId;
-
-    /**
-     * @var integer
-     */
-    protected $concurrency;
-
-    /**
-     * @var OSDetect
-     */
-    protected $osDetect;
-
-    /**
-     * @var SearchExpiredMessage
-     */
-    protected $searchExpiredMessage;
-
-    /**
-     * @var ConsumerWorkerFactory
-     */
-    protected $workerClassOrFactory;
-
-    /**
-     * @var bool
-     */
-    protected $fast = false;
+    use RunnerTrait;
 
     public function __construct(
         $burst,
         $fast,
+        $processIdFile,
+        $daemonize,
         $concurrency,
         $workerFactory,
         $connection,
@@ -61,6 +29,8 @@ class WindowsRunner implements Runner, Master
         $this->masterId = uniqid();
         $this->searchExpiredMessage = $searchExpiredMessage;
         $this->fast = $fast;
+        $this->processIdFile = $processIdFile;
+        $this->daemonize = $daemonize;
     }
 
     function heartbeat()

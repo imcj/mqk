@@ -1,8 +1,10 @@
 <?php
 namespace MQK;
 
+use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 use MQK\Logging\Handlers\StreamHandler;
+use Symfony\Component\Yaml\Yaml;
 
 class YamlConfigProcessor
 {
@@ -25,12 +27,39 @@ class YamlConfigProcessor
     {
         $this->yaml = $yaml;
         $this->config = $config;
-        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+    }
+
+    static public function loadFromFile($yamlPath, $config)
+    {
+        if (!file_exists($yamlPath)) {
+            echo("config file not exist\n");
+            $yaml = [];
+        } else {
+            $yaml = Yaml::parse(file_get_contents($yamlPath));
+        }
+        $parseProcessor = new \MQK\YamlConfigProcessor(
+            $yaml,
+            $config
+        );
+        $parseProcessor->process();
+
+        return $parseProcessor;
     }
 
     public function process()
     {
         $yaml = $this->yaml;
+        if (isset($yaml['daemonize'])) {
+            $daemonize = $yaml['daemonize'];
+
+            if ($daemonize) {
+                LoggerFactory::shared()->setHandlers([new NullHandler()]);
+            }
+            $this->config->setDaemonize($daemonize);
+        }
+
+        $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
+
         $levels = Logger::getLevels();
         if (isset($yaml['logging']) && isset($yaml['logging']['level'])) {
             $level = $yaml['logging']['level'];

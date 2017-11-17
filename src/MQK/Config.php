@@ -93,6 +93,16 @@ class Config
      */
     private $memoryLimit = 1024 * 1024 * 1024;
 
+    /**
+     * @var bool
+     */
+    private $daemonize = false;
+
+    /**
+     * @var string
+     */
+    private $processIdFile;
+
     public function __construct()
     {
     }
@@ -304,5 +314,25 @@ class Config
     public function setMemoryLimit($memoryLimit)
     {
         $this->memoryLimit = $memoryLimit;
+    }
+
+    public function processIdFile()
+    {
+        return $this->processIdFile;
+    }
+
+    public function setProcessIdFile($processIdFile)
+    {
+        $this->processIdFile = $processIdFile;
+    }
+
+    public function daemonize()
+    {
+        return $this->daemonize;
+    }
+
+    public function setDaemonize($daemonize)
+    {
+        $this->daemonize = $daemonize;
     }
 }

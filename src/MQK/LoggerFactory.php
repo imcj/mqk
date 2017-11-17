@@ -4,6 +4,7 @@ namespace MQK;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\HandlerInterface;
+use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -23,6 +24,10 @@ class LoggerFactory
      */
     private $handlers = [];
 
+    public function __construct()
+    {
+    }
+
     public function defaultLevel()
     {
         return $this->defaultLevel;
@@ -31,6 +36,11 @@ class LoggerFactory
     public function setDefaultLevel($level)
     {
         $this->defaultLevel = $level;
+    }
+
+    public function getHandlers()
+    {
+        return $this->handlers;
     }
 
     public function pushHandler($handler)
@@ -55,11 +65,6 @@ class LoggerFactory
         $logger = new Logger($name);
 
         foreach ($this->handlers as $handler) {
-            $logger->pushHandler($handler);
-        }
-
-        if (empty($this->handlers)) {
-            $handler = new StreamHandler("php://stdout", $this->defaultLevel);
             $logger->pushHandler($handler);
         }
 

@@ -45,6 +45,8 @@ class ConsumerWorker extends AbstractWorker
      */
     protected $executor;
 
+    private $alive = true;
+
     public function __construct(
         $bootstrap,
         $connection,
@@ -63,7 +65,6 @@ class ConsumerWorker extends AbstractWorker
         $this->connection->connect(true);
 
         $this->logger->debug("Process ({$this->workerId}) {$this->id} started.");
-
         $this->loadUserInitializeScript($this->bootstrap);
         $this->executor->execute();
     }
@@ -71,6 +72,12 @@ class ConsumerWorker extends AbstractWorker
     protected function quit()
     {
         $this->executor->quit();
+    }
+
+    protected function graceFullQuit()
+    {
+        $this->logger->debug("Grace full quit");
+        $this->executor->goingToDie();
     }
 
     public function consumerWorkerExecutor()

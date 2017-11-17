@@ -1,6 +1,7 @@
 <?php
 namespace MQK;
 
+use MQK\Command\StopCommand;
 use Symfony\Component\Console\Application;
 use MQK\Command\RunCommand;
 use MQK\Command\InvokeCommand;
@@ -14,5 +15,6 @@ class MQKApplication extends Application
         $this->add(new RunCommand());
         $this->add(new InvokeCommand());
         $this->add(new MonitorCommand());
+        $this->add(new StopCommand());
     }
 }

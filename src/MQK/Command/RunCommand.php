@@ -1,6 +1,7 @@
 <?php
 namespace MQK\Command;
 
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\LoggerFactory;
@@ -41,7 +42,8 @@ class RunCommand extends AbstractCommand
             ->addOption("sentry", '', InputOption::VALUE_OPTIONAL, '', '')
             ->addOption('bootstrap', '', InputOption::VALUE_OPTIONAL)
             ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
-            ->addOption('retry', 'r', InputOption::VALUE_OPTIONAL);
+            ->addOption('retry', 'r', InputOption::VALUE_OPTIONAL)
+            ->addOption('pid', 'p', InputOption::VALUE_OPTIONAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -75,6 +77,20 @@ class RunCommand extends AbstractCommand
         $bootstrap = $input->getOption('bootstrap');
         if (!empty($bootstrap))
             $config->setBootstrap($bootstrap);
+
+        $processIdFile = $input->getOption('pid');
+        if (!empty($processIdFile)) {
+            $config->setProcessIdFile($processIdFile);
+
+            $processIdDir = dirname($processIdFile);
+            if (!is_dir($processIdDir)) {
+
+            }
+            if (file_exists($processIdFile)) {
+                print("pid file has exists\n");
+                return;
+            }
+        }
 
         parent::execute($input, $output);
         $this->start($config);
@@ -125,16 +141,24 @@ class RunCommand extends AbstractCommand
         );
 
         $osDetect = new OSDetect();
+
+        if (!$config->daemonize()) {
+            LoggerFactory::shared()->pushHandler(
+                new StreamHandler(STDOUT)
+            );
+        }
+
         if ($osDetect->isPosix()) {
-//        if (false) {
             $runnerClass = PosixRunner::class;
         } else {
             $runnerClass = WindowsRunner::class;
         }
-
+        // TODO: Windows has not possix_pid file ,so using Factory replace class variable
         $runner = new $runnerClass(
             $burst,
             $fast,
+            $config->processIdFile() ?: null,
+            $config->daemonize(),
             $config->concurrency(),
             $workerFactory,
             $connection,
