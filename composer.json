@@ -15,7 +15,7 @@
         "symfony/serializer": "^3.3",
         "symfony/property-access": "^3.3",
         "sentry/sentry": "^1.7",
-        "fatrellis/process": "dev-master",
+        "fatrellis/process": "0.0.7",
         "symfony/yaml": "^3.3",
         "predis/predis": "dev-hotfix-read-blocking-signals"
     },
