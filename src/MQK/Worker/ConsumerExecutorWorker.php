@@ -4,6 +4,7 @@ namespace MQK\Worker;
 use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\SkipFailureRegistryException;
+use MQK\Helper\ByteSize;
 use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
@@ -92,6 +93,11 @@ class ConsumerExecutorWorker
     protected $memoryLimit;
 
     /**
+     * @var ByteSize
+     */
+    private $byteSize;
+
+    /**
      * ConsumerExecutorWorker constructor.
      *
      * @param boolean $burst
@@ -124,6 +130,7 @@ class ConsumerExecutorWorker
         $this->messageInvokableSyncController = $messageInvokableSyncController;
         $this->healthRepoter = $healthReporter;
         $this->errorHandlers = $errorHandlers;
+        $this->byteSize = new ByteSize();
     }
 
     public function execute()
@@ -156,9 +163,9 @@ class ConsumerExecutorWorker
 
             $memoryUsage = $this->memoryGetUsage();
             // TODO: Fixed memory leak
-//            $this->logger->debug("memory usage: \n{$memoryUsage} / {$this->memoryLimit}");
+//            $this->logger->debug("memory usage: \n{$this->byteSize->m($memoryUsage)} / {$this->memoryLimit}");
             if ($memoryUsage > $this->memoryLimit) {
-                $this->logger->info("Restart process, out of memory {$this->memoryLimit}");
+                $this->logger->info("Restart process, out of memory {{$this->byteSize->m($memoryUsage)} / {{$this->byteSize->m($this->memoryLimit)}");
                 break;
             }
             pcntl_signal_dispatch();
@@ -168,6 +175,13 @@ class ConsumerExecutorWorker
         $this->didQuit();
         exit(0);
     }
+
+    function microtimeFloat()
+    {
+        list($usec, $sec) = explode(" ", microtime());
+        return ((float)$usec + (float)$sec);
+    }
+
 
     /**
      * @return boolean 执行成功
@@ -191,7 +205,7 @@ class ConsumerExecutorWorker
 
         $success = true;
         try {
-            $beforeExecute = time();
+            $beforeExecute = $this->microtimeFloat();
             $this->logger->debug('Message will execute');
             $this->healthRepoter->report(WorkerHealth::EXECUTING);
             $messageReturns = $message();
@@ -202,12 +216,24 @@ class ConsumerExecutorWorker
 
             $success = true;
 
-            $afterExecute = time();
+            $afterExecute = $this->microtimeFloat();
             $duration = $afterExecute - $beforeExecute;
-            $this->logger->info("Message execute duration time is {$duration}");
+
             $messageClass = (string)get_class($message);
-            $messageReturnsString = (string)$messageReturns;
-            $this->logger->debug("{$messageClass} {$message->id()} execute result is {$messageReturnsString}");
+            if (is_array($messageReturns)) {
+                $messageReturnsString = var_export($messageReturns, true);
+            } else {
+                try {
+                    $messageReturnsString = (string)$messageReturns;
+                } catch (\Exception $e) {
+                    if (is_object($messageReturns))
+                        $messageReturnsString = "Object";
+                    else
+                        $messageReturnsString = "Unknow";
+                }
+            }
+
+            $this->logger->info("Task {$message->id()} in {$duration}s: {$messageReturnsString}");
             if ($afterExecute - $beforeExecute >= $message->ttl()) {
                 $this->logger->warn(sprintf("The message %s timed out for %d seconds.", $message->id(), $message->ttl()));
             }
