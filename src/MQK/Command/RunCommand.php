@@ -52,10 +52,11 @@ class RunCommand extends AbstractCommand
         $verbose = $input->getOption("verbose");
 
         $loggerFactory = LoggerFactory::shared();
+
         if ($verbose)
             $loggerFactory->setDefaultLevel(Logger::DEBUG);
         else
-            $loggerFactory->setDefaultLevel(Logger::NOTICE);
+            $loggerFactory->setDefaultLevel(Logger::INFO);
 
         $config = Config::defaultConfig();
         $config->setBurst($burst);
@@ -143,9 +144,8 @@ class RunCommand extends AbstractCommand
         $osDetect = new OSDetect();
 
         if (!$config->daemonize()) {
-            LoggerFactory::shared()->pushHandler(
-                new StreamHandler(STDOUT)
-            );
+            $handler = new StreamHandler("php://stdout");
+            LoggerFactory::shared()->setHandlers([$handler]);
         }
 
         if ($osDetect->isPosix()) {

@@ -1,10 +1,7 @@
 <?php
 namespace MQK;
 
-
-use Monolog\Formatter\LineFormatter;
-use Monolog\Handler\HandlerInterface;
-use Monolog\Handler\NullHandler;
+use Monolog\Handler\AbstractHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -20,12 +17,18 @@ class LoggerFactory
     private static $shared;
 
     /**
-     * @var HandlerInterface[]
+     * @var AbstractHandler[]
      */
     private $handlers = [];
 
+    /**
+     * @var Logger[]
+     */
+    private $loggers = [];
+
     public function __construct()
     {
+        $this->handlers = [new StreamHandler("php://stdout")];
     }
 
     public function defaultLevel()
@@ -36,6 +39,15 @@ class LoggerFactory
     public function setDefaultLevel($level)
     {
         $this->defaultLevel = $level;
+
+        $this->setAllHandlerLevel($level);
+    }
+
+    private function setAllHandlerLevel($level)
+    {
+        foreach ($this->handlers as $handler) {
+            $handler->setLevel($level);
+        }
     }
 
     public function getHandlers()
@@ -46,11 +58,21 @@ class LoggerFactory
     public function pushHandler($handler)
     {
         $this->handlers[] = $handler;
+        $handler->setLevel($this->defaultLevel);
     }
 
     public function setHandlers($handlers)
     {
         $this->handlers = $handlers;
+        $this->setAllHandlerLevel($this->defaultLevel);
+
+        foreach ($this->loggers as $logger) {
+            $logger->setHandlers([]);
+
+            foreach ($this->handlers as $handler) {
+                $logger->pushHandler($handler);
+            }
+        }
     }
 
     /**
@@ -62,7 +84,11 @@ class LoggerFactory
      */
     public function getLogger($name, $level=null)
     {
+        if (isset($this->loggers[$name])) {
+            return $this->loggers[$name];
+        }
         $logger = new Logger($name);
+        $this->loggers[$name] = $logger;
 
         foreach ($this->handlers as $handler) {
             $logger->pushHandler($handler);

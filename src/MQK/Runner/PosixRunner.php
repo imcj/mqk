@@ -42,9 +42,11 @@ class PosixRunner extends Master implements Runner
 
     public function run()
     {
-        if (!$this->daemonize)
-            file_put_contents($this->processIdFile, getmypid());
-        else
+        if (!$this->daemonize) {
+            if ($this->processIdFile) {
+                file_put_contents($this->processIdFile, getmypid());
+            }
+        } else
             $this->daemonize();
         $this->logger->notice("MasterProcess ({$this->masterId}) work on process" . posix_getpid());
         parent::run();
@@ -101,7 +103,9 @@ class PosixRunner extends Master implements Runner
 
     protected function willQuit()
     {
-        $this->logger->debug("delete process id file {$this->processIdFile}");
-        unlink($this->processIdFile);
+        if ($this->processIdFile) {
+            $this->logger->debug("delete process id file {$this->processIdFile}");
+            unlink($this->processIdFile);
+        }
     }
 }
