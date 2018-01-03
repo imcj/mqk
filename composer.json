@@ -17,7 +17,7 @@
         "sentry/sentry": "^1.7",
         "fatrellis/process": "0.0.7",
         "symfony/yaml": "^3.3",
-        "predis/predis": "dev-hotfix-read-blocking-signals"
+        "predis/predis": "v1.1.2"
     },
     "autoload":{
         "psr-4": {
