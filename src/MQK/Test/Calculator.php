@@ -9,6 +9,8 @@ class Calculator
     public static function sum($a, $b)
     {
 //        echo $a + $b . "\n";
+        return new \stdClass();
+        return 1.1;
         return $a + $b;
     }
 

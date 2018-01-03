@@ -1,2 +1,2 @@
 memory_limit: 20m
-daemonize: false
+daemonize: true
