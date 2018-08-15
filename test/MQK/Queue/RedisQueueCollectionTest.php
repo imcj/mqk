@@ -22,7 +22,7 @@ class RedisQueueCollectionTest extends TestCase
         $this->connection = new RedisProxy('redis://127.0.0.1');
         $this->connection->connect();
 
-        $this->queue = new RedisQueue("default", $this->connection);
+        $this->queue = new RedisQueue($this->connection, 'defualt');
         $this->connection->flushAll();
     }
 
@@ -40,8 +40,8 @@ class RedisQueueCollectionTest extends TestCase
     {
         $event = new ComplexEvent(1);
         $messageFactory = new MessageAbstractFactory();
-        $message = $messageFactory->messageWithEvent($event);
-        $this->queue->enqueue($message);
+        $message = $messageFactory->messageWithEvent(ComplexEvent::NAME, $event);
+        $this->queue->enqueue($message->queue(), $message);
 
         $assertYes = false;
         MessageEventBus::shared()->addListener(ComplexEvent::NAME, function($event) use (&$assertYes) {

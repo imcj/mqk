@@ -8,6 +8,7 @@
     ],
     "require": {
         "php": ">= 5.6",
+        "mqk/message": "*",
         "monolog/monolog": "^1.23",
         "symfony/console": "^3.3",
         "ad7six/dsn": "^0.4.0",
@@ -23,7 +24,7 @@
         "psr-4": {
             "MQK\\": [
                 "src/MQK/",
-                "test/MQK/"
+                "test/MQK/",
             ]
         },
         "psr-0": {
