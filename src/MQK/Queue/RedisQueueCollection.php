@@ -54,7 +54,6 @@ class RedisQueueCollection implements QueueCollection
     public function dequeue($block=true)
     {
         $messageJson = $this->connection->listPop($this->queues, $block, 1);
-        var_dump($messageJson);
 
         if (null == $messageJson)
             return null;
