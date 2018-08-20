@@ -43,7 +43,8 @@ class RunCommand extends AbstractCommand
             ->addOption('bootstrap', '', InputOption::VALUE_OPTIONAL)
             ->addOption('queue', '', InputOption::VALUE_IS_ARRAY|InputOption::VALUE_REQUIRED)
             ->addOption('retry', 'r', InputOption::VALUE_OPTIONAL)
-            ->addOption('pid', 'p', InputOption::VALUE_OPTIONAL);
+            ->addOption('pid', 'p', InputOption::VALUE_OPTIONAL)
+            ->addOption('entry', 'e', InputOption::VALUE_OPTIONAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

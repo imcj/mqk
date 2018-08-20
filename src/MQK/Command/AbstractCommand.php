@@ -4,6 +4,8 @@ namespace MQK\Command;
 use Monolog\Logger;
 use MQK\Config;
 use MQK\Error\DefaultErrorHandler;
+use MQK\Event\ConfigEvent;
+use MQK\Event\MQKEventDispatcher;
 use MQK\LoggerFactory;
 use MQK\YamlConfigProcessor;
 use Symfony\Component\Console\Command\Command;
@@ -13,13 +15,35 @@ use Symfony\Component\Yaml\Yaml;
 
 abstract class AbstractCommand extends Command
 {
+    /**
+     * @var MQKEventDispatcher
+     */
+    protected $eventDispatcher;
+    
     public function __construct($name = null)
     {
+        $this->eventDispatcher = MQKEventDispatcher::shared();
         parent::__construct($name);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $entry = $input->getOption('entry');
+        if ($entry) {
+            $entryPaths = [
+                getcwd() . "/{$entry}",
+                $entry
+            ];
+
+            foreach ($entryPaths as  $path) {
+
+                if (file_exists($path)) {
+                    include_once $path;
+
+                }
+            }
+        }
+
         $config = Config::defaultConfig();
 
         $defaultErrorHandler = new DefaultErrorHandler();
@@ -79,9 +103,13 @@ abstract class AbstractCommand extends Command
             return;
         }
 
+        $this->eventDispatcher->dispatch(
+            ConfigEvent::CONFIG_LOAD,
+            new ConfigEvent()
+        );
         $conf = Config::defaultConfig();
         $parseProcessor = new YamlConfigProcessor(
-            Yaml::parse(file_get_contents($yamlPath)),
+            Yaml::parse(file_get_contents($yamlPath), Yaml::PARSE_CONSTANT),
             $conf
         );
         try {
@@ -93,6 +121,10 @@ abstract class AbstractCommand extends Command
                 throw $e;
             }
         }
+        $this->eventDispatcher->dispatch(
+            ConfigEvent::CONFIG_LOADED,
+            new ConfigEvent($conf)
+        );
     }
 
 }
