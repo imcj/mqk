@@ -58,6 +58,10 @@ class YamlConfigProcessor
             $this->config->setDaemonize($daemonize);
         }
 
+        if (isset($yaml['redis'])) {
+            $this->config->setRedis($yaml['redis']);
+        }
+
         $this->logger = LoggerFactory::shared()->getLogger(__CLASS__);
 
         $levels = Logger::getLevels();
