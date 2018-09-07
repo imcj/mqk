@@ -8,7 +8,7 @@
     ],
     "require": {
         "php": ">= 5.6",
-        "mqk/message": "*",
+        "mqk/message": "dev-master#341aea78ff18f2e0fa1db16886fd6b865dd6524c",
         "monolog/monolog": "^1.23",
         "symfony/console": "^3.3",
         "ad7six/dsn": "^0.4.0",
@@ -18,7 +18,7 @@
         "sentry/sentry": "^1.7",
         "fatrellis/process": "0.0.7",
         "symfony/yaml": "^3.3",
-        "mqk/predis": "v1.1.2"
+        "mqk/predis": "dev-master#f51f0a0c"
     },
     "autoload":{
         "psr-4": {
@@ -41,6 +41,11 @@
         {
             "type": "git",
             "path": "https://github.com/mqk-php/message"
+        },
+        {
+            "type": "git",
+            "path": "https://github.com/imcj/predis"
         }
+
     ]
 }
