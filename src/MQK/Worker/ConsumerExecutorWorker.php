@@ -208,7 +208,9 @@ class ConsumerExecutorWorker
             $beforeExecute = $this->microtimeFloat();
             $this->logger->debug('Message will execute');
             $this->healthRepoter->report(WorkerHealth::EXECUTING);
+
             $messageReturns = $message();
+
             $this->healthRepoter->report(WorkerHealth::EXECUTED);
             if ($message instanceof MessageInvokableSync) {
                 $this->messageInvokableSyncController->invoke($message);
@@ -219,7 +221,6 @@ class ConsumerExecutorWorker
             $afterExecute = $this->microtimeFloat();
             $duration = $afterExecute - $beforeExecute;
 
-            $messageClass = (string)get_class($message);
             if (is_array($messageReturns)) {
                 $messageReturnsString = var_export($messageReturns, true);
             } else {
