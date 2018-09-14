@@ -31,14 +31,21 @@ class OutboundServiceImpl implements OutboundService
     public function launch($routerKey, $message)
     {
         $routerEntryList = $this->routerEntryRepository->findByRouterKey($routerKey);
+        $messages = [];
 
         foreach ($routerEntryList as $routerEntry) {
             try {
-                $this->notificationCenter->notify($routerEntry, $message);
+                $messages[] = $routerEntry->endpoint() . " respond";
+                $messages[] = $this->notificationCenter->notify(
+                    $routerEntry,
+                    $message
+                );
             } catch (\Exception $e) {
-
+                $messages[] = $e->getMessage();
             }
         }
+
+        return join("\n", $messages);
     }
 
     /**

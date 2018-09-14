@@ -230,7 +230,7 @@ class ConsumerExecutorWorker
                      */
                     $messageNormal = $message;
 
-                    $this->outboundService->launch(
+                    $messageReturns = $this->outboundService->launch(
                         $messageNormal->routerKey(),
                         $messageNormal
                     );

@@ -21,8 +21,10 @@ class NotificationCenterImpl implements NotificationCenter
 
     public function notify(RouterEntry $routerEntry, MessageNormal $message)
     {
-        $this->client->post($routerEntry->endpoint(), [
+        $response = $this->client->post($routerEntry->endpoint(), [
             'json' => $message->jsonSerialize()
         ]);
+
+        return $response->getBody()->getContents();
     }
 }

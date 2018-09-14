@@ -9,7 +9,7 @@ interface NotificationCenter
     /**
      * @param RouterEntry $routerEntry
      * @param MessageNormal $message
-     * @return void
+     * @return string
      */
     public function notify(
         RouterEntry $routerEntry,
