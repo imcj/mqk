@@ -13,6 +13,16 @@ class RouterEntryRepositoryRedis implements RouterEntryRepository
      */
     private $client;
 
+    /**
+     * @var string
+     */
+    private $routerEntryKey = "router_entry_%s_%d";
+
+    /**
+     * @var string
+     */
+    private $routerEntryIndexKey = "router_entry_%s_index";
+
     public function __construct(Client $client)
     {
         $this->client = $client;
@@ -46,13 +56,12 @@ class RouterEntryRepositoryRedis implements RouterEntryRepository
     }
 
     /**
-     * @param string $routerKey
      * @param RouterEntry $routerEntry
      * @return RouterEntry
      */
-    public function addNewRouterEntry($routerKey, RouterEntry $routerEntry)
+    public function addNewRouterEntry(RouterEntry $routerEntry)
     {
-
+        $routerKey = $routerEntry->routerKey();
         $id = $this->client->incr("router_entry_index_counter");
         $routerEntry->setId($id);
         $serialized = json_encode($routerEntry->jsonSerialize());
@@ -71,6 +80,36 @@ class RouterEntryRepositoryRedis implements RouterEntryRepository
             $serialized['description'],
             null, // new \DateTime($serialized['created_at']),
             null // new \DateTime($serialized['updated_at'])
+        );
+    }
+
+    public function removeRouterKeyAndId($routerKey, $id)
+    {
+        $this->client->del([
+            sprintf(
+                $this->routerEntryKey,
+                $routerKey,
+                $id
+            )
+        ]);
+        $this->client->zremrangebyscore(
+            sprintf($this->routerEntryIndexKey, $routerKey),
+            $id,
+            "{$id}"
+        );
+    }
+
+    /**
+     * @param string $routerKey
+     * @param int $id
+     * @return RouterEntry
+     */
+    public function findByRouterKeyAndId($routerKey, $id)
+    {
+        return $this->assembleToModel(
+            $this->client->hgetall(
+                sprintf($this->routerEntryKey, $routerKey, (int)$id)
+            )
         );
     }
 }

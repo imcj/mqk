@@ -2,7 +2,17 @@
 namespace MQK\Queue\Outbound;
 
 
+use MQK\Queue\MessageNormal;
+
 interface NotificationCenter
 {
-    public function notify($routerEntry, $message);
+    /**
+     * @param RouterEntry $routerEntry
+     * @param MessageNormal $message
+     * @return void
+     */
+    public function notify(
+        RouterEntry $routerEntry,
+        MessageNormal $message
+    );
 }

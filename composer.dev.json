@@ -43,8 +43,11 @@
     },
     "repositories": [
         {
-            "type": "git",
-            "url": "https://github.com/mqk-php/message"
+            "type": "path",
+            "url": "../message",
+            "options": {
+                "symlink": true
+            }
         },
         {
             "type": "git",

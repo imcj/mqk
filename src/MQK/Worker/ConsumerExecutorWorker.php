@@ -5,6 +5,11 @@ use Monolog\Logger;
 use MQK\Error\ErrorHandler;
 use MQK\Exception\SkipFailureRegistryException;
 use MQK\Helper\ByteSize;
+use MQK\Queue\Message;
+use MQK\Queue\MessageNormal;
+use MQK\Queue\NotImplementedInvoke;
+use MQK\Queue\Outbound\NotificationCenter;
+use MQK\Queue\Outbound\OutboundService;
 use MQK\SearchExpiredMessage;
 use MQK\Health\HealthReporter;
 use MQK\Health\WorkerHealth;
@@ -98,6 +103,11 @@ class ConsumerExecutorWorker
     private $byteSize;
 
     /**
+     * @var OutboundService
+     */
+    protected $outboundService;
+
+    /**
      * ConsumerExecutorWorker constructor.
      *
      * @param boolean $burst
@@ -118,7 +128,8 @@ class ConsumerExecutorWorker
         MessageInvokableSyncController $messageInvokableSyncController,
         WorkerHealth $workerHealth,
         HealthReporter $healthReporter,
-        $errorHandlers) {
+        $errorHandlers,
+        OutboundService $outboundService) {
 
         $this->burst = $burst;
         $this->fast = $fast;
@@ -131,6 +142,7 @@ class ConsumerExecutorWorker
         $this->healthRepoter = $healthReporter;
         $this->errorHandlers = $errorHandlers;
         $this->byteSize = new ByteSize();
+        $this->outboundService = $outboundService;
     }
 
     public function execute()
@@ -209,7 +221,23 @@ class ConsumerExecutorWorker
             $this->logger->debug('Message will execute');
             $this->healthRepoter->report(WorkerHealth::EXECUTING);
 
-            $messageReturns = $message();
+            try {
+                $messageReturns = $message();
+            } catch (NotImplementedInvoke $e) {
+                if ($message instanceof MessageNormal) {
+                    /**
+                     * @var MessageNormal
+                     */
+                    $messageNormal = $message;
+
+                    $this->outboundService->launch(
+                        $messageNormal->routerKey(),
+                        $messageNormal
+                    );
+                } else {
+                    throw $e;
+                }
+            }
 
             $this->healthRepoter->report(WorkerHealth::EXECUTED);
             if ($message instanceof MessageInvokableSync) {

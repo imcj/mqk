@@ -6,6 +6,8 @@ use MQK\Error\ErrorHandler;
 use MQK\Health\HealthReporterRedis;
 use MQK\Health\WorkerHealth;
 use MQK\Queue\MessageInvokableSyncController;
+use MQK\Queue\Outbound\Impl\NotificationCenterImpl;
+use MQK\Queue\Outbound\OutboundService;
 use MQK\Queue\QueueCollection;
 use MQK\RedisProxy;
 use MQK\Registry;
@@ -59,6 +61,11 @@ class ConsumerExecutorWorkerFactory
      */
     protected $errorHandlers;
 
+    /**
+     * @var OutboundService
+     */
+    protected $outboundService;
+
     public function __construct(
         $burst,
         $fast,
@@ -68,7 +75,8 @@ class ConsumerExecutorWorkerFactory
         $queues,
         $searchExpiredMessage,
         $messagController,
-        $errorHandlers) {
+        $errorHandlers,
+        OutboundService $outboundService) {
 
         $this->burst = $burst;
         $this->fast = $fast;
@@ -79,6 +87,7 @@ class ConsumerExecutorWorkerFactory
         $this->searchExpiredMessage = $searchExpiredMessage;
         $this->messageController = $messagController;
         $this->errorHandlers = $errorHandlers;
+        $this->outboundService = $outboundService;
     }
 
     public function create()
@@ -102,7 +111,8 @@ class ConsumerExecutorWorkerFactory
             $this->messageController,
             $health,
             $healthRepoter,
-            $this->errorHandlers
+            $this->errorHandlers,
+            $this->outboundService
         );
 
         return $executor;

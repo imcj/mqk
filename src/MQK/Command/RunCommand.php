@@ -1,6 +1,7 @@
 <?php
 namespace MQK\Command;
 
+use GuzzleHttp\Client;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use MQK\Config;
@@ -8,6 +9,9 @@ use MQK\LoggerFactory;
 use MQK\OSDetect;
 use MQK\Queue\Message\MessageDAO;
 use MQK\Queue\MessageInvokableSyncController;
+use MQK\Queue\Outbound\Impl\NotificationCenterImpl;
+use MQK\Queue\Outbound\Impl\OutboundServiceImpl;
+use MQK\Queue\Outbound\Redis\RouterEntryRepositoryRedis;
 use MQK\Queue\RedisQueue;
 use MQK\Queue\RedisQueueCollection;
 use MQK\RedisProxy;
@@ -105,6 +109,7 @@ class RunCommand extends AbstractCommand
         $fast = $config->fast();
 
         $connection = new RedisProxy($config->redis());
+        $connection->connect();
         $messageDAO = new MessageDAO($connection);
         $queue = new RedisQueue($connection, $config->queuePrefix());
         $registry = new Registry($connection);
@@ -124,6 +129,15 @@ class RunCommand extends AbstractCommand
             $messageDAO
         );
 
+        $routerEntryRepository = new RouterEntryRepositoryRedis(
+            $connection->connection()
+        );
+        $notificationCenter = new NotificationCenterImpl(new Client());
+        $outboundService = new OutboundServiceImpl(
+            $routerEntryRepository,
+            $notificationCenter
+        );
+
         $consumerExecutorFactory = new ConsumerExecutorWorkerFactory(
             $burst,
             $fast,
@@ -133,7 +147,8 @@ class RunCommand extends AbstractCommand
             $queues,
             $searchExpiredMessage,
             $messageController,
-            $config->errorHandlers()
+            $config->errorHandlers(),
+            $outboundService
         );
 
         $workerFactory = new ConsumerWorkerFactory(
@@ -154,6 +169,7 @@ class RunCommand extends AbstractCommand
         } else {
             $runnerClass = WindowsRunner::class;
         }
+
         // TODO: Windows has not possix_pid file ,so using Factory replace class variable
         $runner = new $runnerClass(
             $burst,

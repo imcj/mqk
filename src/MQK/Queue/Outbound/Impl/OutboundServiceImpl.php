@@ -33,17 +33,35 @@ class OutboundServiceImpl implements OutboundService
         $routerEntryList = $this->routerEntryRepository->findByRouterKey($routerKey);
 
         foreach ($routerEntryList as $routerEntry) {
-            $this->notificationCenter->notify($routerEntry, $message);
+            try {
+                $this->notificationCenter->notify($routerEntry, $message);
+            } catch (\Exception $e) {
+
+            }
         }
     }
 
-    public function addNewEndpoint(RouterEntry $entry)
+    /**
+     * @param RouterEntry $routerEntry
+     * @return RouterEntry
+     */
+    public function addNewRouterEntry(RouterEntry $routerEntry)
     {
-        // TODO: Implement addNewEndpoint() method.
+        $this->routerEntryRepository->addNewRouterEntry($routerEntry);
     }
 
     public function listEndpoint()
     {
         // TODO: Implement listEndpoint() method.
+    }
+
+    /**
+     * @param string $routerKey
+     * @param int $page
+     * @return RouterEntry
+     */
+    public function listRouterEntry($routerKey, $page)
+    {
+
     }
 }

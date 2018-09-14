@@ -22,8 +22,11 @@ class OutboundServiceFacadeImpl implements OutboundServiceFacade
      */
     private $outboundService;
 
-    public function __construct($outboundService)
-    {
+    public function __construct(
+        RouterEntryRepository $routerEntryRepository,
+        OutboundService $outboundService) {
+
+        $this->routerEntryRepository = $routerEntryRepository;
         $this->outboundService = $outboundService;
     }
 
@@ -34,7 +37,17 @@ class OutboundServiceFacadeImpl implements OutboundServiceFacade
      */
     public function listRouterEntry($routerKey, $page)
     {
-        // TODO: Implement listRouterEntry() method.
+        $routerEntryList = $this
+            ->routerEntryRepository
+            ->findByRouterKey($routerKey);
+
+        return array_map(function(RouterEntry $routerEntry) {
+            return new RouterEntryDTO(
+                $routerEntry->id(),
+                $routerEntry->routerKey(),
+                $routerEntry->endpoint()
+            );
+        }, $routerEntryList);
     }
 
     /**
@@ -43,7 +56,16 @@ class OutboundServiceFacadeImpl implements OutboundServiceFacade
      */
     public function addNewRouterEntry(CreateRouterEntryCommand $command)
     {
-        // TODO: Implement addNewRouterEntry() method.
+        return $this->outboundService->addNewRouterEntry(
+            new RouterEntry(
+                null,
+                $command->routerKey(),
+                $command->endpoint(),
+                $command->description(),
+                null,
+                null
+            )
+        );
     }
 
     /**
